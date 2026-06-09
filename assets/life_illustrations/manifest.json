@@ -1,0 +1,263 @@
+{
+  "size": [
+    1200,
+    675
+  ],
+  "root": "assets/life_illustrations",
+  "genders": {
+    "female": {
+      "age_18": [
+        "assets/life_illustrations/female/age_18/variant_01.png",
+        "assets/life_illustrations/female/age_18/variant_02.png",
+        "assets/life_illustrations/female/age_18/variant_03.png"
+      ],
+      "age_19": [
+        "assets/life_illustrations/female/age_19/variant_01.png",
+        "assets/life_illustrations/female/age_19/variant_02.png",
+        "assets/life_illustrations/female/age_19/variant_03.png"
+      ],
+      "age_20": [
+        "assets/life_illustrations/female/age_20/variant_01.png",
+        "assets/life_illustrations/female/age_20/variant_02.png",
+        "assets/life_illustrations/female/age_20/variant_03.png"
+      ],
+      "age_21": [
+        "assets/life_illustrations/female/age_21/variant_01.png",
+        "assets/life_illustrations/female/age_21/variant_02.png",
+        "assets/life_illustrations/female/age_21/variant_03.png"
+      ],
+      "age_22": [
+        "assets/life_illustrations/female/age_22/variant_01.png",
+        "assets/life_illustrations/female/age_22/variant_02.png",
+        "assets/life_illustrations/female/age_22/variant_03.png"
+      ],
+      "age_23": [
+        "assets/life_illustrations/female/age_23/variant_01.png",
+        "assets/life_illustrations/female/age_23/variant_02.png",
+        "assets/life_illustrations/female/age_23/variant_03.png"
+      ],
+      "age_24": [
+        "assets/life_illustrations/female/age_24/variant_01.png",
+        "assets/life_illustrations/female/age_24/variant_02.png",
+        "assets/life_illustrations/female/age_24/variant_03.png"
+      ],
+      "age_25": [
+        "assets/life_illustrations/female/age_25/variant_01.png",
+        "assets/life_illustrations/female/age_25/variant_02.png",
+        "assets/life_illustrations/female/age_25/variant_03.png"
+      ],
+      "age_26": [
+        "assets/life_illustrations/female/age_26/variant_01.png",
+        "assets/life_illustrations/female/age_26/variant_02.png",
+        "assets/life_illustrations/female/age_26/variant_03.png"
+      ],
+      "age_27": [
+        "assets/life_illustrations/female/age_27/variant_01.png",
+        "assets/life_illustrations/female/age_27/variant_02.png",
+        "assets/life_illustrations/female/age_27/variant_03.png"
+      ],
+      "age_28": [
+        "assets/life_illustrations/female/age_28/variant_01.png",
+        "assets/life_illustrations/female/age_28/variant_02.png",
+        "assets/life_illustrations/female/age_28/variant_03.png"
+      ],
+      "age_29": [
+        "assets/life_illustrations/female/age_29/variant_01.png",
+        "assets/life_illustrations/female/age_29/variant_02.png",
+        "assets/life_illustrations/female/age_29/variant_03.png"
+      ],
+      "age_30": [
+        "assets/life_illustrations/female/age_30/variant_01.png",
+        "assets/life_illustrations/female/age_30/variant_02.png",
+        "assets/life_illustrations/female/age_30/variant_03.png"
+      ],
+      "age_31": [
+        "assets/life_illustrations/female/age_31/variant_01.png",
+        "assets/life_illustrations/female/age_31/variant_02.png",
+        "assets/life_illustrations/female/age_31/variant_03.png"
+      ],
+      "age_32": [
+        "assets/life_illustrations/female/age_32/variant_01.png",
+        "assets/life_illustrations/female/age_32/variant_02.png",
+        "assets/life_illustrations/female/age_32/variant_03.png"
+      ],
+      "age_33": [
+        "assets/life_illustrations/female/age_33/variant_01.png",
+        "assets/life_illustrations/female/age_33/variant_02.png",
+        "assets/life_illustrations/female/age_33/variant_03.png"
+      ],
+      "age_34": [
+        "assets/life_illustrations/female/age_34/variant_01.png",
+        "assets/life_illustrations/female/age_34/variant_02.png",
+        "assets/life_illustrations/female/age_34/variant_03.png"
+      ],
+      "age_35": [
+        "assets/life_illustrations/female/age_35/variant_01.png",
+        "assets/life_illustrations/female/age_35/variant_02.png",
+        "assets/life_illustrations/female/age_35/variant_03.png"
+      ],
+      "age_36": [
+        "assets/life_illustrations/female/age_36/variant_01.png",
+        "assets/life_illustrations/female/age_36/variant_02.png",
+        "assets/life_illustrations/female/age_36/variant_03.png"
+      ],
+      "age_37": [
+        "assets/life_illustrations/female/age_37/variant_01.png",
+        "assets/life_illustrations/female/age_37/variant_02.png",
+        "assets/life_illustrations/female/age_37/variant_03.png"
+      ],
+      "age_38": [
+        "assets/life_illustrations/female/age_38/variant_01.png",
+        "assets/life_illustrations/female/age_38/variant_02.png",
+        "assets/life_illustrations/female/age_38/variant_03.png"
+      ],
+      "age_39": [
+        "assets/life_illustrations/female/age_39/variant_01.png",
+        "assets/life_illustrations/female/age_39/variant_02.png",
+        "assets/life_illustrations/female/age_39/variant_03.png"
+      ],
+      "age_40": [
+        "assets/life_illustrations/female/age_40/variant_01.png",
+        "assets/life_illustrations/female/age_40/variant_02.png",
+        "assets/life_illustrations/female/age_40/variant_03.png"
+      ],
+      "age_41": [
+        "assets/life_illustrations/female/age_41/variant_01.png",
+        "assets/life_illustrations/female/age_41/variant_02.png",
+        "assets/life_illustrations/female/age_41/variant_03.png"
+      ],
+      "age_42": [
+        "assets/life_illustrations/female/age_42/variant_01.png",
+        "assets/life_illustrations/female/age_42/variant_02.png",
+        "assets/life_illustrations/female/age_42/variant_03.png"
+      ]
+    },
+    "male": {
+      "age_18": [
+        "assets/life_illustrations/male/age_18/variant_01.png",
+        "assets/life_illustrations/male/age_18/variant_02.png",
+        "assets/life_illustrations/male/age_18/variant_03.png"
+      ],
+      "age_19": [
+        "assets/life_illustrations/male/age_19/variant_01.png",
+        "assets/life_illustrations/male/age_19/variant_02.png",
+        "assets/life_illustrations/male/age_19/variant_03.png"
+      ],
+      "age_20": [
+        "assets/life_illustrations/male/age_20/variant_01.png",
+        "assets/life_illustrations/male/age_20/variant_02.png",
+        "assets/life_illustrations/male/age_20/variant_03.png"
+      ],
+      "age_21": [
+        "assets/life_illustrations/male/age_21/variant_01.png",
+        "assets/life_illustrations/male/age_21/variant_02.png",
+        "assets/life_illustrations/male/age_21/variant_03.png"
+      ],
+      "age_22": [
+        "assets/life_illustrations/male/age_22/variant_01.png",
+        "assets/life_illustrations/male/age_22/variant_02.png",
+        "assets/life_illustrations/male/age_22/variant_03.png"
+      ],
+      "age_23": [
+        "assets/life_illustrations/male/age_23/variant_01.png",
+        "assets/life_illustrations/male/age_23/variant_02.png",
+        "assets/life_illustrations/male/age_23/variant_03.png"
+      ],
+      "age_24": [
+        "assets/life_illustrations/male/age_24/variant_01.png",
+        "assets/life_illustrations/male/age_24/variant_02.png",
+        "assets/life_illustrations/male/age_24/variant_03.png"
+      ],
+      "age_25": [
+        "assets/life_illustrations/male/age_25/variant_01.png",
+        "assets/life_illustrations/male/age_25/variant_02.png",
+        "assets/life_illustrations/male/age_25/variant_03.png"
+      ],
+      "age_26": [
+        "assets/life_illustrations/male/age_26/variant_01.png",
+        "assets/life_illustrations/male/age_26/variant_02.png",
+        "assets/life_illustrations/male/age_26/variant_03.png"
+      ],
+      "age_27": [
+        "assets/life_illustrations/male/age_27/variant_01.png",
+        "assets/life_illustrations/male/age_27/variant_02.png",
+        "assets/life_illustrations/male/age_27/variant_03.png"
+      ],
+      "age_28": [
+        "assets/life_illustrations/male/age_28/variant_01.png",
+        "assets/life_illustrations/male/age_28/variant_02.png",
+        "assets/life_illustrations/male/age_28/variant_03.png"
+      ],
+      "age_29": [
+        "assets/life_illustrations/male/age_29/variant_01.png",
+        "assets/life_illustrations/male/age_29/variant_02.png",
+        "assets/life_illustrations/male/age_29/variant_03.png"
+      ],
+      "age_30": [
+        "assets/life_illustrations/male/age_30/variant_01.png",
+        "assets/life_illustrations/male/age_30/variant_02.png",
+        "assets/life_illustrations/male/age_30/variant_03.png"
+      ],
+      "age_31": [
+        "assets/life_illustrations/male/age_31/variant_01.png",
+        "assets/life_illustrations/male/age_31/variant_02.png",
+        "assets/life_illustrations/male/age_31/variant_03.png"
+      ],
+      "age_32": [
+        "assets/life_illustrations/male/age_32/variant_01.png",
+        "assets/life_illustrations/male/age_32/variant_02.png",
+        "assets/life_illustrations/male/age_32/variant_03.png"
+      ],
+      "age_33": [
+        "assets/life_illustrations/male/age_33/variant_01.png",
+        "assets/life_illustrations/male/age_33/variant_02.png",
+        "assets/life_illustrations/male/age_33/variant_03.png"
+      ],
+      "age_34": [
+        "assets/life_illustrations/male/age_34/variant_01.png",
+        "assets/life_illustrations/male/age_34/variant_02.png",
+        "assets/life_illustrations/male/age_34/variant_03.png"
+      ],
+      "age_35": [
+        "assets/life_illustrations/male/age_35/variant_01.png",
+        "assets/life_illustrations/male/age_35/variant_02.png",
+        "assets/life_illustrations/male/age_35/variant_03.png"
+      ],
+      "age_36": [
+        "assets/life_illustrations/male/age_36/variant_01.png",
+        "assets/life_illustrations/male/age_36/variant_02.png",
+        "assets/life_illustrations/male/age_36/variant_03.png"
+      ],
+      "age_37": [
+        "assets/life_illustrations/male/age_37/variant_01.png",
+        "assets/life_illustrations/male/age_37/variant_02.png",
+        "assets/life_illustrations/male/age_37/variant_03.png"
+      ],
+      "age_38": [
+        "assets/life_illustrations/male/age_38/variant_01.png",
+        "assets/life_illustrations/male/age_38/variant_02.png",
+        "assets/life_illustrations/male/age_38/variant_03.png"
+      ],
+      "age_39": [
+        "assets/life_illustrations/male/age_39/variant_01.png",
+        "assets/life_illustrations/male/age_39/variant_02.png",
+        "assets/life_illustrations/male/age_39/variant_03.png"
+      ],
+      "age_40": [
+        "assets/life_illustrations/male/age_40/variant_01.png",
+        "assets/life_illustrations/male/age_40/variant_02.png",
+        "assets/life_illustrations/male/age_40/variant_03.png"
+      ],
+      "age_41": [
+        "assets/life_illustrations/male/age_41/variant_01.png",
+        "assets/life_illustrations/male/age_41/variant_02.png",
+        "assets/life_illustrations/male/age_41/variant_03.png"
+      ],
+      "age_42": [
+        "assets/life_illustrations/male/age_42/variant_01.png",
+        "assets/life_illustrations/male/age_42/variant_02.png",
+        "assets/life_illustrations/male/age_42/variant_03.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoryStateCard",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "year",
+    "phase",
+    "mainTrack",
+    "lifeTrack",
+    "relationshipTrack",
+    "summary",
+    "scene",
+    "a",
+    "b",
+    "callbacks"
+  ],
+  "properties": {
+    "year": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 18
+    },
+    "phase": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 24
+    },
+    "mainTrack": {
+      "type": "string",
+      "enum": ["life", "relationship"]
+    },
+    "lifeTrack": {
+      "type": "string",
+      "minLength": 18,
+      "maxLength": 36
+    },
+    "relationshipTrack": {
+      "type": "string",
+      "minLength": 18,
+      "maxLength": 36
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 40
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "body"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 16
+        },
+        "body": {
+          "type": "string",
+          "minLength": 72,
+          "maxLength": 108
+        }
+      }
+    },
+    "a": {
+      "$ref": "#/$defs/choice"
+    },
+    "b": {
+      "$ref": "#/$defs/choice"
+    },
+    "callbacks": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 4,
+        "maxLength": 12
+      }
+    }
+  },
+  "$defs": {
+    "choice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "desc", "tag", "riasec"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 6
+        },
+        "desc": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 16
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 4
+        },
+        "riasec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["R", "I", "A", "S", "E", "C"],
+          "properties": {
+            "R": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "I": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "A": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "S": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "E": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "C": { "type": "integer", "minimum": 0, "maximum": 5 }
+          }
+        }
+      }
+    }
+  }
+}

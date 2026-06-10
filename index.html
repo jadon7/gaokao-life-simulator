@@ -5579,9 +5579,9 @@
     }
 
     .entry-panel {
-      width: min(430px, 100%);
-      min-height: min(720px, calc(var(--screen-h) - clamp(36px, 10vw, 96px)));
-      padding: clamp(40px, 7vw, 64px) clamp(26px, 7vw, 38px) clamp(28px, 6vw, 36px);
+      width: min(560px, 100%);
+      min-height: min(860px, calc(var(--screen-h) - clamp(24px, 7vw, 72px)));
+      padding: clamp(34px, 5.8vw, 54px) clamp(24px, 5.8vw, 38px) clamp(24px, 5vw, 34px);
       border: 1px solid rgba(67, 82, 111, 0.08);
       border-radius: 32px;
       background:
@@ -5605,7 +5605,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
 
     .entry-tag {
@@ -5625,15 +5625,20 @@
       max-width: 96%;
       margin: 0 0 22px;
       color: rgba(26, 35, 52, 0.96);
-      font-size: clamp(25px, 7vw, 32px);
+      font-size: clamp(24px, 6.4vw, 30px);
       font-weight: 780;
       line-height: 1.22;
       letter-spacing: 0;
     }
 
+    .entry-title span {
+      display: block;
+      white-space: nowrap;
+    }
+
     .entry-copy {
       max-width: 92%;
-      margin: 0 0 34px;
+      margin: 0 0 24px;
       color: rgba(84, 96, 118, 0.76);
       font-size: 15px;
       font-weight: 430;
@@ -5643,7 +5648,7 @@
     .entry-field {
       display: grid;
       gap: 9px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .entry-field label {
@@ -5696,6 +5701,259 @@
       font-size: 18px;
       font-weight: 780;
       letter-spacing: 0;
+    }
+
+    body[data-flow="entry"] .flow-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 2px 0 18px;
+    }
+
+    body[data-flow="entry"] .flow-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 2px;
+    }
+
+    body[data-flow="entry"] .flow-head h2 {
+      margin: 0;
+      color: rgba(28, 37, 55, 0.96);
+      font-size: clamp(17px, 4vw, 21px);
+      font-weight: 760;
+      line-height: 1.12;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    body[data-flow="entry"] .flow-hint {
+      color: rgba(84, 96, 118, 0.68);
+      font-size: 10px;
+      font-weight: 540;
+      white-space: nowrap;
+      opacity: 0.74;
+    }
+
+    body[data-flow="entry"] .flow-hint span {
+      color: #347df5;
+      font-weight: 780;
+    }
+
+    body[data-flow="entry"] .coverflow {
+      position: relative;
+      height: 286px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: pan-y;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body[data-flow="entry"] .coverflow::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 176px;
+      height: 244px;
+      border: 1px dashed rgba(67, 82, 111, 0.12);
+      border-radius: 24px;
+      box-shadow: 0 0 0 8px rgba(67, 82, 111, 0.04);
+      transform: translate(-50%, calc(-50% - 6px));
+      pointer-events: none;
+    }
+
+    body[data-flow="entry"] .major-grid {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      overflow: visible;
+      scroll-snap-type: none;
+      scrollbar-width: auto;
+    }
+
+    body[data-flow="entry"] .major-chip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 176px;
+      height: 244px;
+      min-height: 0;
+      margin: -122px 0 0 -88px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+      gap: 0;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 24px;
+      overflow: hidden;
+      opacity: 1;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 22px 52px rgba(53, 68, 96, 0.12);
+      transform: none;
+      will-change: transform, opacity;
+      transition: transform 0.42s cubic-bezier(.22,.61,.36,1), opacity 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    body[data-flow="entry"] .major-chip.no-anim {
+      transition: none;
+    }
+
+    body[data-flow="entry"] .major-chip::before,
+    body[data-flow="entry"] .major-chip::after {
+      content: none;
+      display: none;
+    }
+
+    body[data-flow="entry"] .cf-art {
+      position: relative;
+      height: 54%;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: radial-gradient(125% 100% at 50% 16%, oklch(0.985 0.008 var(--h)), oklch(0.955 0.022 var(--h)));
+    }
+
+    body[data-flow="entry"] .cf-art::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 40%;
+      background: linear-gradient(transparent, oklch(0.9 0.05 var(--h) / 0.4));
+    }
+
+    body[data-flow="entry"] .gi {
+      position: relative;
+      z-index: 1;
+      width: 92px;
+      height: 92px;
+    }
+
+    body[data-flow="entry"] .gi-halo {
+      position: absolute;
+      inset: -20%;
+      z-index: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 56%, oklch(0.72 0.25 var(--h) / 0.62), transparent 62%);
+      filter: blur(14px);
+    }
+
+    body[data-flow="entry"] .gi svg {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    body[data-flow="entry"] .cf-body {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    body[data-flow="entry"] .cf-body b {
+      color: rgba(28, 37, 55, 0.94);
+      font-size: 15px;
+      font-weight: 760;
+      line-height: 1.15;
+    }
+
+    body[data-flow="entry"] .cf-body span {
+      color: rgba(84, 96, 118, 0.72);
+      font-size: 11px;
+      font-weight: 430;
+      line-height: 1.35;
+    }
+
+    body[data-flow="entry"] .cf-body small {
+      margin-top: auto;
+      color: #347df5;
+      font-size: 10px;
+      font-weight: 740;
+      letter-spacing: 0.05em;
+    }
+
+    body[data-flow="entry"] .major-chip.is-active {
+      border-color: transparent;
+      box-shadow: 0 28px 60px oklch(0.3 0.06 var(--h) / 0.28);
+    }
+
+    body[data-flow="entry"] .cf-nav {
+      position: absolute;
+      top: 50%;
+      z-index: 500;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: rgba(28, 37, 55, 0.82);
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 12px 26px rgba(53, 68, 96, 0.09);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      font-size: 22px;
+      line-height: 1;
+      transform: translateY(-50%);
+      transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    body[data-flow="entry"] .cf-nav:hover {
+      color: #347df5;
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    body[data-flow="entry"] .cf-nav.prev {
+      left: clamp(0px, 3vw, 22px);
+    }
+
+    body[data-flow="entry"] .cf-nav.next {
+      right: clamp(0px, 3vw, 22px);
+    }
+
+    body[data-flow="entry"] .cf-dots {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      padding: 0 12px;
+      margin-top: -4px;
+      opacity: 0.48;
+    }
+
+    body[data-flow="entry"] .cf-dot {
+      width: 5px;
+      height: 5px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(67, 82, 111, 0.14);
+      transition: all 0.2s ease;
+    }
+
+    body[data-flow="entry"] .cf-dot.is-active {
+      width: 14px;
+      background: rgba(52, 125, 245, 0.78);
     }
 
     .entry-disclaimer {
@@ -5849,6 +6107,204 @@
       gap: clamp(16px, 2.6vw, 26px);
     }
 
+    body[data-flow="setup"] .persona-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: clamp(16px, 2.2vw, 22px);
+      border: 1px solid rgba(67, 82, 111, 0.07);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.68);
+      box-shadow: 0 1px 2px rgba(53, 68, 96, 0.035), 0 18px 38px rgba(53, 68, 96, 0.075);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+    }
+
+    body[data-flow="setup"] .persona-coverflow {
+      position: relative;
+      height: 244px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: pan-y;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body[data-flow="setup"] .persona-coverflow::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 168px;
+      height: 214px;
+      border: 1px dashed rgba(67, 82, 111, 0.12);
+      border-radius: 24px;
+      box-shadow: 0 0 0 8px rgba(67, 82, 111, 0.04);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    body[data-flow="setup"] .persona-grid {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    body[data-flow="setup"] .persona-card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 168px;
+      height: 214px;
+      margin: -107px 0 0 -84px;
+      padding: 0;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: stretch;
+      overflow: hidden;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 44px rgba(53, 68, 96, 0.12);
+      transform: none;
+      will-change: transform, opacity;
+      transition: transform 0.42s cubic-bezier(.22,.61,.36,1), opacity 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    body[data-flow="setup"] .persona-card.no-anim {
+      transition: none;
+    }
+
+    body[data-flow="setup"] .persona-card.is-active {
+      border-color: transparent;
+      box-shadow: 0 28px 60px oklch(0.3 0.06 var(--persona-h) / 0.28);
+    }
+
+    body[data-flow="setup"] .persona-photo {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 126px;
+      overflow: hidden;
+      background:
+        radial-gradient(120% 92% at 50% 15%, oklch(0.98 0.018 var(--persona-h)), oklch(0.92 0.055 var(--persona-h))),
+        rgba(255, 255, 255, 0.9);
+    }
+
+    body[data-flow="setup"] .persona-photo::before {
+      content: "";
+      position: absolute;
+      inset: 4px 0 -8px;
+      background: var(--persona-art) center 12% / cover no-repeat;
+      filter: saturate(var(--persona-sat, 1)) hue-rotate(var(--persona-rotate, 0deg));
+      transform: scale(1.05);
+    }
+
+    body[data-flow="setup"] .persona-photo::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 44%;
+      background: linear-gradient(transparent, oklch(0.93 0.045 var(--persona-h) / 0.62));
+    }
+
+    body[data-flow="setup"] .persona-body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 78px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    body[data-flow="setup"] .persona-body b {
+      color: rgba(28, 37, 55, 0.94);
+      font-size: 15px;
+      font-weight: 760;
+      line-height: 1.12;
+    }
+
+    body[data-flow="setup"] .persona-body span {
+      color: rgba(84, 96, 118, 0.72);
+      font-size: 11px;
+      font-weight: 430;
+      line-height: 1.35;
+    }
+
+    body[data-flow="setup"] .persona-body small {
+      margin-top: auto;
+      color: #347df5;
+      font-size: 10px;
+      font-weight: 740;
+      letter-spacing: 0.05em;
+    }
+
+    body[data-flow="setup"] .persona-nav {
+      position: absolute;
+      top: 50%;
+      z-index: 500;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: rgba(28, 37, 55, 0.82);
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 12px 26px rgba(53, 68, 96, 0.09);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      font-size: 22px;
+      line-height: 1;
+      transform: translateY(-50%);
+      transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    body[data-flow="setup"] .persona-nav:hover {
+      color: #347df5;
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    body[data-flow="setup"] .persona-nav.prev {
+      left: clamp(0px, 4vw, 28px);
+    }
+
+    body[data-flow="setup"] .persona-nav.next {
+      right: clamp(0px, 4vw, 28px);
+    }
+
+    body[data-flow="setup"] .persona-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 0 12px;
+    }
+
+    body[data-flow="setup"] .persona-dot {
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(67, 82, 111, 0.14);
+      transition: all 0.2s ease;
+    }
+
+    body[data-flow="setup"] .persona-dot.is-active {
+      width: 20px;
+      background: #347df5;
+    }
+
     body[data-flow="setup"] .creator-top {
       display: grid;
       grid-template-columns: 244px minmax(0, 1fr);
@@ -5894,6 +6350,7 @@
       border-radius: 0;
       background: var(--portrait-art) center 8% / cover no-repeat;
       box-shadow: none;
+      filter: var(--portrait-filter, none);
       transform: none;
     }
 
@@ -5972,6 +6429,34 @@
       box-shadow: 0 0 0 3px rgba(52, 125, 245, 0.12);
     }
 
+    body[data-flow="setup"] .option-segment {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      min-width: 0;
+    }
+
+    body[data-flow="setup"] .option-segment button {
+      min-height: 46px;
+      padding: 8px 10px;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 14px;
+      color: rgba(36, 47, 66, 0.76);
+      background: rgba(247, 249, 252, 0.88);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+      font-size: 14px;
+      font-weight: 520;
+      line-height: 1.18;
+      transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    body[data-flow="setup"] .option-segment button.is-active {
+      border-color: rgba(52, 125, 245, 0.28);
+      color: #176de4;
+      background: rgba(231, 240, 255, 0.96);
+      box-shadow: 0 10px 24px rgba(52, 125, 245, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    }
+
     body[data-flow="setup"] .creator-actions {
       grid-column: 1 / -1;
       display: grid;
@@ -5982,6 +6467,26 @@
 
     body[data-flow="setup"] .creator-actions .setup-error {
       grid-column: 1 / -1;
+    }
+
+    body[data-flow="setup"] .dev-only {
+      display: none;
+    }
+
+    body[data-dev-tools="true"][data-flow="setup"] .dev-only {
+      display: inline-flex;
+    }
+
+    body[data-dev-tools="false"][data-flow="setup"] .creator-actions {
+      grid-template-columns: 1fr;
+    }
+
+    body[data-dev-tools="false"] .dev-only {
+      display: none !important;
+    }
+
+    body[data-dev-tools="true"] .dev-only {
+      display: inline-flex;
     }
 
     body[data-flow="setup"] #randomProfile,
@@ -6206,6 +6711,10 @@
         grid-template-columns: 1fr;
       }
 
+      body[data-flow="setup"] .option-segment {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       body[data-flow="setup"] .creator-actions {
         grid-template-columns: 1fr;
       }
@@ -6333,6 +6842,31 @@
       font-weight: 600;
     }
 
+    body[data-flow="result"] .result-hero h2 {
+      display: grid;
+      gap: 2px;
+      max-width: 13ch;
+      margin-top: 10px;
+      font-size: clamp(34px, 7.2vw, 54px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    body[data-flow="result"] .result-hero h2 span {
+      display: block;
+    }
+
+    body[data-flow="result"] .result-status {
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    body[data-flow="result"] .result-status-lead {
+      max-width: 36ch;
+      font-size: clamp(18px, 2.45vw, 23px);
+      line-height: 1.28;
+    }
+
     body[data-flow="result"] .result-status-tag,
     body[data-flow="result"] .result-guide-card b,
     body[data-flow="result"] .result-scene b,
@@ -6382,18 +6916,21 @@
 
     body[data-flow="result"] .ability-hero {
       display: grid;
-      gap: 12px;
+      gap: 0;
       min-width: 0;
+      align-content: start;
     }
 
     body[data-flow="result"] .ability-art {
       position: relative;
-      min-height: 208px;
+      width: 100%;
+      min-height: 0;
+      aspect-ratio: 4 / 5;
       border-radius: 26px;
       overflow: hidden;
       background:
         linear-gradient(180deg, rgba(16, 20, 30, 0.06) 0%, rgba(16, 20, 30, 0.26) 100%),
-        var(--ability-art) center/cover no-repeat,
+        var(--ability-art) center top/cover no-repeat,
         linear-gradient(135deg, color-mix(in srgb, var(--ability-accent) 72%, white) 0%, rgba(255, 255, 255, 0.94) 100%);
       box-shadow: 0 18px 36px rgba(43, 54, 74, 0.12);
       isolation: isolate;
@@ -6409,9 +6946,10 @@
 
     body[data-flow="result"] .ability-copy {
       display: grid;
-      gap: 6px;
+      gap: 7px;
       min-width: 0;
-      padding: 2px 2px 0;
+      margin-top: -4px;
+      padding: 14px 2px 0;
     }
 
     body[data-flow="result"] .ability-summary {
@@ -6801,7 +7339,7 @@
     body[data-flow="setup"] .cf-nav {
       position: absolute;
       top: 50%;
-      z-index: 40;
+      z-index: 500;
       width: 44px;
       height: 44px;
       padding: 0;
@@ -6868,7 +7406,7 @@
 
   </style>
 </head>
-<body data-flow="entry" data-theme="clarity">
+<body data-flow="entry" data-theme="clarity" data-dev-tools="false">
   <div class="app">
     <header>
       <div class="topbar">
@@ -6880,7 +7418,7 @@
           </div>
         </div>
         <div class="top-actions">
-          <button id="randomTop" type="button">随机考生</button>
+          <button class="dev-only" id="randomTop" type="button">随机考生</button>
           <button id="restartTop" class="primary" type="button">重开一局</button>
         </div>
       </div>
@@ -6892,14 +7430,26 @@
           <div class="entry-topbar">
             <span class="entry-tag">从 18 岁出发</span>
           </div>
-          <h1 class="entry-title">人生不是预制菜，给你未来的人生验验牌。</h1>
+          <h1 class="entry-title"><span>人生不是预制菜</span><span>给未来的人生验验牌。</span></h1>
           <p class="entry-copy">完成 18 次选择，体验有不一样的人生</p>
           <div class="entry-field">
-            <label for="entryMajor">输入志愿</label>
+            <label for="entryName">怎么称呼你？</label>
             <div class="entry-input-wrap">
-              <input id="entryMajor" value="计算机科学与技术" autocomplete="off" />
-              <span class="entry-input-action">输入</span>
+              <input id="entryName" placeholder="可选，例如：张同学" autocomplete="off" />
+              <span class="entry-input-action">可选</span>
             </div>
+          </div>
+          <div class="flow-wrap entry-major-flow">
+            <div class="flow-head">
+              <h2>你希望是什么开局？</h2>
+              <span class="flow-hint"><span>←</span> 左右翻动选择 · <span id="pathCount">15 条路径</span> <span>→</span></span>
+            </div>
+            <div class="major-field coverflow">
+              <div class="major-grid" id="majorGrid" role="radiogroup" aria-label="意向专业方向"></div>
+              <button class="cf-nav prev" id="cfPrev" type="button" aria-label="上一个">‹</button>
+              <button class="cf-nav next" id="cfNext" type="button" aria-label="下一个">›</button>
+            </div>
+            <div class="cf-dots" id="cfDots" aria-hidden="true"></div>
           </div>
           <button class="entry-cta" id="entryStart" type="button">我要验牌</button>
           <p class="entry-disclaimer">结果仅供互动娱乐与专业理解参考，不构成志愿填报建议，不评价专业好坏，不替用户做决定。</p>
@@ -6909,6 +7459,18 @@
       <section class="panel setup-panel" aria-label="用户基础信息">
         <form class="profile-form" id="profileForm">
           <div class="setup-creator">
+            <div class="persona-flow" aria-label="选择你的形象">
+              <div class="flow-head">
+                <h2>选择你的形象</h2>
+                <span class="flow-hint"><span>←</span> 左右翻动选择 · <span id="avatarCount">6 张形象卡</span> <span>→</span></span>
+              </div>
+              <div class="persona-coverflow" id="avatarCoverflow">
+                <div class="persona-grid" id="avatarGrid" role="radiogroup" aria-label="角色形象"></div>
+                <button class="persona-nav prev" id="avatarPrev" type="button" aria-label="上一个形象">‹</button>
+                <button class="persona-nav next" id="avatarNext" type="button" aria-label="下一个形象">›</button>
+              </div>
+              <div class="persona-dots" id="avatarDots" aria-hidden="true"></div>
+            </div>
             <div class="creator-top">
               <aside class="creator-left">
                 <div class="id-portrait" aria-hidden="true">
@@ -6946,18 +7508,15 @@
                     分数
                     <input id="score" placeholder="可选" inputmode="numeric" autocomplete="off" />
                   </label>
-                  <label>
-                    期望职业
-                    <input id="dreamJob" placeholder="可选" autocomplete="off" />
-                  </label>
-                  <label>
+                  <label class="wide">
                     家庭期待
-                    <select id="familyHope">
-                      <option>稳定且体面</option>
-                      <option>尽快赚钱</option>
-                      <option>考研深造</option>
-                      <option>自由探索</option>
-                    </select>
+                    <input id="familyHope" type="hidden" value="稳定且体面" />
+                    <div class="option-segment" id="familyHopeOptions" role="radiogroup" aria-label="家庭期待">
+                      <button class="is-active" type="button" data-value="稳定且体面" role="radio" aria-checked="true">稳定且体面</button>
+                      <button type="button" data-value="尽快赚钱" role="radio" aria-checked="false">尽快赚钱</button>
+                      <button type="button" data-value="考研深造" role="radio" aria-checked="false">考研深造</button>
+                      <button type="button" data-value="自由探索" role="radio" aria-checked="false">自由探索</button>
+                    </div>
                   </label>
                   <label class="wide">
                     个人关键词
@@ -6969,21 +7528,8 @@
               <div class="setup-actions creator-actions">
                 <div class="setup-error" id="setupError" role="alert"></div>
                 <button class="dev-only" id="randomProfile" type="button">随机考生</button>
-                <button class="primary" id="applyProfile" type="submit">开始翻牌</button>
+                <button class="primary" id="applyProfile" type="submit">我要验牌</button>
               </div>
-            </div>
-
-            <div class="flow-wrap">
-              <div class="flow-head">
-                <h2>选择你的人生方向</h2>
-                <span class="flow-hint"><span>←</span> 左右翻动选择 · <span id="pathCount">15 条路径</span> <span>→</span></span>
-              </div>
-              <div class="major-field coverflow">
-                <div class="major-grid" id="majorGrid" role="radiogroup" aria-label="意向专业方向"></div>
-                <button class="cf-nav prev" id="cfPrev" type="button" aria-label="上一个">‹</button>
-                <button class="cf-nav next" id="cfNext" type="button" aria-label="下一个">›</button>
-              </div>
-              <div class="cf-dots" id="cfDots" aria-hidden="true"></div>
             </div>
           </div>
         </form>
@@ -7057,7 +7603,7 @@
     <div class="result-card">
       <div class="result-hero">
         <div class="result-copy">
-          <small>18 次选择后的你</small>
+          <small id="resultEyebrow">阶段结果</small>
           <h2 id="resultTitle">正在生成</h2>
           <p id="resultSummary"></p>
         </div>
@@ -7100,12 +7646,12 @@
     };
 
     const hollandTypes = {
-      R: { label: "实用型", nick: "匠人", word: "动手", color: "#315c9a", short: "工具、现场、原型、实际问题", directions: ["工程设计", "智能硬件", "工业设计", "建筑土木", "现场技术"] },
-      I: { label: "研究型", nick: "哲人", word: "研究", color: "#6c5ce7", short: "分析、推理、验证、探索规律", directions: ["科研", "算法", "数据分析", "医学研究", "统计建模"] },
-      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#ff5b23", short: "表达、审美、内容、作品成形", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
-      S: { label: "社会型", nick: "好人", word: "助人", color: "#0f8b8d", short: "沟通、陪伴、教育、服务他人", directions: ["教育", "心理咨询", "用户研究", "医疗服务", "公益服务"] },
-      E: { label: "企业型", nick: "商人", word: "组织", color: "#ed4710", short: "说服、管理、争取、推动资源", directions: ["商业管理", "创业", "市场增长", "商务推进", "法律商务"] },
-      C: { label: "常规型", nick: "公人", word: "秩序", color: "#8bbf16", short: "流程、规则、数据、稳定执行", directions: ["财会审计", "合规风控", "数据运营", "行政管理", "流程管理"] }
+      R: { label: "实用型", nick: "匠人", word: "动手", color: "#315c9a", short: "工具、现场、原型、实际问题", careerLabel: "工程实作", directions: ["工程设计", "智能硬件", "工业设计", "建筑土木", "现场技术"] },
+      I: { label: "研究型", nick: "哲人", word: "研究", color: "#6c5ce7", short: "分析、推理、验证、探索规律", careerLabel: "研究分析", directions: ["科研", "算法", "数据分析", "医学研究", "统计建模"] },
+      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#ff5b23", short: "表达、审美、内容、作品成形", careerLabel: "内容创意", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
+      S: { label: "社会型", nick: "好人", word: "助人", color: "#0f8b8d", short: "沟通、陪伴、教育、服务他人", careerLabel: "沟通助人", directions: ["教育", "心理咨询", "用户研究", "医疗服务", "公益服务"] },
+      E: { label: "企业型", nick: "商人", word: "组织", color: "#ed4710", short: "说服、管理、争取、推动资源", careerLabel: "组织推进", directions: ["商业管理", "创业", "市场增长", "商务推进", "法律商务"] },
+      C: { label: "常规型", nick: "公人", word: "秩序", color: "#8bbf16", short: "流程、规则、数据、稳定执行", careerLabel: "流程运营", directions: ["财会审计", "合规风控", "数据运营", "行政管理", "流程管理"] }
     };
 
     const coverflowStep = 120;
@@ -7593,6 +8139,15 @@
       }
     };
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const runtimeFlags = {
+      dev: urlParams.get("dev") === "1",
+      pilot: urlParams.get("pilot") === "1",
+      pilotResult: urlParams.get("pilotResult") === "1"
+    };
+
+    const pilotCardsUrl = "docs/pilot-arc-6-cards.sample.json";
+
     const randomProfiles = [
       { name: "林予安", gender: "女生", province: "江苏", score: "570", dream: "AI 产品经理", hope: "稳定且体面", keywords: "技术、表达、城市机会", major: "cs" },
       { name: "周屿", gender: "男生", province: "河南", score: "612", dream: "临床医生", hope: "考研深造", keywords: "责任感、硬核训练、确定路径", major: "med" },
@@ -7605,6 +8160,17 @@
     const majorKeys = Object.keys(majors);
 
     const profileAvatarArt = "url('assets/card_interaction/profile_avatar.png')";
+    const avatarOptions = [
+      { id: "fresh", title: "清醒新生", desc: "看着乖，实际会自己拿主意", tag: "默认形象", hue: 215, rotate: "0deg", sat: 1 },
+      { id: "calm", title: "稳住型", desc: "先看清局面，再决定怎么出手", tag: "慢热靠谱", hue: 178, rotate: "12deg", sat: 0.92 },
+      { id: "bright", title: "外放型", desc: "人群里不怯场，机会来得快", tag: "表达在线", hue: 35, rotate: "-10deg", sat: 1.1 },
+      { id: "sharp", title: "锋利型", desc: "判断快，遇到难题先拆开", tag: "脑子很忙", hue: 284, rotate: "22deg", sat: 1.05 },
+      { id: "soft", title: "温和型", desc: "会照顾人，也不轻易乱答应", tag: "关系敏感", hue: 135, rotate: "-24deg", sat: 0.96 },
+      { id: "wild", title: "整活型", desc: "嘴上随便，关键时刻敢上桌", tag: "有点戏", hue: 332, rotate: "32deg", sat: 1.16 }
+    ].map(item => ({ ...item, art: profileAvatarArt }));
+    const avatarStep = 112;
+    let avatarCenter = 0;
+    let avatarDrag = null;
     const questionSketchArt = [
       "url('assets/card_interaction/question_sketch_01.png')",
       "url('assets/card_interaction/question_sketch_02.png')",
@@ -7624,10 +8190,11 @@
       index: 0,
       history: [],
       profile: {},
+      avatar: "fresh",
       major: "cs",
       entryMajorText: "计算机科学与技术",
       deck: [],
-      totalYears: 18,
+      totalYears: runtimeFlags.pilot ? 6 : 18,
       values: {
         explore: 50,
         discipline: 50,
@@ -7650,7 +8217,9 @@
       feedbackByYear: {},
       result: null,
       isAnimating: false,
-      drag: null
+      drag: null,
+      pilotCards: [],
+      pilotCardsPromise: null
     };
 
     const els = {
@@ -7668,9 +8237,11 @@
       timeline: document.querySelector("#timeline"),
       tagRow: document.querySelector("#tagRow"),
       seedLine: document.querySelector("#seedLine"),
-      entryMajor: document.querySelector("#entryMajor"),
+      entryName: document.querySelector("#entryName"),
       entryStart: document.querySelector("#entryStart"),
       majorGrid: document.querySelector("#majorGrid"),
+      avatarGrid: document.querySelector("#avatarGrid"),
+      avatarCoverflow: document.querySelector("#avatarCoverflow"),
       profileName: document.querySelector("#profileName"),
       profileSummary: document.querySelector("#profileSummary"),
       portrait: document.querySelector("#portrait"),
@@ -7693,17 +8264,32 @@
 
     function readProfile() {
       const entryMajorText = cleanEntryMajor();
+      const setupName = document.querySelector("#studentName")?.value.trim() || "";
+      const entryName = els.entryName?.value?.trim() || "";
       return {
-        name: document.querySelector("#studentName").value.trim() || "未命名考生",
+        name: setupName || entryName || "未命名考生",
         gender: document.querySelector("#gender").value,
         province: document.querySelector("#province").value.trim() || "未知省份",
         score: document.querySelector("#score").value.trim() || "未知分数",
-        dream: document.querySelector("#dreamJob").value.trim() || "暂未填写",
-        hope: document.querySelector("#familyHope").value,
+        dream: "暂未填写",
+        hope: document.querySelector("#familyHope")?.value || "稳定且体面",
         keywords: document.querySelector("#keywords").value.trim() || "观察中",
+        avatar: state.avatar || "fresh",
         major: entryMajorText || state.major,
         majorLabel: entryMajorText || majorLabel()
       };
+    }
+
+    function setFamilyHope(value = "稳定且体面") {
+      const input = document.querySelector("#familyHope");
+      const options = Array.from(document.querySelectorAll("#familyHopeOptions button"));
+      const nextValue = options.some(button => button.dataset.value === value) ? value : "稳定且体面";
+      if (input) input.value = nextValue;
+      options.forEach(button => {
+        const isActive = button.dataset.value === nextValue;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-checked", isActive ? "true" : "false");
+      });
     }
 
     function majorLabel() {
@@ -7711,8 +8297,8 @@
     }
 
     function cleanEntryMajor() {
-      const value = els.entryMajor?.value?.trim() || state.entryMajorText || "";
-      return value || "";
+      const selected = state.entryMajorText || majorLabel();
+      return selected || "";
     }
 
     function inferMajorKey(text) {
@@ -7737,10 +8323,7 @@
     }
 
     function applyEntryMajor() {
-      const value = cleanEntryMajor() || "计算机科学与技术";
-      state.entryMajorText = value;
-      state.major = inferMajorKey(value);
-      if (els.entryMajor) els.entryMajor.value = value;
+      state.entryMajorText = majorLabel();
       applyProfile(readProfile());
     }
 
@@ -7752,36 +8335,30 @@
     }
 
     const fixedQuestionSeeds = [
-      { title: "室友群会议", prompt: "宿舍群突然为了空调温度开会，投票链接比学生会通知还正式。你发现这事如果不处理，今晚谁都别睡。", left: "直接定规则", right: "先装没看见", leftHint: "立规矩", rightHint: "装没看见", tagA: "秩序维护", tagB: "低冲突", deltaA: { discipline: 5, stability: 4, pressure: 1 }, deltaB: { stability: 3, empathy: -2, pressure: 3 } },
-      { title: "朋友圈社死", prompt: "你本想发一句成熟感悟，结果配图选成了食堂付款码截图。朋友们已经开始点赞，气氛很难撤回。", left: "立刻删除", right: "顺势自嘲", leftHint: "删除", rightHint: "自嘲", tagA: "止损", tagB: "整活", deltaA: { stability: 4, pressure: 2, explore: -1 }, deltaB: { empathy: 4, explore: 5, pressure: -2 } },
-      { title: "父母远程指挥", prompt: "家里突然发来一篇长文，说你这个专业未来很危险。文章排版很像十年前，但语气非常坚定。", left: "认真解释", right: "先安抚再说", leftHint: "解释", rightHint: "安抚", tagA: "正面沟通", tagB: "情绪管理", deltaA: { discipline: 3, empathy: 3, pressure: 1 }, deltaB: { empathy: 6, stability: 3, ambition: -1 } },
-      { title: "同学突然爆红", prompt: "一个平时总借你充电器的同学突然因为短视频爆红，还邀请你一起做账号。你怀疑机会是真的，也怀疑他还会借充电器。", left: "先试一期", right: "礼貌拒绝", leftHint: "试一期", rightHint: "拒绝", tagA: "机会试探", tagB: "边界清晰", deltaA: { explore: 6, ambition: 4, pressure: -2 }, deltaB: { stability: 5, discipline: 2, explore: -2 } },
-      { title: "临时救场", prompt: "活动前一小时，主持人嗓子哑了，所有人齐刷刷看向你。你只是路过，却突然像被系统点名。", left: "硬着头皮上", right: "推荐别人上", leftHint: "上台", rightHint: "推荐", tagA: "临场发挥", tagB: "资源调度", deltaA: { ambition: 5, explore: 4, pressure: -2 }, deltaB: { empathy: 4, stability: 3, pressure: 1 } },
-      { title: "简历玄学", prompt: "你改了三版简历没人理，换了一个更像玄学的文件名后，招聘老师居然秒回。你开始怀疑人生也吃关键词。", left: "继续优化", right: "相信玄学", leftHint: "优化", rightHint: "玄学", tagA: "系统迭代", tagB: "民间方法", deltaA: { discipline: 5, ambition: 3, stability: 1 }, deltaB: { explore: 5, pressure: 2, discipline: -2 } },
-      { title: "饭局点名", prompt: "一次聚餐里，前辈突然让你讲两句未来规划。你筷子还没放下，人生陈述已经被迫开机。", left: "认真表达", right: "幽默带过", leftHint: "认真讲", rightHint: "带过去", tagA: "主动表达", tagB: "社交卸力", deltaA: { ambition: 5, discipline: 2, pressure: -1 }, deltaB: { empathy: 5, stability: 2, pressure: 2 } },
-      { title: "半夜消息", prompt: "凌晨一点，项目群突然弹出一句“都在吗”。你知道这四个字通常不是问候，而是命运发来的推送。", left: "马上回复", right: "明早处理", leftHint: "回复", rightHint: "明早", tagA: "高响应", tagB: "边界感", deltaA: { pressure: -4, discipline: 4, ambition: 2 }, deltaB: { stability: 5, empathy: -1, pressure: 4 } },
-      { title: "朋友借钱", prompt: "多年朋友突然找你借一笔不大不小的钱，说下个月一定还。你相信人品，但也见过太多下个月。", left: "借但写清楚", right: "不借给方案", leftHint: "写清楚", rightHint: "给方案", tagA: "信任有边界", tagB: "理性支持", deltaA: { empathy: 5, discipline: 3, pressure: -1 }, deltaB: { stability: 5, empathy: 2, ambition: -1 } },
-      { title: "体检红字", prompt: "体检报告出现一个红色指标，医生说问题不大，但你的搜索记录已经把自己送进医学剧第三集。", left: "立刻调整作息", right: "先复查确认", leftHint: "调整", rightHint: "复查", tagA: "身体优先", tagB: "理性确认", deltaA: { stability: 5, pressure: 4, ambition: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 } },
-      { title: "老同学比较", prompt: "同学聚会上，有人把收入、房子、职级聊成排行榜。你发现自己不想参赛，但耳朵已经自动记分。", left: "离开话题", right: "正面接招", leftHint: "退出", rightHint: "接招", tagA: "自我保护", tagB: "外部竞争", deltaA: { stability: 5, empathy: 2, ambition: -2 }, deltaB: { ambition: 6, pressure: -3, discipline: 2 } },
-      { title: "导师临门一脚", prompt: "一个曾经帮过你的老师忽然推荐你去做一件很难的事。你知道这是机会，也知道机会经常伪装成麻烦。", left: "接下试试", right: "坦白顾虑", leftHint: "接下", rightHint: "坦白", tagA: "机会承接", tagB: "风险沟通", deltaA: { ambition: 5, discipline: 3, pressure: -2 }, deltaB: { empathy: 4, stability: 4, explore: -1 } },
-      { title: "租房暴击", prompt: "房东突然涨租，理由是附近开了新商场。你看了眼通勤距离，感觉自己也被城市当成订阅用户。", left: "搬远一点", right: "砍价留下", leftHint: "搬走", rightHint: "砍价", tagA: "成本控制", tagB: "现实谈判", deltaA: { stability: 4, pressure: 3, explore: 2 }, deltaB: { discipline: 4, empathy: 1, ambition: 1 } },
-      { title: "婚礼座位", prompt: "朋友婚礼安排你和一群陌生人坐一桌，大家都很客气，直到话题突然拐到你的人生进度。", left: "主动破冰", right: "低调吃饭", leftHint: "破冰", rightHint: "低调", tagA: "关系拓展", tagB: "能量保存", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { stability: 4, pressure: 3, ambition: -1 } },
-      { title: "旧物回潮", prompt: "你翻出当年一个不起眼的小物件，突然想起某个早期选择。它不值钱，但很像人生存档点。", left: "留下它", right: "拍照告别", leftHint: "留下", rightHint: "告别", tagA: "回忆锚点", tagB: "轻装前进", deltaA: { empathy: 4, stability: 3, pressure: 1 }, deltaB: { explore: 4, stability: 2, ambition: 1 } },
-      { title: "老板黑话", prompt: "领导说“这个事很简单，你自由发挥”。你翻译了一下，大概是边界未知、责任明确、锅也可能有你一口。", left: "先要边界", right: "先做样稿", leftHint: "要边界", rightHint: "做样稿", tagA: "需求澄清", tagB: "快速验证", deltaA: { discipline: 5, stability: 3, empathy: 1 }, deltaB: { explore: 5, ambition: 3, pressure: -1 } },
-      { title: "亲戚咨询", prompt: "亲戚听说你懂这个专业，立刻把全家孩子的未来都发给你。你只是回家吃饭，突然变成半个咨询台。", left: "认真分析", right: "只给原则", leftHint: "分析", rightHint: "原则", tagA: "耐心输出", tagB: "边界输出", deltaA: { empathy: 6, discipline: 2, pressure: -2 }, deltaB: { stability: 4, empathy: 2, pressure: 3 } },
-      { title: "临时上热搜", prompt: "你参与的小项目被陌生账号截图转发，评论区有人夸也有人阴阳。系统提示：公共表达副本已开启。", left: "公开回应", right: "保持沉默", leftHint: "回应", rightHint: "沉默", tagA: "公开表达", tagB: "冷处理", deltaA: { ambition: 5, empathy: 3, pressure: -3 }, deltaB: { stability: 5, discipline: 2, explore: -1 } },
-      { title: "搭子分岔", prompt: "长期一起做事的搭子想去另一座城市，你们的节奏第一次不在同一张表格里。", left: "继续远程合作", right: "体面拆伙", leftHint: "远程", rightHint: "拆伙", tagA: "关系延续", tagB: "阶段告别", deltaA: { empathy: 5, discipline: 3, pressure: -1 }, deltaB: { stability: 5, explore: 2, empathy: -1 } },
-      { title: "错过消息", prompt: "一个重要机会的消息被你错过了两天，对方已经找到别人。你第一次意识到，人生有时输给免打扰。", left: "补救争取", right: "复盘放下", leftHint: "补救", rightHint: "放下", tagA: "主动补救", tagB: "及时复盘", deltaA: { ambition: 5, pressure: -2, discipline: 2 }, deltaB: { stability: 5, discipline: 3, explore: -1 } },
-      { title: "家庭投票", prompt: "家里人对你的选择开了一个小型家庭会议，每个人都很爱你，但每个人的建议都不一样。", left: "听多数意见", right: "自己拍板", leftHint: "听多数", rightHint: "拍板", tagA: "家庭协商", tagB: "自我决策", deltaA: { empathy: 5, stability: 3, ambition: -1 }, deltaB: { ambition: 5, explore: 3, pressure: -2 } },
-      { title: "年度复盘", prompt: "你写下今年最大的三个变化，发现最重要的那个完全不在计划里。人生像表格，但总有人乱填单元格。", left: "重写计划", right: "顺势调整", leftHint: "重写", rightHint: "顺势", tagA: "计划升级", tagB: "弹性适应", deltaA: { discipline: 5, stability: 3, pressure: 1 }, deltaB: { explore: 5, empathy: 2, ambition: 1 } },
-      { title: "证书诱惑", prompt: "一个证书广告精准命中你，说拿下它人生就会升级。你看了价格，感觉升级包有点贵。", left: "报名学习", right: "先问前辈", leftHint: "报名", rightHint: "询问", tagA: "能力投资", tagB: "信息验证", deltaA: { discipline: 4, ambition: 3, pressure: -1 }, deltaB: { stability: 4, empathy: 2, explore: 1 } },
-      { title: "突然被看见", prompt: "你随手做的一次分享被行业前辈转发，机会突然变大，也变得有点吓人。", left: "顺势扩大", right: "稳住节奏", leftHint: "扩大", rightHint: "稳住", tagA: "顺势放大", tagB: "节奏控制", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, ambition: -1 } }
-    ];
-
-    const fixedQuestionLenses = [
-      { summary: "有个熟人频繁出现在你的日常，还记住了你随口说的小事", prefix: "" },
-      { summary: "家里嘴上说随你，其实一直悄悄关注你的作息和饭点", prefix: "这一年，" },
-      { summary: "朋友群多了新梗，早年的选择又被人翻出来玩笑", prefix: "突然，" }
+      { title: "宿舍空调协议", prompt: "宿舍空调吵到凌晨，群里已经有人开始阴阳怪气。你发现不立个办法，今晚谁都睡不成。", left: "拉个投票定规则，先把今晚稳住", right: "先不开口，等大家自己消气", leftHint: "立规矩", rightHint: "先观察", tagA: "定规则", tagB: "低冲突", consequenceA: "你定下空调表，宿舍终于睡着了，但也有人嫌你太爱管事", consequenceB: "你没插手争论，表面少了冲突，半夜却又被吵醒一次", deltaA: { discipline: 5, stability: 4, pressure: 1 }, deltaB: { stability: 3, empathy: -2, pressure: 3 } },
+      { title: "朋友圈误发", prompt: "你发感悟时错配了食堂付款码，朋友已经开始点赞。删除会尴尬，不删更像公开处刑。", left: "立刻删除截图，先把损失止住", right: "顺势自嘲，把尴尬变成梗", leftHint: "删除", rightHint: "自嘲", tagA: "止损", tagB: "转梗", consequenceA: "你删得很快，截图没再扩散，但朋友群笑你手速像灭火", consequenceB: "你接住了这个梗，群里笑成一片，沈拓也第一次主动回你", deltaA: { stability: 4, pressure: 2, explore: -1 }, deltaB: { empathy: 4, explore: 5, pressure: -2 } },
+      { title: "家里转来长文", prompt: "家里转来一篇专业劝退长文，排版很旧，语气很重。你知道他们怕你走错，但也不能一直被吓着走。", left: "列出事实和路径，认真解释一次", right: "先接住担心，晚点再谈细节", leftHint: "解释", rightHint: "安抚", tagA: "讲事实", tagB: "先安抚", consequenceA: "你把路径讲清楚，家里少了几句催促，但开始盯你的成绩", consequenceB: "你先把家里安抚住了，晚饭电话短了很多，问题却还没真正解决", deltaA: { discipline: 3, empathy: 3, pressure: 1 }, deltaB: { empathy: 6, stability: 3, ambition: -1 } },
+      { title: "同学账号起飞", prompt: "常借你充电器的同学短视频爆了，转头邀你一起做号。机会看着真，麻烦也像会按月续费。", left: "先试一条内容，用数据再判断", right: "礼貌拒绝，别把时间全押上去", leftHint: "试一期", rightHint: "拒绝", tagA: "小试", tagB: "边界", consequenceA: "你试做一条视频，数据不错，但周末复习时间被吃掉一半", consequenceB: "你拒绝了邀约，时间表稳住了，那位同学之后少找你借充电器", deltaA: { explore: 6, ambition: 4, pressure: -2 }, deltaB: { stability: 5, discipline: 2, explore: -2 } },
+      { title: "活动临时救场", prompt: "活动前一小时主持人失声，所有人同时看向你。你只是路过，却被推到最亮的灯下面。", left: "硬着头皮上台，先把场面托住", right: "推荐更合适的人，自己做后援", leftHint: "上台", rightHint: "推荐", tagA: "救场", tagB: "调度", consequenceA: "你把场面撑住了，老师记住你的表达力，也顺手把下次活动交给你", consequenceB: "你推荐的人稳住现场，自己没露脸，但团队开始觉得你懂分工", deltaA: { ambition: 5, explore: 4, pressure: -2 }, deltaB: { empathy: 4, stability: 3, pressure: 1 } },
+      { title: "简历没人回复", prompt: "你投了十几份简历都没回音，只有一位学长指出项目描述太空。问题不玄，是你没讲清自己做成了什么。", left: "重写项目结果，把证据补齐", right: "继续海投，先用数量撞机会", leftHint: "重写", rightHint: "海投", tagA: "复盘", tagB: "广撒网", consequenceA: "你重写了项目结果，面试邀约少但更准，作息也没被海投拖垮", consequenceB: "你继续海投，邮箱热闹了，真正匹配的机会却还是不多", deltaA: { discipline: 5, ambition: 3, stability: 1 }, deltaB: { explore: 5, pressure: 2, discipline: -2 } },
+      { title: "饭局突然点名", prompt: "前辈让你讲两句未来规划，桌上瞬间安静。你筷子还没放下，就被迫把自己讲明白。", left: "认真讲清方向，顺便要建议", right: "轻松带过，不把饭局变答辩", leftHint: "认真讲", rightHint: "带过去", tagA: "表达", tagB: "卸力", consequenceA: "你讲清了方向，前辈饭后发来一个机会，也顺手加了压力", consequenceB: "你用玩笑带过了追问，饭局轻松了，前辈也没再继续深聊", deltaA: { ambition: 5, discipline: 2, pressure: -1 }, deltaB: { empathy: 5, stability: 2, pressure: 2 } },
+      { title: "凌晨项目消息", prompt: "凌晨一点，项目群弹出一句“都在吗”。你知道这不是问候，通常是任务披着睡衣来了。", left: "马上回复，先把问题接住", right: "明早处理，守住休息边界", leftHint: "回复", rightHint: "明早", tagA: "响应", tagB: "边界", consequenceA: "你半夜接住了问题，项目保住进度，你第二天早八差点迟到", consequenceB: "你没有半夜上线，睡眠保住了，群里却默认你不适合急活", deltaA: { pressure: -4, discipline: 4, ambition: 2 }, deltaB: { stability: 5, empathy: -1, pressure: 4 } },
+      { title: "朋友开口借钱", prompt: "多年朋友找你借一笔钱，说下个月一定还。你相信他，但也见过太多下个月变成下下个月。", left: "借钱但写清时间和金额", right: "不借现金，帮他找别的办法", leftHint: "写清楚", rightHint: "给方案", tagA: "边界", tagB: "支持", consequenceA: "你把钱借出去了，关系没伤，但还款日开始变成心里闹钟", consequenceB: "你没直接借钱，朋友有点失落，后来还是用了你的解决方案", deltaA: { empathy: 5, discipline: 3, pressure: -1 }, deltaB: { stability: 5, empathy: 2, ambition: -1 } },
+      { title: "体检一个红字", prompt: "体检报告冒出一个红色指标，医生说先别慌。你嘴上说淡定，搜索记录已经把自己送进医学剧。", left: "立刻调整作息，先管身体", right: "预约复查，用数据确认问题", leftHint: "调整", rightHint: "复查", tagA: "健康", tagB: "求证", consequenceA: "你停了几次熬夜，身体指标慢慢回落，项目进度也被迫降速", consequenceB: "你去复查确认了风险，心里稳了，也开始认真记睡眠时间", deltaA: { stability: 5, pressure: 4, ambition: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 } },
+      { title: "同学聚会比较", prompt: "聚会上有人把收入和职级聊成排行榜，你不想参赛，耳朵却已经自动记分。再坐下去，心态要被带跑。", left: "换个话题，保护自己的节奏", right: "正面接招，看看差距在哪", leftHint: "换话题", rightHint: "接招", tagA: "护心态", tagB: "竞争", consequenceA: "你换掉了比较话题，心态没被带跑，也少拿自己跟别人乱比", consequenceB: "你听完了差距，回家列了计划，焦虑也跟着一起到家", deltaA: { stability: 5, empathy: 2, ambition: -2 }, deltaB: { ambition: 6, pressure: -3, discipline: 2 } },
+      { title: "老师递来难活", prompt: "曾经帮过你的老师推荐你接一个难项目，名字听着很体面，工作量也很实在。机会这次没穿西装，穿的是加班外套。", left: "接下项目，换一个硬履历", right: "说清顾虑，争取缩小范围", leftHint: "接下", rightHint: "谈范围", tagA: "承接", tagB: "沟通", consequenceA: "你接下了难项目，履历多了一行，周末也少了一大半", consequenceB: "你谈清了范围，老师没生气，还把任务拆成能完成的两段", deltaA: { ambition: 5, discipline: 3, pressure: -2 }, deltaB: { empathy: 4, stability: 4, explore: -1 } },
+      { title: "房东突然涨租", prompt: "房东说附近新商场开业，所以房租要涨。你看着通勤时间，感觉自己也被城市当成订阅用户。", left: "搬远一点，先把成本降下来", right: "留下谈价，争取少涨一点", leftHint: "搬走", rightHint: "砍价", tagA: "控成本", tagB: "谈判", consequenceA: "你搬远了，房租降下来，通勤却每天多吞掉四十分钟", consequenceB: "你谈下了涨幅，住处保住了，也第一次认真算生活账", deltaA: { stability: 4, pressure: 3, explore: 2 }, deltaB: { discipline: 4, empathy: 1, ambition: 1 } },
+      { title: "婚礼同桌追问", prompt: "朋友婚礼把你安排到陌生人桌，大家从客气聊到人生进度。再不接话，你就要被问到三年规划。", left: "主动破冰，把话题拉回现场", right: "低调吃饭，减少无效社交", leftHint: "破冰", rightHint: "低调", tagA: "破冰", tagB: "省电", consequenceA: "你把话题拉回婚礼，陌生桌气氛活了，也多加了两个联系人", consequenceB: "你安静吃完这桌饭，能量保住了，后来没人记住你来过", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { stability: 4, pressure: 3, ambition: -1 } },
+      { title: "旧物翻出来", prompt: "你翻出早年留下的小物件，想起一次差点放弃的选择。它不值钱，但像把旧路重新亮了一下。", left: "留下它，提醒自己别忘来路", right: "拍照告别，轻装继续往前", leftHint: "留下", rightHint: "告别", tagA: "留锚点", tagB: "轻装", consequenceA: "你把旧物留在桌角，每次赶工都能想起当初为什么开始", consequenceB: "你拍照后收起旧物，心里轻了一点，也不再反复回头", deltaA: { empathy: 4, stability: 3, pressure: 1 }, deltaB: { explore: 4, stability: 2, ambition: 1 } },
+      { title: "领导一句自由发挥", prompt: "领导说这事很简单，你自由发挥。你听懂了：边界未知，责任明确，最后可能还有一口锅。", left: "先确认边界，再开始动手", right: "先做样稿，用结果换反馈", leftHint: "要边界", rightHint: "做样稿", tagA: "澄清", tagB: "试做", consequenceA: "你问清了边界，返工少了，领导也知道你不是盲接任务的人", consequenceB: "你先交了样稿，反馈来得很快，返工也一起排队来了", deltaA: { discipline: 5, stability: 3, empathy: 1 }, deltaB: { explore: 5, ambition: 3, pressure: -1 } },
+      { title: "亲戚临时咨询", prompt: "亲戚听说你懂这个专业，立刻把孩子分数和截图全发来。你只是回家吃饭，忽然变成半个咨询台。", left: "认真分析一次，讲清风险", right: "只给原则，不替别人拍板", leftHint: "分析", rightHint: "原则", tagA: "输出", tagB: "边界", consequenceA: "你认真分析完，亲戚很感谢，之后又把三个朋友推给你", consequenceB: "你只给了原则，饭桌轻松很多，也没人把结果全压到你身上", deltaA: { empathy: 6, discipline: 2, pressure: -2 }, deltaB: { stability: 4, empathy: 2, pressure: 3 } },
+      { title: "项目被转发", prompt: "你参与的小项目被陌生账号截图转发，评论区有人夸也有人挑刺。公共表达这扇门，自己开了。", left: "公开回应，把问题讲清楚", right: "暂时沉默，先观察舆论", leftHint: "回应", rightHint: "沉默", tagA: "回应", tagB: "冷处理", consequenceA: "你公开回应后，质疑少了不少，也有人开始私信找你合作", consequenceB: "你先沉默观察，风波慢慢散了，错过的合作也跟着散了", deltaA: { ambition: 5, empathy: 3, pressure: -3 }, deltaB: { stability: 5, discipline: 2, explore: -1 } },
+      { title: "搭子要去外地", prompt: "长期一起做事的搭子要去另一座城市，你们的节奏第一次错开。继续绑在一起，会累；直接散，也舍不得。", left: "继续远程合作，先试三个月", right: "体面拆伙，把关系留下来", leftHint: "远程", rightHint: "拆伙", tagA: "延续", tagB: "告别", consequenceA: "你们远程试了三个月，项目还能跑，但沟通成本明显变高", consequenceB: "你们体面拆伙，合作停了，关系反而没被拖到难看", deltaA: { empathy: 5, discipline: 3, pressure: -1 }, deltaB: { stability: 5, explore: 2, empathy: -1 } },
+      { title: "机会错过两天", prompt: "一个重要机会被你晚看到两天，对方已经找到别人。你第一次发现，免打扰也能改变剧情。", left: "补救争取，问是否还有位置", right: "复盘放下，重建消息机制", leftHint: "补救", rightHint: "复盘", tagA: "补救", tagB: "复盘", consequenceA: "你补救争取到候补位，机会没完全回来，联系人却记住了你", consequenceB: "你放下这次机会，重新整理提醒规则，后面少漏了两次消息", deltaA: { ambition: 5, pressure: -2, discipline: 2 }, deltaB: { stability: 5, discipline: 3, explore: -1 } },
+      { title: "家庭会议开场", prompt: "家里为你的选择开了小型会议，每个人都很爱你，也都想改你剧本。你得回应爱，也得保住自己。", left: "听多数意见，先降低冲突", right: "自己拍板，再解释代价", leftHint: "听多数", rightHint: "拍板", tagA: "协商", tagB: "自决", consequenceA: "你按多数意见退了一步，家里安心了，你心里却留了个问号", consequenceB: "你自己拍板定下方向，家里沉默了几天，后来开始看你行动", deltaA: { empathy: 5, stability: 3, ambition: -1 }, deltaB: { ambition: 5, explore: 3, pressure: -2 } },
+      { title: "计划突然偏航", prompt: "你写下今年三个变化，最重要那个完全不在计划里。计划没错，只是现实又多开了一条支线。", left: "重写计划，把变化纳入路线", right: "顺势调整，先抓住当下机会", leftHint: "重写", rightHint: "顺势", tagA: "计划", tagB: "应变", consequenceA: "你重写了计划，路径清楚很多，也删掉了两个不必要目标", consequenceB: "你顺势接住新机会，故事变热闹了，原计划被挤到后排", deltaA: { discipline: 5, stability: 3, pressure: 1 }, deltaB: { explore: 5, empathy: 2, ambition: 1 } },
+      { title: "证书广告命中", prompt: "一个证书广告精准命中焦虑，说拿下它就能升级人生。你看完价格，感觉升级包有点贵。", left: "报名系统学，逼自己补短板", right: "先问前辈，确认含金量", leftHint: "报名", rightHint: "询问", tagA: "投资", tagB: "求证", consequenceA: "你报名后按周学习，钱包薄了，但短板真的补上了一截", consequenceB: "你问完前辈避开了坑，省下钱，也多认识一个可靠信息源", deltaA: { discipline: 4, ambition: 3, pressure: -1 }, deltaB: { stability: 4, empathy: 2, explore: 1 } },
+      { title: "分享突然出圈", prompt: "你随手做的一次分享被行业前辈转发，机会突然变大。被看见很爽，也意味着以后不能乱写。", left: "顺势扩大，做成系列内容", right: "稳住节奏，先打磨质量", leftHint: "扩大", rightHint: "稳住", tagA: "放大", tagB: "打磨", consequenceA: "你把分享做成系列，关注涨得很快，更新压力也跟着上桌", consequenceB: "你先打磨内容质量，增长慢了，但每次发布都更站得住", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, ambition: -1 } }
     ];
 
     function hashString(text) {
@@ -7814,16 +8391,68 @@
       return result;
     }
 
+    function pickFromPool(pool, offset = 0) {
+      const profile = state.profile || readProfile();
+      const hash = hashString(`${profileSignature(profile)}:${offset}`);
+      return pool[hash % pool.length];
+    }
+
+    function getStoryCast() {
+      const maleNames = ["周竞", "程野", "陆一川", "贺闻", "沈拓"];
+      const femaleNames = ["沈枝", "许遥", "姜南", "林雾", "周栀"];
+      const neutralNames = ["许青禾", "陈泊", "林楠", "苏望", "乔予"];
+      const profile = state.profile || readProfile();
+      const relationPool = profile.gender === "男生"
+        ? femaleNames
+        : profile.gender === "女生"
+          ? maleNames
+          : [...neutralNames, ...maleNames.slice(0, 2), ...femaleNames.slice(0, 2)];
+      return {
+        relationName: pickFromPool(relationPool, 11),
+        roommateName: pickFromPool(neutralNames, 21),
+        mentorName: pickFromPool(["林知夏", "孟回", "顾行舟", "周砚", "齐老师"], 31)
+      };
+    }
+
+    function fixedMainTrack(template) {
+      const text = `${template.title}${template.prompt}`;
+      if (/婚礼|搭子|借钱|破冰|朋友圈|同学突然爆红|饭局点名|朋友|家里|亲戚/.test(text)) return "relationship";
+      if (/体检|作息|熬夜/.test(text)) return "health";
+      return "life";
+    }
+
+    function buildFixedTracks(yearNumber, template) {
+      const cast = getStoryCast();
+      const scoreBands = ["前25%", "前20%", "前15%", "前12%"];
+      const lifeTemplates = [
+        `专业主线没掉，成绩稳在${scoreBands[yearNumber % scoreBands.length]}`,
+        `${cast.mentorName}记住了你的名字，开始把细活交给你`,
+        `你把课表重新排过，作息终于没再一路失控`
+      ];
+      const relationshipTemplates = [
+        `${cast.relationName}记住了你下课时间，偶尔给你留座`,
+        `${cast.relationName}说你太忙，却还是会给你留消息`,
+        `${cast.relationName}没催你回复，但开始把你排进周末`
+      ];
+      const mainTrack = fixedMainTrack(template);
+      return {
+        mainTrack: mainTrack === "relationship" ? "relationship" : "life",
+        lifeTrack: lifeTemplates[yearNumber % lifeTemplates.length],
+        relationshipTrack: relationshipTemplates[(yearNumber + 1) % relationshipTemplates.length]
+      };
+    }
+
     function buildFixedQuestionBank(profile, majorKey) {
       const majorText = (majors[majorKey] && majors[majorKey].label) || "你的专业";
-      const expanded = fixedQuestionSeeds.flatMap((seed, seedIndex) => fixedQuestionLenses.map((lens, lensIndex) => ({
+      const uniqueSeeds = fixedQuestionSeeds.map((seed, seedIndex) => ({
         ...seed,
         title: seed.title,
-        summary: lens.summary,
-        prompt: `${lens.prefix}${seed.prompt}`.replaceAll("这个专业", majorText),
-        bankIndex: seedIndex * fixedQuestionLenses.length + lensIndex
-      })));
-      return shuffledCopy(expanded, `${profileSignature(profile)}:${majorKey}:fixed-bank`);
+        summary: "",
+        prompt: seed.prompt.replaceAll("这个专业", majorText),
+        bankIndex: seedIndex,
+        fixedKey: `${seedIndex}:${seed.title}:${hashString(seed.prompt)}`
+      }));
+      return shuffledCopy(uniqueSeeds, `${profileSignature(profile)}:${majorKey}:fixed-bank`);
     }
 
     function prepareFixedQuestionBank() {
@@ -7837,45 +8466,102 @@
       return yearNumber > 1 && yearNumber % fixedInsertEvery === 0;
     }
 
+    function usedFixedKeys(ignoreYear = 0) {
+      const keys = new Set();
+      state.deck.forEach(card => {
+        if (!card || Number(card.yearNumber) === Number(ignoreYear)) return;
+        if (card.fixedKey) keys.add(card.fixedKey);
+      });
+      state.history.forEach(item => {
+        if (!item || Number(item.year) === Number(ignoreYear)) return;
+        if (item.fixedKey) keys.add(item.fixedKey);
+      });
+      return keys;
+    }
+
+    function pickFixedTemplate(yearNumber, purpose = "fixed") {
+      prepareFixedQuestionBank();
+      const bank = state.fixedQuestionBank.length ? state.fixedQuestionBank : buildFixedQuestionBank(state.profile, state.major);
+      if (!bank.length) return null;
+      const used = usedFixedKeys(yearNumber);
+      const baseIndex = purpose === "fixed"
+        ? Math.max(0, Math.floor(yearNumber / fixedInsertEvery) - 1)
+        : Math.max(0, yearNumber - 2);
+      for (let offset = 0; offset < bank.length; offset += 1) {
+        const template = bank[(baseIndex + offset) % bank.length];
+        if (!used.has(template.fixedKey)) return template;
+      }
+      return bank[baseIndex % bank.length];
+    }
+
+    function fixedSummaryForTemplate(yearNumber, template, tracks) {
+      const otherTrack = tracks.mainTrack === "relationship" ? tracks.lifeTrack : tracks.relationshipTrack;
+      const cast = getStoryCast();
+      const options = [
+        `${otherTrack}；${cast.relationName}也把上次那件事记进了聊天里`,
+        `${otherTrack}；家里少催了两句，却开始盯你的下一步`,
+        `${otherTrack}；朋友群把前一次选择改成了新梗`
+      ];
+      return shortFeedbackText(options[hashString(`${template.fixedKey}:${yearNumber}`) % options.length]);
+    }
+
     function readableFixedOption(label, tag) {
       const text = String(label || "").trim();
-      if (text.length >= 18) return text;
-      return `${text}，把${String(tag || "这条路").slice(0, 8)}这条路走到底`;
+      if (text.length >= 12) return text;
+      return `${text}，按${String(tag || "当前判断").slice(0, 6)}处理`;
     }
 
     function buildFixedCard(yearNumber) {
-      prepareFixedQuestionBank();
-      const bank = state.fixedQuestionBank.length ? state.fixedQuestionBank : buildFixedQuestionBank(state.profile, state.major);
-      const template = bank[(Math.floor(yearNumber / fixedInsertEvery) - 1) % bank.length];
+      const template = pickFixedTemplate(yearNumber, "fixed");
+      if (!template) return null;
       const leftOption = readableFixedOption(template.left, template.tagA);
       const rightOption = readableFixedOption(template.right, template.tagB);
-      return normalizeRemoteCard({
+      const tracks = buildFixedTracks(yearNumber, template);
+      return applyPreviousInfoToCard(normalizeRemoteCard({
         source: "fixed",
+        fixedKey: template.fixedKey,
         yearNumber,
         question: `第 ${yearNumber} 年 / ${state.totalYears}`,
-        summary: template.summary,
+        summary: fixedSummaryForTemplate(yearNumber, template, tracks),
+        mainTrack: tracks.mainTrack,
+        lifeTrack: tracks.lifeTrack,
+        relationshipTrack: tracks.relationshipTrack,
+        callbackSeeds: [template.title, tracks.mainTrack === "relationship" ? tracks.lifeTrack : tracks.relationshipTrack].slice(0, 2),
         scene: `事件：${template.title}\n情境：${template.prompt}`,
-        a: `A. ${leftOption}`,
-        b: `B. ${rightOption}`,
+        a: {
+          title: template.leftHint,
+          desc: leftOption,
+          tag: template.tagA,
+          consequence: template.consequenceA
+        },
+        b: {
+          title: template.rightHint,
+          desc: rightOption,
+          tag: template.tagB,
+          consequence: template.consequenceB
+        },
         left: {
           label: leftOption,
           tag: template.tagA,
+          consequence: template.consequenceA,
           delta: template.deltaA,
-          feedback: draftChoiceFeedback(template.title, { title: template.left, label: leftOption, tag: template.tagA }, "A")
+          feedback: template.consequenceA || draftChoiceFeedback(template.title, { title: template.left, label: leftOption, tag: template.tagA }, "A")
         },
         right: {
           label: rightOption,
           tag: template.tagB,
+          consequence: template.consequenceB,
           delta: template.deltaB,
-          feedback: draftChoiceFeedback(template.title, { title: template.right, label: rightOption, tag: template.tagB }, "B")
+          feedback: template.consequenceB || draftChoiceFeedback(template.title, { title: template.right, label: rightOption, tag: template.tagB }, "B")
         }
-      });
+      }));
     }
 
     function buildInstantFirstCard() {
       const profile = state.profile || readProfile();
       const displayName = profile.name && profile.name !== "未命名考生" ? profile.name : "你";
       const majorText = profile.majorLabel || majorLabel();
+      const cast = getStoryCast();
       const keywordText = profile.keywords && profile.keywords !== "观察中" ? `，还带着「${profile.keywords}」这组初始词条` : "";
       return normalizeRemoteCard({
         source: "opening",
@@ -7889,44 +8575,61 @@
           label: "立刻加入项目，把专业新手村打出声响",
           tag: "开局冲刺",
           delta: { explore: 5, ambition: 4, pressure: -2 },
-          feedback: "第一个项目让你被同学记住，群里也多了一个总能接住话的人。"
+          feedback: `你接下了第一波活，室友和辅导员都记住了你这个开学就敢上桌的人。${cast.relationName}也开始在群里顺手接你的话。`
         },
         right: {
           label: "先稳住节奏，把大学地图摸清再行动",
           tag: "稳住节奏",
           delta: { stability: 5, discipline: 3, explore: 1 },
-          feedback: "开局节奏稳了下来，家里少催了几句，身边也有人开始记住你的作息。"
+          feedback: `你没让开学第一周直接炸掉，作息先稳了下来，专业课也没掉线。${cast.relationName}开始记住你总坐机房靠窗那一排。`
         }
       });
     }
 
     function buildBridgeCard(yearNumber) {
-      prepareFixedQuestionBank();
-      const bank = state.fixedQuestionBank.length ? state.fixedQuestionBank : buildFixedQuestionBank(state.profile, state.major);
-      const template = bank[Math.max(0, yearNumber - 2) % bank.length];
+      const template = pickFixedTemplate(yearNumber, "fallback");
+      if (!template) return buildInstantFirstCard();
       const leftOption = readableFixedOption(template.left, template.tagA);
       const rightOption = readableFixedOption(template.right, template.tagB);
-      return normalizeRemoteCard({
+      const tracks = buildFixedTracks(yearNumber, template);
+      return applyPreviousInfoToCard(normalizeRemoteCard({
         source: "fallback",
+        fixedKey: template.fixedKey,
         yearNumber,
         question: `第 ${yearNumber} 年 / ${state.totalYears}`,
-        summary: "",
+        summary: fixedSummaryForTemplate(yearNumber, template, tracks),
+        mainTrack: tracks.mainTrack,
+        lifeTrack: tracks.lifeTrack,
+        relationshipTrack: tracks.relationshipTrack,
+        callbackSeeds: [template.title, tracks.mainTrack === "relationship" ? tracks.lifeTrack : tracks.relationshipTrack].slice(0, 2),
         scene: `事件：${template.title}\n情境：${template.prompt}`,
-        a: `A. ${leftOption}`,
-        b: `B. ${rightOption}`,
+        a: {
+          title: template.leftHint,
+          desc: leftOption,
+          tag: template.tagA,
+          consequence: template.consequenceA
+        },
+        b: {
+          title: template.rightHint,
+          desc: rightOption,
+          tag: template.tagB,
+          consequence: template.consequenceB
+        },
         left: {
           label: leftOption,
           tag: template.tagA,
+          consequence: template.consequenceA,
           delta: template.deltaA,
-          feedback: draftChoiceFeedback(template.title, { title: template.left, label: leftOption, tag: template.tagA }, "A")
+          feedback: template.consequenceA || draftChoiceFeedback(template.title, { title: template.left, label: leftOption, tag: template.tagA }, "A")
         },
         right: {
           label: rightOption,
           tag: template.tagB,
+          consequence: template.consequenceB,
           delta: template.deltaB,
-          feedback: draftChoiceFeedback(template.title, { title: template.right, label: rightOption, tag: template.tagB }, "B")
+          feedback: template.consequenceB || draftChoiceFeedback(template.title, { title: template.right, label: rightOption, tag: template.tagB }, "B")
         }
-      });
+      }));
     }
 
     function countRemoteYearsFrom(startYear, limit) {
@@ -7948,10 +8651,20 @@
       layoutMajorCoverflow(coverflowCenter, false);
     }
 
+    function currentAvatarOption() {
+      return avatarOptions.find(item => item.id === state.avatar) || avatarOptions[0];
+    }
+
+    function avatarFilter(avatar = currentAvatarOption()) {
+      return `saturate(${avatar.sat || 1}) hue-rotate(${avatar.rotate || "0deg"})`;
+    }
+
     function applyProfile(profile = readProfile()) {
       state.profile = profile;
+      state.avatar = profile.avatar || state.avatar || "fresh";
       if (profile.major && majors[profile.major]) state.major = profile.major;
       const shownMajor = profile.majorLabel || majorLabel();
+      const avatar = currentAvatarOption();
       const seedParts = [
         profile.province !== "未知省份" ? profile.province : "",
         profile.score !== "未知分数" ? `${profile.score} 分` : "",
@@ -7961,11 +8674,14 @@
       els.seedLine.textContent = seedParts.join("，") || "等待填写开局信息。";
       els.profileName.textContent = profile.name;
       els.profileSummary.textContent = `${profile.province !== "未知省份" ? profile.province : "地区未知"} · ${profile.score !== "未知分数" ? `${profile.score} 分` : "分数未知"} · ${shownMajor}`;
-      els.portrait.style.setProperty("--portrait-art", profileAvatarArt);
-      els.profilePreviewPortrait.style.setProperty("--portrait-art", profileAvatarArt);
+      els.portrait.style.setProperty("--portrait-art", avatar.art);
+      els.portrait.style.setProperty("--portrait-filter", avatarFilter(avatar));
+      els.profilePreviewPortrait.style.setProperty("--portrait-art", avatar.art);
+      els.profilePreviewPortrait.style.setProperty("--portrait-filter", avatarFilter(avatar));
       els.profilePreviewName.textContent = shownMajor;
       els.profilePreviewLine.textContent = `选了「${shownMajor}」方向${profile.keywords !== "观察中" ? `，带着「${profile.keywords}」` : ""}，等待第一张人生卡牌。`;
       renderMajorGrid();
+      renderAvatarGrid();
       renderTags();
     }
 
@@ -7992,6 +8708,119 @@
       }
     }
 
+    function renderAvatarGrid() {
+      if (!els.avatarGrid) return;
+      document.querySelector("#avatarCount")?.replaceChildren(document.createTextNode(`${avatarOptions.length} 张形象卡`));
+      if (els.avatarGrid.children.length !== avatarOptions.length) {
+        buildAvatarCoverflowCards();
+        initAvatarCoverflowControls();
+      }
+      avatarCenter = Math.max(0, avatarOptions.findIndex(item => item.id === state.avatar));
+      layoutAvatarCoverflow(avatarCenter, false);
+    }
+
+    function buildAvatarCoverflowCards() {
+      els.avatarGrid.innerHTML = avatarOptions.map((avatar, index) => {
+        const active = avatar.id === state.avatar ? " is-active" : "";
+        return `
+          <button type="button" class="persona-card${active}" role="radio" aria-checked="${avatar.id === state.avatar}" data-avatar="${escapeHTML(avatar.id)}" data-index="${index}" style="--persona-h:${avatar.hue};--persona-art:${avatar.art};--persona-sat:${avatar.sat};--persona-rotate:${avatar.rotate};">
+            <span class="persona-photo"></span>
+            <span class="persona-body">
+              <b>${escapeHTML(avatar.title)}</b>
+              <span>${escapeHTML(avatar.desc)}</span>
+              <small>${escapeHTML(avatar.tag)}</small>
+            </span>
+          </button>
+        `;
+      }).join("");
+      const dots = document.querySelector("#avatarDots");
+      if (dots) {
+        dots.innerHTML = avatarOptions.map((_, index) => `<button type="button" class="persona-dot" data-index="${index}" aria-label="第 ${index + 1} 个形象"></button>`).join("");
+      }
+    }
+
+    function layoutAvatarCoverflow(centerFloat, animate = true) {
+      if (!els.avatarGrid) return;
+      const cards = Array.from(els.avatarGrid.children);
+      cards.forEach((card, index) => {
+        const offset = index - centerFloat;
+        const abs = Math.abs(offset);
+        card.classList.toggle("no-anim", !animate);
+        if (abs > 3.4) {
+          card.style.opacity = "0";
+          card.style.pointerEvents = "none";
+          card.style.transform = `translate3d(${Math.sign(offset) * 420}px, 70px, 0) scale(0.62)`;
+          card.style.zIndex = "0";
+          card.classList.remove("is-active");
+          return;
+        }
+        const tx = offset * avatarStep;
+        const ty = abs * 20 - Math.max(0, 1 - abs) * 6;
+        const rotate = Math.max(-3, Math.min(3, offset)) * 6;
+        const scale = (1 - abs * 0.08) + Math.max(0, 1 - abs) * 0.08;
+        card.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${rotate}deg) scale(${scale})`;
+        card.style.opacity = abs > 2.4 ? "0.42" : "1";
+        card.style.pointerEvents = "auto";
+        card.style.zIndex = String(200 - Math.round(abs * 10));
+        card.classList.toggle("is-active", abs < 0.5);
+        card.setAttribute("aria-checked", abs < 0.5 ? "true" : "false");
+      });
+      const activeIndex = clamp(Math.round(centerFloat), 0, Math.max(0, avatarOptions.length - 1));
+      document.querySelectorAll("#avatarDots .persona-dot").forEach((dot, index) => {
+        dot.classList.toggle("is-active", index === activeIndex);
+      });
+    }
+
+    function selectAvatarByIndex(index, animate = true) {
+      const nextIndex = clamp(Math.round(index), 0, Math.max(0, avatarOptions.length - 1));
+      avatarCenter = nextIndex;
+      state.avatar = avatarOptions[nextIndex]?.id || avatarOptions[0].id;
+      layoutAvatarCoverflow(nextIndex, animate);
+      applyProfile(readProfile());
+      scheduleWarmup();
+    }
+
+    function initAvatarCoverflowControls() {
+      const coverflow = els.avatarCoverflow;
+      if (!coverflow || coverflow.dataset.ready === "true") return;
+      coverflow.dataset.ready = "true";
+      coverflow.addEventListener("pointerdown", event => {
+        if (event.target.closest(".persona-nav")) return;
+        avatarDrag = { id: event.pointerId, startX: event.clientX, base: avatarCenter, moved: false };
+        try { coverflow.setPointerCapture(event.pointerId); } catch (_) {}
+      });
+      coverflow.addEventListener("pointermove", event => {
+        if (!avatarDrag || avatarDrag.id !== event.pointerId) return;
+        const dx = event.clientX - avatarDrag.startX;
+        if (Math.abs(dx) > 4) avatarDrag.moved = true;
+        const floatIndex = clamp(avatarDrag.base - dx / avatarStep, -0.45, avatarOptions.length - 0.55);
+        layoutAvatarCoverflow(floatIndex, false);
+      });
+      const finishDrag = event => {
+        if (!avatarDrag || avatarDrag.id !== event.pointerId) return;
+        const dx = event.clientX - avatarDrag.startX;
+        const moved = avatarDrag.moved;
+        const next = Math.round(avatarDrag.base - dx / avatarStep);
+        avatarDrag = null;
+        if (moved) selectAvatarByIndex(next, true);
+      };
+      coverflow.addEventListener("pointerup", finishDrag);
+      coverflow.addEventListener("pointercancel", finishDrag);
+      document.querySelector("#avatarPrev")?.addEventListener("click", event => {
+        event.preventDefault();
+        selectAvatarByIndex(avatarOptions.findIndex(item => item.id === state.avatar) - 1, true);
+      });
+      document.querySelector("#avatarNext")?.addEventListener("click", event => {
+        event.preventDefault();
+        selectAvatarByIndex(avatarOptions.findIndex(item => item.id === state.avatar) + 1, true);
+      });
+      document.querySelector("#avatarDots")?.addEventListener("click", event => {
+        const dot = event.target.closest(".persona-dot");
+        if (!dot) return;
+        selectAvatarByIndex(Number(dot.dataset.index || 0), true);
+      });
+    }
+
     function glassMajorIcon(key, hue, inner) {
       const safeKey = String(key).replace(/[^a-z0-9_-]/gi, "");
       const gid = `gb_${safeKey}`;
@@ -8016,8 +8845,9 @@
 
     function layoutMajorCoverflow(centerFloat, animate = true) {
       const cards = Array.from(els.majorGrid.children);
+      const total = cards.length;
       cards.forEach((card, index) => {
-        const offset = index - centerFloat;
+        const offset = shortestLoopOffset(index, centerFloat, total);
         const abs = Math.abs(offset);
         card.classList.toggle("no-anim", !animate);
         if (abs > 3.4) {
@@ -8039,19 +8869,18 @@
         card.classList.toggle("is-active", abs < 0.5);
         card.setAttribute("aria-checked", abs < 0.5 ? "true" : "false");
       });
-      const activeIndex = clamp(Math.round(centerFloat), 0, Math.max(0, majorKeys.length - 1));
+      const activeIndex = wrapIndex(Math.round(centerFloat), majorKeys.length);
       document.querySelectorAll("#cfDots .cf-dot").forEach((dot, index) => {
         dot.classList.toggle("is-active", index === activeIndex);
       });
     }
 
     function selectMajorByIndex(index, animate = true) {
-      const nextIndex = clamp(Math.round(index), 0, Math.max(0, majorKeys.length - 1));
-      coverflowCenter = nextIndex;
+      const nextIndex = wrapIndex(Math.round(index), majorKeys.length);
+      coverflowCenter = index;
       state.major = majorKeys[nextIndex];
       state.entryMajorText = majorLabel();
-      if (els.entryMajor) els.entryMajor.value = state.entryMajorText;
-      layoutMajorCoverflow(nextIndex, animate);
+      layoutMajorCoverflow(index, animate);
       applyProfile(readProfile());
       scheduleWarmup();
     }
@@ -8069,7 +8898,7 @@
         if (!coverflowDrag || coverflowDrag.id !== event.pointerId) return;
         const dx = event.clientX - coverflowDrag.startX;
         if (Math.abs(dx) > 4) coverflowDrag.moved = true;
-        const floatIndex = clamp(coverflowDrag.base - dx / coverflowStep, -0.45, majorKeys.length - 0.55);
+        const floatIndex = coverflowDrag.base - dx / coverflowStep;
         layoutMajorCoverflow(floatIndex, false);
       });
       const finishDrag = event => {
@@ -8119,7 +8948,8 @@
     }
 
     function syncDevToolsVisibility() {
-      document.body.dataset.devTools = new URLSearchParams(window.location.search).get("dev") === "1" ? "true" : "false";
+      document.body.dataset.devTools = runtimeFlags.dev ? "true" : "false";
+      document.body.dataset.pilot = runtimeFlags.pilot ? "true" : "false";
     }
 
     function resetGame(keepProfile = true, nextFlow = "entry") {
@@ -8157,6 +8987,11 @@
     }
 
     function enterSetupFromCover() {
+      const entryName = els.entryName?.value?.trim() || "";
+      const setupNameInput = document.querySelector("#studentName");
+      if (entryName && setupNameInput && !setupNameInput.value.trim()) {
+        setupNameInput.value = entryName;
+      }
       applyEntryMajor();
       render();
       showFlow("setup");
@@ -8227,12 +9062,11 @@
       document.querySelector("#gender").value = profile.gender;
       document.querySelector("#province").value = profile.province;
       document.querySelector("#score").value = profile.score;
-      document.querySelector("#dreamJob").value = profile.dream;
-      document.querySelector("#familyHope").value = profile.hope;
+      setFamilyHope(profile.hope);
       document.querySelector("#keywords").value = profile.keywords;
       state.major = (profile.major && majors[profile.major]) ? profile.major : majorKeys[0];
       state.entryMajorText = majors[state.major]?.label || "计算机科学与技术";
-      if (els.entryMajor) els.entryMajor.value = state.entryMajorText;
+      if (els.entryName) els.entryName.value = profile.name;
       applyProfile(readProfile());
     }
 
@@ -8245,6 +9079,9 @@
     }
 
     async function apiPost(path, payload) {
+      if (runtimeFlags.pilot) {
+        return handlePilotApi(path, payload);
+      }
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 45000);
       try {
@@ -8303,7 +9140,7 @@
 
     function setSetupPending(isPending) {
       els.applyProfileButton.disabled = isPending;
-      els.applyProfileButton.textContent = isPending ? "开始翻牌" : "开始翻牌";
+      els.applyProfileButton.textContent = isPending ? "验牌中" : "我要验牌";
       if (isPending) showSetupError("");
     }
 
@@ -8320,26 +9157,87 @@
       return message || fallback;
     }
 
+    async function loadPilotCards() {
+      if (state.pilotCards.length) return state.pilotCards;
+      if (!state.pilotCardsPromise) {
+        state.pilotCardsPromise = fetch(pilotCardsUrl, { cache: "no-store" })
+          .then(response => {
+            if (!response.ok) throw new Error(`试播数据加载失败：${response.status}`);
+            return response.json();
+          })
+          .then(data => {
+            const cards = Array.isArray(data.cards) ? data.cards : [];
+            state.pilotCards = cards;
+            state.totalYears = cards.length || 6;
+            return cards;
+          })
+          .finally(() => {
+            state.pilotCardsPromise = null;
+          });
+      }
+      return state.pilotCardsPromise;
+    }
+
+    async function handlePilotApi(path, payload) {
+      const cards = await loadPilotCards();
+      if (path === "/api/game/batch") {
+        const startYear = Math.max(1, Number(payload?.startYear || 1));
+        const count = Math.max(1, Number(payload?.count || 1));
+        return {
+          ok: true,
+          cards: cards.slice(startYear - 1, startYear - 1 + count)
+        };
+      }
+      if (path === "/api/game/result") {
+        return {
+          ok: true,
+          result: buildPilotResult()
+        };
+      }
+      if (path === "/api/game/start") {
+        return {
+          ok: true,
+          card: cards[0] || null
+        };
+      }
+      if (path === "/api/game/next") {
+        const year = Math.max(1, Number(payload?.year || (payload?.history?.length || 0) + 1));
+        return {
+          ok: true,
+          card: cards[year - 1] || null
+        };
+      }
+      throw new Error("试播模式下不支持这个接口");
+    }
+
     function buildHistoryItem(card, direction, index = state.index) {
       const chosen = card[direction];
       return {
         index,
-        year: card.year,
+        year: card.yearNumber || Number(String(card.year || "").match(/\d+/)?.[0] || index + 1),
+        yearLabel: card.year,
         scene: card.prompt,
+        sceneTitle: card.scene,
         summary: composePreviousFeedback(card) || card.context,
+        source: card.source || "",
+        fixedKey: card.fixedKey || "",
         lifeTrack: card.lifeTrack || "",
         relationshipTrack: card.relationshipTrack || "",
+        mainTrack: card.mainTrack || "",
+        phase: card.phase || "",
         callbackSeeds: Array.isArray(card.callbackSeeds) ? card.callbackSeeds : [],
         direction,
         choice: chosen.tag,
         choiceText: chosen.label,
+        consequence: chosen.consequence || chosen.feedback || "",
         delta: chosen.delta,
         tag: chosen.tag,
-        holland: inferChoiceHolland(chosen, direction)
+        holland: normalizeRiasecScores(chosen.riasec) || inferChoiceHolland(chosen, direction)
       };
     }
 
     function buildChoiceFeedback(card, chosen) {
+      if (chosen.consequence) return shortFeedbackText(chosen.consequence);
       if (chosen.feedback) return shortFeedbackText(chosen.feedback);
       return draftChoiceFeedback(card.eventTitle || card.scene, chosen, chosen === card.left ? "A" : "B");
     }
@@ -8352,40 +9250,60 @@
     }
 
     function draftChoiceFeedback(eventTitle, chosen, choiceKey = "") {
+      if (chosen?.consequence) return shortFeedbackText(chosen.consequence);
       const event = String(eventTitle || "这件事").replace(/[。.!！?？]/g, "").trim() || "这件事";
       const title = String(chosen?.title || "").trim();
       const label = String(chosen?.label || "").trim();
       const tag = String(chosen?.tag || "").trim();
       const text = `${title}${label}${tag}${choiceKey}`;
+      if (/玄学|优化|复盘|计划|整理|学习|询问/.test(text)) {
+        return `你没继续拿${event}赌运气，回头把它按系统重做了一轮，虽然慢一点，但作息和专业基本盘都稳住了`;
+      }
       if (/稳|边界|止损|确认|放下|告别|沉默|低调|观望|撤|留|明早|退出/.test(text)) {
-        return `${event}先被你稳住了，眼前麻烦没有继续放大，周围人也慢慢摸清了你的节奏`;
+        return `${event}没再继续吞你的时间，你把节奏从边缘拽了回来，至少最近几天能正常睡觉了`;
       }
       if (/解释|安抚|支持|沟通|破冰|协商|照顾|推荐|一起|留下/.test(text)) {
-        return `你先把${event}里的人接住了，气氛缓下来，后面的关系和合作也顺了不少`;
+        return `你先把${event}里的人接住了，场面没闹僵，对方后面也更愿意跟你说真话`;
       }
       if (/冲|接|上|表达|扩大|回应|补救|试|拍板|加入|争取|公开|推进|报名/.test(text)) {
-        return `你把${event}往前推了一步，回声来得很快，新的机会和压力也一起冒了出来`;
+        return `你把${event}硬推着往前走，台面上的人立刻开始按能不能扛事来记你，压力也一起追上来了`;
       }
-      if (/调整|复盘|计划|整理|优化|学习|询问/.test(text)) {
-        return `${event}被你认真收拾过一轮，表面看像慢一步，其实是在给后面的路补底子`;
-      }
-      return `这一步让${event}留下了后果，眼前局面变了，旁边的人和节奏也跟着动了`;
+      return `${event}没有白过，你这一步已经改掉了后面几天的安排，连身边人看你的方式都变了`;
     }
 
     function buildVisibleChoiceFeedback(choiceText, choiceKey = "") {
       const text = String(choiceText || "").replace(/[。.!！?？]$/g, "").trim();
-      if (!text) return "上一年的决定开始改变局面";
-      if (choiceKey === "A") return "局面被你主动推开，机会变大，关系也开始升温";
-      if (choiceKey === "B") return "节奏被你稳住，压力少了一点，身边关系慢慢靠近";
-      return "上一年的决定留下后果，生活里的另一条关系也往前走了一步";
+      if (!text) return "上一年的事已经留下后果，这一年的麻烦不是凭空冒出来的";
+      if (choiceKey === "A") return "你把那步硬顶了出去，机会是来了，但这一周的时间表也被连根拔掉";
+      if (choiceKey === "B") return "你没继续乱冲，手头节奏稳回来了，可有些人也顺手把期待往回收了半步";
+      return "上一年的选择已经开始收账，眼前这局不是凭空掉下来的";
+    }
+
+    function reconstructPreviousInfo(card) {
+      const targetYear = Number(card?.yearNumber || 0) - 1;
+      if (targetYear < 1) return null;
+      const historyItem = [...state.history].reverse().find(item => Number(item.year) === targetYear);
+      if (!historyItem) return null;
+      const choiceKey = historyItem.direction === "left" ? "A" : "B";
+      return {
+        choiceKey,
+        choiceText: historyItem.choiceText,
+        feedback: historyItem.consequence || draftChoiceFeedback(historyItem.sceneTitle || historyItem.scene, {
+          title: historyItem.choice,
+          label: historyItem.choiceText,
+          tag: historyItem.tag
+        }, choiceKey)
+      };
     }
 
     function composePreviousFeedback(card) {
       const modelFeedback = shortFeedbackText(card.modelHeader || card.summary || card.context);
       const track = chooseOffstageTrack(card, modelFeedback);
-      if (!card.previous) return track || modelFeedback || buildOffstageFallback(textCategories([card.eventTitle, card.scene, card.prompt].filter(Boolean).join("")));
-      const previousOutcome = shortFeedbackText(card.previous.feedback || buildVisibleChoiceFeedback(card.previous.choiceText, card.previous.choiceKey));
-      const combined = [previousOutcome, track].filter(Boolean).join("，");
+      const previousInfo = card.previous || reconstructPreviousInfo(card);
+      if (!previousInfo) return track || modelFeedback || buildOffstageFallback(textCategories([card.eventTitle, card.scene, card.prompt].filter(Boolean).join("")));
+      const previousOutcome = compactFeedbackPart(previousInfo.feedback || buildVisibleChoiceFeedback(previousInfo.choiceText, previousInfo.choiceKey), 28);
+      const offstage = compactFeedbackPart(track, 18);
+      const combined = [previousOutcome, offstage].filter(Boolean).join("，");
       return shortFeedbackText(combined || previousOutcome || modelFeedback);
     }
 
@@ -8411,15 +9329,16 @@
 
     function buildOffstageFallback(sceneCategories) {
       if (sceneCategories.has("relationship")) {
-        return "工作节奏和家里期待都往前推了一步";
+        return "你们这边刚闹出动静，课表和项目那边也没停，家里还顺手把下一步安排问到了脸上";
       }
       if (sceneCategories.has("health")) {
-        return "有人开始稳定关心你的饭点和心情";
+        return "你把作息往回救了一点，家里这才没继续拿睡觉时间当审问题";
       }
       if (sceneCategories.has("work") || sceneCategories.has("study")) {
-        return "身边关系也在日常里慢慢靠近";
+        const cast = getStoryCast();
+        return `${cast.relationName}已经会顺手给你留机房靠窗的位置，你嘴上装没事，对方其实早把你排进日常了`;
       }
-      return "生活里的关系和节奏都往前走了一步";
+      return "你这边刚收完残局，另一头的人和事也开始重新按你现在的分量来对待你";
     }
 
     function textCategories(value) {
@@ -8481,7 +9400,21 @@
         .trim();
     }
 
+    function compactFeedbackPart(value, maxLength) {
+      const clean = cleanFeedbackText(value).replace(/[。.!！?？；;]+$/g, "").trim();
+      if (!clean || clean.length <= maxLength) return clean;
+      const clipped = clean.slice(0, maxLength);
+      const boundary = Math.max(
+        clipped.lastIndexOf("，"),
+        clipped.lastIndexOf("、"),
+        clipped.lastIndexOf("。"),
+        clipped.lastIndexOf("；")
+      );
+      return (boundary >= Math.floor(maxLength * 0.58) ? clipped.slice(0, boundary) : clipped).trim();
+    }
+
     function shortFeedbackText(value) {
+      const maxLength = 48;
       const clean = cleanFeedbackText(value)
         .replace(/你选择了[^，。！？!?；;]{0,42}[，。！？!?；;]?/g, "")
         .replace(/选择了[^，。！？!?；;]{0,42}[，。！？!?；;]?/g, "")
@@ -8492,20 +9425,21 @@
       let result = "";
       for (const piece of pieces) {
         const next = `${result}${piece}`;
-        if (result && next.length > 64) break;
+        if (result && next.length > maxLength) break;
         result = next;
-        if (result.length >= 34 && /[。！？!?；;]$/.test(result)) break;
+        if (result.length >= 36 && /[。！？!?；;]$/.test(result)) break;
       }
       if (!result) result = clean;
-      if (result.length > 64) {
-        const clipped = result.slice(0, 64);
+      if (result.length > maxLength) {
+        const clipped = result.slice(0, maxLength);
         const boundary = Math.max(
           clipped.lastIndexOf("。"),
           clipped.lastIndexOf("！"),
           clipped.lastIndexOf("？"),
-          clipped.lastIndexOf("；")
+          clipped.lastIndexOf("；"),
+          clipped.lastIndexOf("，")
         );
-        result = boundary >= 24 ? clipped.slice(0, boundary + 1) : clipped;
+        result = boundary >= 28 ? clipped.slice(0, boundary + 1) : clipped;
       }
       return result.replace(/[。.!！?？；;]+$/g, "").trim();
     }
@@ -8628,6 +9562,12 @@
         const index = Math.max(0, card.yearNumber - 1);
         const existing = state.deck[index];
         if (existing?.source === "fallback" && index <= state.index) return;
+        if (isDuplicateQuestionCard(card, card.yearNumber)) {
+          if (!existing || isReplaceableFallback(card.yearNumber)) {
+            state.deck[index] = buildBridgeCard(card.yearNumber);
+          }
+          return;
+        }
         card.generatedHistoryDepth = generatedHistoryDepth;
         applyPreviousInfoToCard(card);
         state.deck[index] = card;
@@ -8638,6 +9578,7 @@
       if (yearNumber < 1 || yearNumber > state.totalYears) return false;
       if (!isFixedSlot(yearNumber) || state.deck[yearNumber - 1]) return false;
       const card = buildFixedCard(yearNumber);
+      if (!card) return false;
       applyPreviousInfoToCard(card);
       state.deck[yearNumber - 1] = card;
       return true;
@@ -8723,6 +9664,35 @@
       return Boolean(card && card.source === "fallback" && yearNumber - 1 > state.index);
     }
 
+    function questionTextForDuplicate(card) {
+      return [card?.fixedKey, card?.eventTitle, card?.scene, card?.prompt]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    function isDuplicateQuestionCard(card, ignoreYear = 0) {
+      const currentText = questionTextForDuplicate(card);
+      if (!currentText) return false;
+      const currentTitle = String(card?.eventTitle || card?.scene || "").trim();
+      const fixedKey = card?.fixedKey || "";
+      const seenCards = [
+        ...state.deck.filter(Boolean),
+        ...state.history.map(item => ({
+          yearNumber: item.year,
+          fixedKey: item.fixedKey || "",
+          eventTitle: item.sceneTitle || "",
+          prompt: item.scene || ""
+        }))
+      ];
+      return seenCards.some(item => {
+        if (!item || Number(item.yearNumber) === Number(ignoreYear)) return false;
+        if (fixedKey && item.fixedKey === fixedKey) return true;
+        const title = String(item.eventTitle || item.scene || "").trim();
+        if (currentTitle && title && currentTitle === title) return true;
+        return textSimilarityScore(currentText, questionTextForDuplicate(item)) >= 0.72;
+      });
+    }
+
     function parseSceneParts(value, fallbackEvent = "这一年的岔路口") {
       const raw = String(value || "").trim();
       const eventMatch = raw.match(/(?:^|\n)\s*事件[:：]\s*([^\n]+)/);
@@ -8765,6 +9735,7 @@
     }
 
     function shouldShowPreviousFeedback(card) {
+      if (Number(card?.yearNumber || 0) <= 1) return false;
       return Boolean(composePreviousFeedback(card));
     }
 
@@ -8773,11 +9744,22 @@
       const leftChoice = normalizeChoicePayload(card.a || card.left, "A");
       const rightChoice = normalizeChoicePayload(card.b || card.right, "B");
       const source = card.source || "deepseek";
-      const sceneParts = parseSceneParts(card.scene || card.prompt, card.sceneTitle || card.event || card.title || `第 ${yearNumber} 年事件`);
+      const hasStructuredScene = typeof card.scene === "object" && card.scene;
+      const sceneTitle = hasStructuredScene ? card.scene.title : (card.sceneTitle || card.event || card.title || `第 ${yearNumber} 年事件`);
+      const sceneBody = hasStructuredScene ? card.scene.body : (card.scene || card.prompt);
+      const sceneParts = hasStructuredScene
+        ? {
+            event: String(sceneTitle || `第 ${yearNumber} 年事件`).trim(),
+            context: String(sceneBody || "这一年的故事正在生成。").trim()
+          }
+        : parseSceneParts(sceneBody, sceneTitle);
+      const normalizedCallbacks = Array.isArray(card.callbackSeeds)
+        ? card.callbackSeeds.slice(0, 3)
+        : (Array.isArray(card.callbacks) ? card.callbacks.slice(0, 3) : []);
       return {
         source,
         yearNumber,
-        year: card.year || card.question || `第 ${yearNumber} 年 / ${state.totalYears}`,
+        year: card.question || `第 ${yearNumber} 年 / ${state.totalYears}`,
         age: formatAge(yearNumber),
         scene: sceneParts.event,
         eventTitle: sceneParts.event,
@@ -8785,9 +9767,12 @@
         prompt: sceneParts.context,
         context: card.summary || card.context || "",
         summary: card.summary || "",
+        phase: card.phase || "",
+        mainTrack: card.mainTrack || "",
         lifeTrack: card.lifeTrack || "",
         relationshipTrack: card.relationshipTrack || "",
-        callbackSeeds: Array.isArray(card.callbackSeeds) ? card.callbackSeeds.slice(0, 3) : [],
+        callbackSeeds: normalizedCallbacks,
+        fixedKey: card.fixedKey || "",
         previous: null,
         leftHint: "A",
         rightHint: "B",
@@ -8796,7 +9781,9 @@
           title: leftChoice.title,
           desc: leftChoice.desc,
           tag: leftChoice.tag || card.left?.tag || "A",
-          delta: card.left?.delta || { stability: 3, discipline: 2, explore: -1 },
+          consequence: leftChoice.consequence || card.left?.consequence || "",
+          riasec: normalizeRiasecScores((card.a || card.left)?.riasec),
+          delta: card.left?.delta || deriveDeltaFromRiasec((card.a || card.left)?.riasec, { stability: 3, discipline: 2, explore: -1 }),
           feedback: card.left?.feedback || draftChoiceFeedback(sceneParts.event, { ...leftChoice, label: leftChoice.label || "选择 A" }, "A")
         },
         right: {
@@ -8804,9 +9791,37 @@
           title: rightChoice.title,
           desc: rightChoice.desc,
           tag: rightChoice.tag || card.right?.tag || "B",
-          delta: card.right?.delta || { explore: 3, ambition: 2, stability: -1 },
+          consequence: rightChoice.consequence || card.right?.consequence || "",
+          riasec: normalizeRiasecScores((card.b || card.right)?.riasec),
+          delta: card.right?.delta || deriveDeltaFromRiasec((card.b || card.right)?.riasec, { explore: 3, ambition: 2, stability: -1 }),
           feedback: card.right?.feedback || draftChoiceFeedback(sceneParts.event, { ...rightChoice, label: rightChoice.label || "选择 B" }, "B")
         }
+      };
+    }
+
+    function normalizeRiasecScores(value) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+      const keys = ["R", "I", "A", "S", "E", "C"];
+      const scores = {};
+      let hasValue = false;
+      keys.forEach(key => {
+        const numeric = Math.max(0, Number(value[key]) || 0);
+        scores[key] = numeric;
+        if (numeric > 0) hasValue = true;
+      });
+      return hasValue ? scores : null;
+    }
+
+    function deriveDeltaFromRiasec(value, fallback) {
+      const riasec = normalizeRiasecScores(value);
+      if (!riasec) return fallback;
+      return {
+        explore: riasec.I * 2 + riasec.A * 2,
+        discipline: riasec.C * 2 + riasec.I,
+        empathy: riasec.S * 2,
+        stability: riasec.C * 2,
+        ambition: riasec.E * 2,
+        pressure: riasec.R + riasec.C
       };
     }
 
@@ -8816,10 +9831,12 @@
         const desc = String(value.desc || value.description || "").trim();
         const tag = String(value.tag || fallbackTag || "").replace(/^[AB]$/i, "").trim();
         const label = String(value.label || [title, desc].filter(Boolean).join("，")).replace(/^[AB][.。]\s*/, "").trim();
+        const consequence = String(value.consequence || value.feedback || "").trim();
         return {
           title: title || conciseChoiceTitle(label || fallbackTag),
           desc: desc || choiceDescriptionFallback(label, title),
           tag: tag || title || fallbackTag,
+          consequence,
           label: label || [title, desc].filter(Boolean).join("，")
         };
       }
@@ -8829,6 +9846,7 @@
         title,
         desc: choiceDescriptionFallback(raw, title),
         tag: title || fallbackTag,
+        consequence: "",
         label: raw || title || fallbackTag
       };
     }
@@ -8883,12 +9901,12 @@
         .replace(/这条路走到底[。.!！?？]?$/g, "")
         .trim();
       if (!description || description === raw) description = raw;
-      return {
-        title: title || "选择",
-        description: description || raw || "沿着这条路继续走。",
-        tag: tag || title || "人生岔路"
-      };
-    }
+        return {
+          title: title || "选择",
+          description: description || raw || "沿着这条路继续走。",
+          tag: tag || title || "人生岔路"
+        };
+      }
 
     function conciseChoiceTitle(value) {
       const raw = String(value || "").trim();
@@ -8924,7 +9942,7 @@
           <div class="swipe-badge left">左选择</div>
           <div class="swipe-badge right">右选择</div>
           <div class="card-cover" aria-hidden="true"><span class="card-cover-burst">✳</span></div>
-          ${shouldShowPreviousFeedback(card) ? `<p class="previous-feedback">${escapeHTML(composePreviousFeedback(card) || "上一年的决定留下后果，关系和生活也往前走了一步")}</p>` : ""}
+          ${shouldShowPreviousFeedback(card) ? `<p class="previous-feedback">${escapeHTML(composePreviousFeedback(card) || "上一年的事已经留下后果，另一条线也没停下")}</p>` : ""}
           <div class="card-scene">
             <div class="card-scene-copy">
               <small>${escapeHTML(card.year)} · ${escapeHTML(card.age)}</small>
@@ -9584,10 +10602,11 @@
 
     function getHollandScoresFromHistory() {
       const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      const usePureRiasec = state.history.length > 0 && state.history.every(item => item.holland && Object.values(item.holland || {}).some(value => Number(value) > 0));
       state.history.forEach(item => {
         if (item.holland) {
           mergeHollandScores(scores, item.holland);
-        } else {
+        } else if (!usePureRiasec) {
           scoreHollandText(scores, [item.choice, item.choiceText, item.tag].join(" "), 1.4);
           scoreHollandDelta(scores, item.delta, 0.18);
         }
@@ -9602,8 +10621,8 @@
     }
 
     function getHollandPercent(code, scores) {
-      const top = Math.max(...Object.values(scores), 1);
-      return Math.round((scores[code] / top) * 100);
+      const total = Math.max(Object.values(scores).reduce((sum, value) => sum + value, 0), 1);
+      return Math.round((scores[code] / total) * 100);
     }
 
     function getHollandDirections(code) {
@@ -9628,18 +10647,27 @@
     }
 
     function buildHollandNarrative(code) {
-      const keys = code.split("").filter(key => hollandTypes[key]);
+      const summary = typeof code === "string" ? getHollandSummaryData() : code;
+      const { rank, scores } = summary;
+      const keys = rank.slice(0, 3).map(([key]) => key).filter(key => hollandTypes[key]);
       const labelText = joinNaturalChinese(keys.map(formatHollandTypeLabel));
       const tendencyMap = {
-        R: "动手处理真实问题",
-        I: "分析复杂问题",
-        A: "创造表达",
-        S: "理解他人并和人打交道",
-        E: "组织资源推动事情",
-        C: "按规则把事情理顺"
+        R: "先上手，把问题落到真实场景里",
+        I: "先分析清楚，再决定怎么做",
+        A: "把表达、风格和作品感做出来",
+        S: "先顾到人，再推动事情往前",
+        E: "把局面推开，把资源组织起来",
+        C: "先把流程理顺，再稳稳落地"
       };
+      const [first, second] = rank;
+      const firstPercent = getHollandPercent(first?.[0] || "I", scores);
+      const secondPercent = getHollandPercent(second?.[0] || "A", scores);
+      const firstLabel = formatHollandTypeLabel(first?.[0] || "I");
+      const mixText = firstPercent - secondPercent >= 12
+        ? `${firstLabel}更突出`
+        : `${firstLabel}和${formatHollandTypeLabel(second?.[0] || "A")}都很明显`;
       const tendencyText = joinNaturalChinese(keys.map(key => tendencyMap[key]));
-      return `你的兴趣更偏向${labelText}，说明你可能更享受${tendencyText}。但这不代表你一定要走某一种专业或职业，还要结合学科能力、分数段、家庭风险承受力和就业目标综合判断。`;
+      return `${mixText}。你的兴趣更偏向${labelText}，做选择时往往会自然靠近“${tendencyText}”这类路子。它不是专业判决书，还要结合学科能力、分数段、家庭风险承受力和就业目标一起看。`;
     }
 
     function hollandHeadline(code) {
@@ -9710,6 +10738,7 @@
       const primary = rank[0]?.[0] || "I";
       const titleLine = code.split("").map(key => hollandTypes[key]?.word || "").filter(Boolean).join(" + ");
       const directions = getHollandDirections(code);
+      const total = Math.max(Object.values(scores).reduce((sum, value) => sum + value, 0), 1);
       return {
         scores,
         rank,
@@ -9717,12 +10746,14 @@
         primary,
         primaryMeta: hollandTypes[primary] || hollandTypes.I,
         titleLine,
-        directions
+        directions,
+        total
       };
     }
 
     function buildAbilityPortraitHTML() {
-      const { scores, code, titleLine, directions, primaryMeta } = getHollandSummaryData();
+      const summary = getHollandSummaryData();
+      const { scores, code, titleLine, directions, primaryMeta } = summary;
       return `
         <div class="ability-card" style="--ability-accent:${primaryMeta.color};--ability-art:${finalRoleArt};">
           <div class="ability-top">
@@ -9758,7 +10789,7 @@
             </div>
           </div>
           <div class="ability-trend">
-            <p class="ability-trend-body">${escapeHTML(buildHollandNarrative(code))}</p>
+            <p class="ability-trend-body">${escapeHTML(buildHollandNarrative(summary))}</p>
           </div>
         </div>
       `;
@@ -9821,8 +10852,10 @@
 
     function renderResultLoading() {
       document.querySelector(".result-card")?.classList.add("is-loading");
+      const resultEyebrow = document.querySelector("#resultEyebrow");
+      if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       els.resultTitle.textContent = "正在生成";
-      els.resultSummary.innerHTML = `${resultStatusHTML("十八年的选择正在合成最后一页。称号、近况和关键片段正在整理。")}<span class="result-loader">生成结局<span><i></i><i></i><i></i></span></span>`;
+      els.resultSummary.innerHTML = `${resultStatusHTML(`${state.totalYears} 张牌的选择正在合成最后一页。称号、近况和关键片段正在整理。`)}<span class="result-loader">生成结局<span><i></i><i></i><i></i></span></span>`;
       els.resultOverview.innerHTML = `
         <div class="career-probability">
           <p class="career-summary">职业可能性正在根据这局选择重新计算。</p>
@@ -9861,9 +10894,11 @@
 
     function renderResultError(message) {
       document.querySelector(".result-card")?.classList.remove("is-loading");
+      const resultEyebrow = document.querySelector("#resultEyebrow");
+      if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       els.resultTitle.textContent = "生成失败";
       els.resultSummary.innerHTML = resultStatusHTML(message);
-      els.resultOverview.textContent = "第 18 年已经完成，但最终结果生成失败。请点击“再来一局”重新开始，或检查后端 DeepSeek 配置后刷新重试。";
+      els.resultOverview.textContent = `第 ${state.totalYears} 张牌已经完成，但最终结果生成失败。请点击“再来一局”重新开始，或检查后端 DeepSeek 配置后刷新重试。`;
       els.resultTags.innerHTML = [majorLabel(), "结果失败"].map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join("");
       els.resultInsights.innerHTML = `
         <section class="result-section">
@@ -9877,6 +10912,8 @@
 
     function renderResult(result) {
       document.querySelector(".result-card")?.classList.remove("is-loading");
+      const resultEyebrow = document.querySelector("#resultEyebrow");
+      if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const hollandSummary = getHollandSummaryData();
       const tags = [majorLabel(), `霍兰德 ${hollandSummary.code}`, hollandTypes[hollandSummary.primary]?.label || "研究型"];
       const scenes = (Array.isArray(result.famousScenes) ? result.famousScenes : [])
@@ -9902,8 +10939,8 @@
         "志愿只是起点，后面每次改写都算数",
         getFutureMessage()
       );
-      els.resultTitle.textContent = result.title;
-      els.resultSummary.innerHTML = resultStatusHTML(result.status42);
+      els.resultTitle.innerHTML = resultTitleHTML(result.title, result);
+      els.resultSummary.innerHTML = resultStatusHTML(normalizeResultStatus(result.status42, safeScenes));
       els.resultOverview.innerHTML = careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities);
       els.resultInsights.innerHTML = `
         <section class="result-section">
@@ -9959,11 +10996,155 @@
       els.resultTags.innerHTML = tags.map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join("");
     }
 
+    function buildPilotResult() {
+      const hollandSummary = getHollandSummaryData();
+      const major = majorLabel();
+      const played = state.history.map(item => {
+        const card = state.deck[item.year - 1];
+        const choice = item.direction === "left" ? card?.left : card?.right;
+        return { ...item, card, choice };
+      }).filter(item => item.card && item.choice);
+      const stats = getChoiceStats();
+      const routeTagMap = {
+        ESA: "你更像那种能把人、场子和机会一起带热的人。",
+        ECI: "你既想把局面推大，也会本能地给自己留一个后手。",
+        CEI: "你不是慢，你是在先把盘面理顺，再挑最值的机会出手。",
+        CIE: "你会先把后果和逻辑想清，再决定要不要往前冲。",
+        ESI: "你推进事情时并不冷，很多时候也会顺手把人接住。",
+        AIE: "你既想把东西做出风格，也想让它真的被更多人看见。"
+      };
+      const sceneTargets = [played[1], played[3], played[played.length - 1]].filter(Boolean);
+      const scenes = sceneTargets.map((item, index) => ({
+        title: item.sceneTitle || item.card?.scene || `第 ${item.year} 年拐点`,
+        body: buildPilotSceneSummary(item, index)
+      }));
+      const possibilityMap = hollandSummary.rank.slice(0, 3).map(([code]) => {
+        const meta = hollandTypes[code] || hollandTypes.I;
+        return {
+          percent: `${getHollandPercent(code, hollandSummary.scores)}%`,
+          label: meta.careerLabel || `${meta.word}相关方向`
+        };
+      });
+      const relationshipForward = played
+        .filter(item => item.mainTrack === "relationship")
+        .reduce((sum, item) => sum + ((item.holland?.S || 0) + (item.holland?.E || 0) - (item.holland?.C || 0)), 0);
+      const dominantRouteText = routeTagMap[hollandSummary.code] || `你这局最明显的底色，是${hollandSummary.code}这组三字母的混合路线。`;
+      const closingTension = relationshipForward >= 0
+        ? "你开始知道，往前冲这件事不只用在项目上，也要用在该回应的人身上。"
+        : "你已经很会扛事了，下一阶段更难的是别把“先忙完再说”用在所有关系上。";
+      const pushStyle = stats.right - stats.left >= 2
+        ? "这 6 张里你多数时候会先推开局面，哪怕代价会晚一点补票。"
+        : stats.left - stats.right >= 2
+          ? "这 6 张里你更常先稳住手里的底盘，再决定要不要把风险放大。"
+          : "这 6 张里你不是一种打法走到底，而是在机会和代价之间反复试手感。";
+      return {
+        title: buildShareableLifeTitle(hollandSummary, possibilityMap),
+        status42: `${dominantRouteText}${pushStyle}${closingTension}`,
+        majorCareerNote: `这局里你从「${major}」出发，最后更容易被${hollandSummary.code}这组三字母路线吸住。眼下最明显的三个出口是 ${possibilityMap[0]?.percent || "0%"} 的${possibilityMap[0]?.label || "研究分析"}、${possibilityMap[1]?.percent || "0%"} 的${possibilityMap[1]?.label || "内容创意"}、${possibilityMap[2]?.percent || "0%"} 的${possibilityMap[2]?.label || "组织推进"}。专业决定起点，不会把你一辈子锁死。`,
+        famousScenes: scenes,
+        trajectory: buildPilotTrajectory(played, hollandSummary),
+        shareHooks: [
+          "这不是命运定稿，是你前六集的人生试播片。",
+          "项目能补版本，关系不一定总有下一个空档。"
+        ],
+        careerPossibilities: possibilityMap,
+        timelineBlocks: buildPilotTimelineBlocks(played),
+        choiceHabit: {
+          title: "你会在机会和稳妥之间反复校准",
+          body: getChoicePattern()
+        },
+        mentalPrep: {
+          title: "越往前冲，越要留出关系缓冲",
+          body: getRiskNode()
+        },
+        letter18: {
+          title: "别急着把自己定型",
+          body: `这 6 张只说明你在「${major}」起点下的第一段倾向，还远远不是终局。`
+        }
+      };
+    }
+
+    function buildPilotSceneSummary(item) {
+      const title = item.sceneTitle || item.card?.scene || "这一年";
+      const choice = String(item.choiceText || "").replace(/[。.!！?？]/g, "").trim();
+      const summary = shortFeedbackText(item.summary || item.card?.summary || "");
+      const relationHint = shortFeedbackText(item.mainTrack === "relationship" ? item.lifeTrack : item.relationshipTrack);
+      const merged = [summary, relationHint].filter(Boolean).join("；");
+      if (merged && merged.length <= 44) return merged;
+      if (summary) return summary;
+      if (choice) return `你在「${title}」这步选了${choice}，后面的节奏也从这里开始改写。`;
+      return `${title}之后，很多事都不再只停在想一想。`;
+    }
+
+    function buildPilotTimelineBlocks(played) {
+      const opening = played.slice(0, 2);
+      const middle = played.slice(2, 4);
+      const ending = played.slice(4);
+      return [
+        {
+          title: "第 1-2 张：先被推上场",
+          body: opening.length
+            ? "你还没完全适应大学节奏，项目、展示和第一次小翻车已经先把你推到了人群前面。"
+            : "故事刚开场，很多事就已经开始往前赶。"
+        },
+        {
+          title: "第 3-4 张：关系线开始有镜头",
+          body: middle.length
+            ? "你一边被机会往前拽，一边也发现有些人已经开始记住你的节奏和嘴硬。"
+            : "第二段里，主线和关系线开始同时加速。"
+        },
+        {
+          title: "第 5-6 张：被看见，也开始付代价",
+          body: ending.length
+            ? "当你越来越像那个能顶事的人，真正难的题也来了：有些机会要抢，有些回应不能总说下次。"
+            : "后半段不再只是赢不赢，而是你准备拿什么去换。"
+        }
+      ];
+    }
+
+    function buildPilotTrajectory(played, hollandSummary) {
+      const code = hollandSummary.code;
+      const first = played[0]?.sceneTitle || "开局";
+      const last = played[played.length - 1]?.sceneTitle || "最后一步";
+      const bridge = played.find(item => item.mainTrack === "relationship")?.sceneTitle || "关系线第一次露头";
+      return `这 6 张更像一部节奏很快的校园试播集：你从「${first}」被硬推上场，中段在「${bridge}」第一次意识到，故事里不只有项目和成绩，后面又在「${last}」发现，晚一步真的会让人和机会一起后撤。最后长出来的，是 ${code} 这组三字母代表的那种做事路数：既有你本来的习惯，也有这一路被现实逼出来的新反应。`;
+    }
+
+    function buildShareableLifeTitle(hollandSummary = getHollandSummaryData(), possibilities = []) {
+      const code = hollandSummary.code || "";
+      const primary = hollandSummary.primary || code[0] || "I";
+      const topCareer = normalizeCareerLabel(possibilities[0]?.label || getHollandDirections(code).split("、")[0] || "专业路上的靠谱大人");
+      const emotionalMap = {
+        R: "动手很快但嘴硬",
+        I: "脑子很忙但情绪稳",
+        A: "有表达欲但不乱飘",
+        S: "会接住人但也会累",
+        E: "敢冲场子但会复盘",
+        C: "秩序感强但心里加班"
+      };
+      const realityMap = {
+        R: "靠实操把日子焊牢",
+        I: "靠分析把坑绕过去",
+        A: "靠作品把机会熬出来",
+        S: "靠口碑把路越走越宽",
+        E: "靠资源把局面做大",
+        C: "靠稳字把账本做漂亮"
+      };
+      const career = /师|员|人|主理人|经理|工程|研究|顾问|策划|开发|分析|运营|产品|教师/.test(topCareer)
+        ? topCareer
+        : `${topCareer}方向的人`;
+      return [
+        emotionalMap[primary] || "情绪稳定但会嘴硬",
+        realityMap[code[1]] || "现实账本还算漂亮",
+        career
+      ].join("，");
+    }
+
     function careerProbabilityHTML(text, possibilities = null) {
       const raw = String(text || "").trim();
       const matches = Array.isArray(possibilities) && possibilities.length
         ? possibilities.slice(0, 3).map(item => ({
-          percent: `${Number(item.percent || 0)}%`,
+          percent: formatCareerPercent(item.percent),
           label: normalizeCareerLabel(item.label)
         })).filter(item => item.percent !== "0%" && item.label)
         : [...raw.matchAll(/(\d{1,3})%\s*的概率(?:成为|转向|走向)?([^，。；;]+)/g)]
@@ -9989,6 +11170,17 @@
           </div>
         </div>
       `;
+    }
+
+    function formatCareerPercent(value) {
+      const raw = String(value ?? "").trim();
+      if (!raw) return "0%";
+      if (raw.includes("%")) {
+        const numeric = Math.max(0, Math.min(100, Number(raw.match(/\d+(?:\.\d+)?/)?.[0] || 0)));
+        return numeric ? `${numeric}%` : "0%";
+      }
+      const numeric = Math.max(0, Math.min(100, Number(raw) || 0));
+      return numeric ? `${numeric}%` : "0%";
     }
 
     function normalizeCareerLabel(value) {
@@ -10021,6 +11213,55 @@
           ${compactTags.length ? `<span class="result-status-tags">${compactTags.map(item => `<span class="result-status-tag">${escapeHTML(item)}</span>`).join("")}</span>` : ""}
         </span>
       `;
+    }
+
+    function resultTitleHTML(title, result = {}) {
+      return normalizeResultTitleParts(title, result)
+        .map(part => `<span>${escapeHTML(part)}</span>`)
+        .join("");
+    }
+
+    function normalizeResultTitleParts(title, result = {}) {
+      const raw = String(title || "").replace(/[。！？!?；;]/g, "，").trim();
+      let parts = raw
+        .split(/[，,、｜|/]+/)
+        .map(part => part.trim())
+        .filter(Boolean);
+      const looksOldSummary = parts.length >= 3 && !/(但|且|靠|财富|贫|稳|自由|焦虑|内卷|专业|师|员|人|主理人|经理|工程|研究|顾问|策划|开发|分析|运营|产品|教师)/.test(parts.join(""));
+      if (parts.length < 3 || looksOldSummary) {
+        const hollandSummary = getHollandSummaryData();
+        const generated = buildShareableLifeTitle(hollandSummary, result?.careerPossibilities || []);
+        parts = generated.split(/[，,、｜|/]+/).map(part => part.trim()).filter(Boolean);
+      }
+      if (parts.length < 3) {
+        const compact = raw.replace(/\s+/g, "");
+        const first = compact.match(/[^，]{0,8}但[^，]{2,8}/)?.[0] || "情绪稳定但会嘴硬";
+        const second = compact.match(/靠[^，]{2,12}|[^，]{0,8}但[^，]{2,8}/)?.[0] || "现实账本还算漂亮";
+        const third = result?.famousScenes?.[0]?.title
+          ? `${String(result.famousScenes[0].title).replace(/[，。！？!?；;]/g, "").slice(0, 8)}相关人`
+          : "专业路上的靠谱大人";
+        parts = [first, second, third];
+      }
+      return parts.slice(0, 3).map((part, index) => {
+        const clean = part.replace(/^(一个|你是|你像)/, "").trim();
+        const fallback = ["情绪稳定但会嘴硬", "现实账本还算漂亮", "专业路上的靠谱大人"][index];
+        return (clean || fallback).slice(0, 16);
+      });
+    }
+
+    function normalizeResultStatus(status, scenes = []) {
+      const raw = String(status || "").replace(/\s+/g, "").trim();
+      const highLight = scenes.find(scene => scene?.title)?.title || "几次救场";
+      if (!raw) return `靠${highLight.slice(0, 8)}混成靠谱大人，代价是手机静音也会心虚。`;
+      const cleaned = raw
+        .replace(/^你走了\d+年[，,]?/, "")
+        .replace(/^从[^，。！？!?；;]{2,24}到[^，。！？!?；;]{2,24}[，,]?/, "")
+        .replace(/18年/g, "这些年");
+      if (cleaned.length <= 52 && !/^从/.test(cleaned)) return cleaned;
+      const firstSentence = cleaned.split(/[。！？!?；;]/).find(Boolean) || cleaned;
+      const clipped = firstSentence.slice(0, 48);
+      const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"));
+      return (boundary >= 26 ? clipped.slice(0, boundary) : clipped).replace(/[，。！？!?；;]+$/g, "") || `靠${highLight.slice(0, 8)}混成靠谱大人，代价是手机静音也会心虚`;
     }
 
     let resultImageModulePromise = null;
@@ -10075,15 +11316,29 @@
       return Math.max(min, Math.min(max, value));
     }
 
+    function wrapIndex(index, total) {
+      if (!total) return 0;
+      return ((index % total) + total) % total;
+    }
+
+    function shortestLoopOffset(index, centerFloat, total) {
+      if (!total) return 0;
+      const base = index - centerFloat;
+      return base - Math.round(base / total) * total;
+    }
+
     els.entryStart.addEventListener("click", enterSetupFromCover);
-    els.entryMajor.addEventListener("keydown", event => {
+    els.entryName?.addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault();
         enterSetupFromCover();
       }
     });
-    els.entryMajor.addEventListener("input", () => {
-      state.entryMajorText = cleanEntryMajor();
+    els.entryName?.addEventListener("input", () => {
+      const setupNameInput = document.querySelector("#studentName");
+      if (setupNameInput && !setupNameInput.value.trim()) {
+        applyProfile(readProfile());
+      }
     });
 
     els.form.addEventListener("submit", event => {
@@ -10095,10 +11350,17 @@
       startGame();
     });
 
-    document.querySelector("#randomProfile").addEventListener("click", event => {
+    document.querySelector("#randomProfile")?.addEventListener("click", event => {
       event.preventDefault();
       applyRandomProfile();
       render();
+    });
+    document.querySelector("#familyHopeOptions")?.addEventListener("click", event => {
+      const button = event.target.closest("button[data-value]");
+      if (!button) return;
+      setFamilyHope(button.dataset.value);
+      applyProfile(readProfile());
+      scheduleWarmup();
     });
     els.form.addEventListener("input", () => {
       applyProfile(readProfile());
@@ -10115,7 +11377,14 @@
       const index = Number(chip.dataset.index ?? majorKeys.indexOf(chip.dataset.major));
       selectMajorByIndex(Number.isFinite(index) ? index : 0, true);
     });
-    document.querySelector("#randomTop").addEventListener("click", () => resetGame(false, "setup"));
+    els.avatarGrid?.addEventListener("click", event => {
+      const card = event.target.closest(".persona-card");
+      if (!card) return;
+      if (avatarDrag?.moved) return;
+      const index = Number(card.dataset.index ?? avatarOptions.findIndex(item => item.id === card.dataset.avatar));
+      selectAvatarByIndex(Number.isFinite(index) ? index : 0, true);
+    });
+    document.querySelector("#randomTop")?.addEventListener("click", () => resetGame(false, "setup"));
     document.querySelector("#restartTop").addEventListener("click", () => resetGame(true, "entry"));
     document.querySelector("#restartResult").addEventListener("click", () => resetGame(true, "entry"));
     document.querySelector("#saveResult").addEventListener("click", saveResultImage);
@@ -10137,6 +11406,7 @@
     }
 
     syncDevToolsVisibility();
+    setFamilyHope(document.querySelector("#familyHope")?.value);
     applyProfile(readProfile());
     render();
     scheduleWarmup();

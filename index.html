@@ -1556,8 +1556,8 @@
       display: block;
       margin-bottom: 6px;
       color: var(--coal);
-      font-size: 13px;
-      line-height: 1.3;
+      font-size: 16px;
+      line-height: 1.34;
       font-weight: 900;
     }
 
@@ -1676,7 +1676,7 @@
 
     .ability-row {
       display: grid;
-      grid-template-columns: 58px minmax(0, 1fr) 34px;
+      grid-template-columns: 72px minmax(0, 1fr) 42px;
       gap: 10px;
       align-items: center;
     }
@@ -6360,10 +6360,234 @@
     }
 
     body[data-flow="result"] .result-section-title {
+      font-size: 21px;
       font-weight: 780;
     }
 
     body[data-flow="result"] .career-summary {
+      font-weight: 500;
+    }
+
+    body[data-flow="result"] .ability-card {
+      display: grid;
+      gap: 14px;
+    }
+
+    body[data-flow="result"] .ability-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    body[data-flow="result"] .ability-hero {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    body[data-flow="result"] .ability-art {
+      position: relative;
+      min-height: 208px;
+      border-radius: 26px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(16, 20, 30, 0.06) 0%, rgba(16, 20, 30, 0.26) 100%),
+        var(--ability-art) center/cover no-repeat,
+        linear-gradient(135deg, color-mix(in srgb, var(--ability-accent) 72%, white) 0%, rgba(255, 255, 255, 0.94) 100%);
+      box-shadow: 0 18px 36px rgba(43, 54, 74, 0.12);
+      isolation: isolate;
+    }
+
+    body[data-flow="result"] .ability-art::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(16, 20, 30, 0.18) 100%);
+      z-index: 0;
+    }
+
+    body[data-flow="result"] .ability-copy {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      padding: 2px 2px 0;
+    }
+
+    body[data-flow="result"] .ability-summary {
+      margin: 0;
+    }
+
+    body[data-flow="result"] .ability-copy h4 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 25px;
+      line-height: 1.16;
+      font-weight: 680;
+      letter-spacing: 0;
+    }
+
+    body[data-flow="result"] .ability-summary {
+      color: #313847;
+      font-size: 14px;
+      line-height: 1.58;
+      font-weight: 520;
+    }
+
+    body[data-flow="result"] .ability-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.62;
+      font-weight: 500;
+    }
+
+    body[data-flow="result"] .ability-bars {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid rgba(36, 48, 68, 0.08);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    body[data-flow="result"] .ability-intro {
+      margin: 0;
+      color: #3a4150;
+      font-size: 13px;
+      line-height: 1.72;
+      font-weight: 500;
+    }
+
+    body[data-flow="result"] .ability-radar-wrap {
+      display: grid;
+      place-items: center;
+      padding: 0 0 4px;
+    }
+
+    body[data-flow="result"] .ability-radar {
+      width: min(100%, 204px);
+      height: auto;
+      overflow: visible;
+    }
+
+    body[data-flow="result"] .ability-radar-grid {
+      fill: none;
+      stroke: rgba(57, 66, 82, 0.16);
+      stroke-width: 1;
+    }
+
+    body[data-flow="result"] .ability-radar-axis {
+      stroke: rgba(57, 66, 82, 0.16);
+      stroke-width: 1;
+    }
+
+    body[data-flow="result"] .ability-radar-shape {
+      fill: color-mix(in srgb, var(--ability-accent) 28%, white);
+      stroke: color-mix(in srgb, var(--ability-accent) 76%, white);
+      stroke-width: 2.4;
+    }
+
+    body[data-flow="result"] .ability-radar-dot {
+      fill: color-mix(in srgb, var(--ability-accent) 84%, white);
+      stroke: rgba(255, 255, 255, 0.92);
+      stroke-width: 1.4;
+    }
+
+    body[data-flow="result"] .ability-radar-label {
+      fill: color-mix(in srgb, var(--ability-accent) 82%, #202631);
+      font-size: 14px;
+      font-weight: 650;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    body[data-flow="result"] .ability-radar-word {
+      fill: #5d6574;
+      font-size: 14px;
+      font-weight: 560;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    body[data-flow="result"] .ability-score-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    body[data-flow="result"] .ability-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 52px;
+      grid-template-areas:
+        "label score"
+        "track score";
+      column-gap: 10px;
+      row-gap: 6px;
+      align-items: center;
+    }
+
+    body[data-flow="result"] .ability-row-head {
+      display: contents;
+    }
+
+    body[data-flow="result"] .ability-row label {
+      grid-area: label;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 620;
+      letter-spacing: 0;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    body[data-flow="result"] .ability-score {
+      grid-area: score;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 620;
+      text-align: right;
+      white-space: nowrap;
+      width: 52px;
+      height: 100%;
+      padding-left: 8px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.9) 24%);
+    }
+
+    body[data-flow="result"] .ability-track {
+      grid-area: track;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(36, 48, 68, 0.09);
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    body[data-flow="result"] .ability-track span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--ability-color);
+      box-shadow: 0 6px 16px color-mix(in srgb, var(--ability-color) 32%, transparent);
+    }
+
+    body[data-flow="result"] .ability-trend {
+      border: 1px solid rgba(36, 48, 68, 0.08);
+      border-radius: 20px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(246, 248, 252, 0.78));
+    }
+
+    body[data-flow="result"] .ability-trend-body {
+      margin: 0;
+      color: #313847;
+      font-size: 14px;
+      line-height: 1.78;
       font-weight: 500;
     }
 
@@ -6397,6 +6621,26 @@
 
       body[data-flow="play"] .card-scene-copy {
         padding-top: 82px;
+      }
+
+      body[data-flow="result"] .ability-top {
+        grid-template-columns: 1fr;
+      }
+
+      body[data-flow="result"] .ability-art {
+        min-height: 188px;
+      }
+
+      body[data-flow="result"] .ability-copy h4 {
+        font-size: 21px;
+      }
+
+      body[data-flow="result"] .ability-track {
+        max-width: 100%;
+      }
+
+      body[data-flow="result"] .ability-radar {
+        width: min(100%, 188px);
       }
     }
 
@@ -6823,6 +7067,8 @@
         <div class="tag-row" id="resultTags"></div>
         <div class="result-overview" id="resultOverview"></div>
         <div class="result-grid" id="resultInsights"></div>
+        <div class="result-grid" id="resultHighlights"></div>
+        <div class="result-grid" id="resultGuides"></div>
         <div class="result-actions">
           <button id="saveResult" type="button">保存结果图</button>
           <button id="restartResult" class="primary" type="button">再来一局</button>
@@ -6851,6 +7097,15 @@
       stability: { label: "确定感", color: "#4b3dc4" },
       ambition: { label: "进取心", color: "#ed4710" },
       pressure: { label: "抗压值", color: "#8bbf16" }
+    };
+
+    const hollandTypes = {
+      R: { label: "实用型", nick: "匠人", word: "动手", color: "#315c9a", short: "工具、现场、原型、实际问题", directions: ["工程设计", "智能硬件", "工业设计", "建筑土木", "现场技术"] },
+      I: { label: "研究型", nick: "哲人", word: "研究", color: "#6c5ce7", short: "分析、推理、验证、探索规律", directions: ["科研", "算法", "数据分析", "医学研究", "统计建模"] },
+      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#ff5b23", short: "表达、审美、内容、作品成形", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
+      S: { label: "社会型", nick: "好人", word: "助人", color: "#0f8b8d", short: "沟通、陪伴、教育、服务他人", directions: ["教育", "心理咨询", "用户研究", "医疗服务", "公益服务"] },
+      E: { label: "企业型", nick: "商人", word: "组织", color: "#ed4710", short: "说服、管理、争取、推动资源", directions: ["商业管理", "创业", "市场增长", "商务推进", "法律商务"] },
+      C: { label: "常规型", nick: "公人", word: "秩序", color: "#8bbf16", short: "流程、规则、数据、稳定执行", directions: ["财会审计", "合规风控", "数据运营", "行政管理", "流程管理"] }
     };
 
     const coverflowStep = 120;
@@ -7431,6 +7686,8 @@
       resultTags: document.querySelector("#resultTags"),
       resultOverview: document.querySelector("#resultOverview"),
       resultInsights: document.querySelector("#resultInsights"),
+      resultHighlights: document.querySelector("#resultHighlights"),
+      resultGuides: document.querySelector("#resultGuides"),
       resultPortrait: document.querySelector("#resultPortrait")
     };
 
@@ -8077,7 +8334,8 @@
         choice: chosen.tag,
         choiceText: chosen.label,
         delta: chosen.delta,
-        tag: chosen.tag
+        tag: chosen.tag,
+        holland: inferChoiceHolland(chosen, direction)
       };
     }
 
@@ -9256,66 +9514,251 @@
       return "偏弱";
     }
 
-    function buildAbilityPortraitHTML() {
-      const trendKeys = ["explore", "discipline", "pressure"];
-      const trendMeta = trendKeys.map(key => ({
-        key,
-        label: traits[key].label,
-        color: traits[key].color,
-        points: sampleTraitTimeline(key)
-      }));
-      const chartWidth = 320;
-      const chartHeight = 126;
-      const chartPadding = 12;
-      const [leadKey] = getTopTraits(1)[0] || ["explore"];
-      const leadMeta = traits[leadKey] || traits.explore;
+    function addHollandScore(scores, code, value) {
+      if (!Object.prototype.hasOwnProperty.call(scores, code)) return;
+      scores[code] += value;
+    }
+
+    function scoreHollandText(scores, text, weight = 1) {
+      const source = String(text || "");
+      const keywordMap = {
+        R: ["动手", "工具", "原型", "做出来", "修", "现场", "设备", "硬件", "工程", "落地", "实践", "实操", "搭建", "测试", "上手", "制作", "焊", "施工", "亲自"],
+        I: ["分析", "研究", "证据", "数据", "规律", "验证", "实验", "推理", "问题", "复盘", "算法", "模型", "调查", "原因", "求证", "论文", "结构", "拆解", "观察"],
+        A: ["表达", "创意", "设计", "作品", "内容", "故事", "审美", "风格", "写", "展示", "策划", "视频", "画", "讲清楚", "创作", "灵感", "品牌", "拍摄"],
+        S: ["帮助", "沟通", "陪伴", "同学", "用户", "学生", "家人", "团队", "服务", "倾听", "公益", "咨询", "关系", "理解", "照顾", "支持", "安抚", "协作", "接住"],
+        E: ["争取", "组织", "推动", "说服", "带队", "资源", "机会", "汇报", "谈", "管理", "商业", "客户", "负责", "主动", "冲", "公开", "带人", "经营", "市场", "影响"],
+        C: ["规则", "流程", "计划", "表", "清单", "稳定", "证书", "整理", "标准", "秩序", "备份", "节点", "按步骤", "风险", "边界", "确认", "保底", "谨慎", "止损", "守住"]
+      };
+      Object.entries(keywordMap).forEach(([code, words]) => {
+        words.forEach(word => {
+          if (source.includes(word)) addHollandScore(scores, code, weight);
+        });
+      });
+    }
+
+    function scoreHollandDelta(scores, delta = {}, scale = 1) {
+      const map = {
+        explore: { I: 1.2, A: 1 },
+        discipline: { C: 1.2, I: 0.7 },
+        empathy: { S: 1.5 },
+        stability: { C: 1.2 },
+        ambition: { E: 1.4 },
+        pressure: { R: 0.7, C: 0.6 }
+      };
+      Object.entries(delta || {}).forEach(([traitKey, value]) => {
+        const positive = Math.max(0, Number(value) || 0);
+        if (!positive || !map[traitKey]) return;
+        Object.entries(map[traitKey]).forEach(([code, factor]) => addHollandScore(scores, code, positive * factor * scale));
+      });
+    }
+
+    function mergeHollandScores(target, extra) {
+      Object.entries(extra || {}).forEach(([code, value]) => addHollandScore(target, code, Number(value) || 0));
+    }
+
+    function inferChoiceHolland(choice = {}, direction = "") {
+      const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      const text = [choice.title, choice.desc, choice.tag, choice.label].filter(Boolean).join(" ");
+      scoreHollandText(scores, text, 1.4);
+
+      const weightedPatterns = [
+        ["R", /动手|上手|搭建|实操|制作|现场|施工|亲自|硬扛|落地|修好|焊出来/],
+        ["I", /研究|分析|求证|验证|观察|拆解|复盘|读论文|做模型|先想清楚/],
+        ["A", /创意|表达|设计|作品|风格|写出来|讲出来|做内容|拍出来/],
+        ["S", /沟通|帮助|陪伴|支持|安抚|照顾|协作|接住|带人|一起扛/],
+        ["E", /争取|推动|冲上去|主动拿下|公开表达|带队|谈下来|拉资源|报名|拍板/],
+        ["C", /稳住|保底|按计划|先确认|整理清楚|守住|边界|止损|按流程|谨慎/]
+      ];
+      weightedPatterns.forEach(([code, pattern]) => {
+        if (pattern.test(text)) addHollandScore(scores, code, 2.8);
+      });
+
+      if (!Object.values(scores).some(value => value > 0)) {
+        scoreHollandDelta(scores, choice.delta || {}, 0.18);
+        if (direction === "left") addHollandScore(scores, "C", 0.6);
+        if (direction === "right") addHollandScore(scores, "E", 0.6);
+      }
+
+      return scores;
+    }
+
+    function getHollandScoresFromHistory() {
+      const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      state.history.forEach(item => {
+        if (item.holland) {
+          mergeHollandScores(scores, item.holland);
+        } else {
+          scoreHollandText(scores, [item.choice, item.choiceText, item.tag].join(" "), 1.4);
+          scoreHollandDelta(scores, item.delta, 0.18);
+        }
+      });
+      const total = Object.values(scores).reduce((sum, value) => sum + value, 0);
+      if (!total) Object.keys(scores).forEach(code => { scores[code] = 1; });
+      return scores;
+    }
+
+    function getHollandRank(scores = getHollandScoresFromHistory()) {
+      return Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    }
+
+    function getHollandPercent(code, scores) {
+      const top = Math.max(...Object.values(scores), 1);
+      return Math.round((scores[code] / top) * 100);
+    }
+
+    function getHollandDirections(code) {
+      const seen = new Set();
+      code.split("").forEach(key => {
+        (hollandTypes[key]?.directions || []).forEach(item => seen.add(item));
+      });
+      return Array.from(seen).slice(0, 7).join("、");
+    }
+
+    function formatHollandTypeLabel(code) {
+      const meta = hollandTypes[code];
+      return meta ? `${code}${meta.label}` : code;
+    }
+
+    function joinNaturalChinese(items) {
+      const list = items.filter(Boolean);
+      if (!list.length) return "";
+      if (list.length === 1) return list[0];
+      if (list.length === 2) return `${list[0]}和${list[1]}`;
+      return `${list.slice(0, -1).join("、")}和${list[list.length - 1]}`;
+    }
+
+    function buildHollandNarrative(code) {
+      const keys = code.split("").filter(key => hollandTypes[key]);
+      const labelText = joinNaturalChinese(keys.map(formatHollandTypeLabel));
+      const tendencyMap = {
+        R: "动手处理真实问题",
+        I: "分析复杂问题",
+        A: "创造表达",
+        S: "理解他人并和人打交道",
+        E: "组织资源推动事情",
+        C: "按规则把事情理顺"
+      };
+      const tendencyText = joinNaturalChinese(keys.map(key => tendencyMap[key]));
+      return `你的兴趣更偏向${labelText}，说明你可能更享受${tendencyText}。但这不代表你一定要走某一种专业或职业，还要结合学科能力、分数段、家庭风险承受力和就业目标综合判断。`;
+    }
+
+    function hollandHeadline(code) {
+      const primary = code.split("").find(key => hollandTypes[key]) || "I";
+      const meta = hollandTypes[primary] || hollandTypes.I;
+      return `${primary}${meta.label} — ${meta.nick}`;
+    }
+
+    function hollandIntroText() {
+      return "RIASEC 将人格分为 6 种类型，每一种人格类型都有相对应的职业兴趣，大家总是根据自己的人格类型所赋予的职业兴趣去选择职业。";
+    }
+
+    function radarPoint(index, value, center, radius) {
+      const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 6;
+      const currentRadius = radius * (clamp(value, 0, 100) / 100);
+      return {
+        x: center + Math.cos(angle) * currentRadius,
+        y: center + Math.sin(angle) * currentRadius
+      };
+    }
+
+    function polygonPath(points) {
+      return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ") + " Z";
+    }
+
+    function buildHollandRadarSVG(scores) {
+      const size = 248;
+      const center = size / 2;
+      const radius = 84;
+      const order = ["R", "I", "A", "S", "E", "C"];
+      const gridLevels = [0.28, 0.5, 0.72, 1];
+      const axisLabels = {
+        R: "实际型",
+        I: "研究型",
+        A: "艺术型",
+        S: "社会型",
+        E: "企业型",
+        C: "传统型"
+      };
+      const points = order.map((key, index) => radarPoint(index, getHollandPercent(key, scores), center, radius));
+      const axes = order.map((key, index) => {
+        const outer = radarPoint(index, 100, center, radius);
+        const label = radarPoint(index, 100, center, radius + 22);
+        const word = radarPoint(index, 100, center, radius + 38);
+        return { key, outer, label, word };
+      });
       return `
-        <div class="ability-card">
+        <svg class="ability-radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="RIASEC 雷达图">
+          ${gridLevels.map(level => {
+            const gridPoints = order.map((_, index) => radarPoint(index, level * 100, center, radius));
+            return `<path d="${polygonPath(gridPoints)}" class="ability-radar-grid level-${Math.round(level * 100)}"></path>`;
+          }).join("")}
+          ${axes.map(axis => `
+            <line x1="${center}" y1="${center}" x2="${axis.outer.x.toFixed(2)}" y2="${axis.outer.y.toFixed(2)}" class="ability-radar-axis"></line>
+            <text x="${axis.label.x.toFixed(2)}" y="${axis.label.y.toFixed(2)}" class="ability-radar-label">${escapeHTML(axis.key)}</text>
+            <text x="${axis.word.x.toFixed(2)}" y="${axis.word.y.toFixed(2)}" class="ability-radar-word">${escapeHTML(axisLabels[axis.key])}</text>
+          `).join("")}
+          <path d="${polygonPath(points)}" class="ability-radar-shape"></path>
+          ${points.map(point => `<circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="4.2" class="ability-radar-dot"></circle>`).join("")}
+        </svg>
+      `;
+    }
+
+    function getHollandSummaryData() {
+      const scores = getHollandScoresFromHistory();
+      const rank = getHollandRank(scores);
+      const code = rank.slice(0, 3).map(([key]) => key).join("");
+      const primary = rank[0]?.[0] || "I";
+      const titleLine = code.split("").map(key => hollandTypes[key]?.word || "").filter(Boolean).join(" + ");
+      const directions = getHollandDirections(code);
+      return {
+        scores,
+        rank,
+        code,
+        primary,
+        primaryMeta: hollandTypes[primary] || hollandTypes.I,
+        titleLine,
+        directions
+      };
+    }
+
+    function buildAbilityPortraitHTML() {
+      const { scores, code, titleLine, directions, primaryMeta } = getHollandSummaryData();
+      return `
+        <div class="ability-card" style="--ability-accent:${primaryMeta.color};--ability-art:${finalRoleArt};">
           <div class="ability-top">
-            <div class="ability-ring">
-              <div class="ability-ring-core">
-                <div>
-                  <b>${escapeHTML(leadMeta.label)}</b>
-                  <span>当前底色</span>
-                </div>
+            <div class="ability-hero">
+              <div class="ability-art" aria-hidden="true"></div>
+              <div class="ability-copy">
+                <h4>${escapeHTML(hollandHeadline(code))}</h4>
+                <p class="ability-summary">${escapeHTML(`${code}：${titleLine}`)}</p>
+                <p class="ability-note">适合 ${escapeHTML(directions)} 等方向</p>
               </div>
             </div>
-            <div class="ability-bars">
-              ${Object.entries(traits).map(([key, trait]) => {
-                const value = clamp(state.values[key], 0, 100);
+            <div class="ability-bars" aria-label="RIASEC 百分比分布">
+              <p class="ability-intro">${escapeHTML(hollandIntroText())}</p>
+              <div class="ability-radar-wrap">
+                ${buildHollandRadarSVG(scores)}
+              </div>
+              <div class="ability-score-list">
+              ${Object.entries(hollandTypes).map(([key, trait]) => {
+                const value = getHollandPercent(key, scores);
                 return `
                   <div class="ability-row">
-                    <label>${escapeHTML(trait.label)}</label>
+                    <div class="ability-row-head">
+                      <label>${escapeHTML(key)} ${escapeHTML(trait.label)}</label>
+                      <span class="ability-score">${value}%</span>
+                    </div>
                     <div class="ability-track" style="--ability-color:${trait.color}">
                       <span style="width:${value}%"></span>
                     </div>
-                    <span class="ability-score">${escapeHTML(abilityLevelText(value))}</span>
                   </div>
                 `;
               }).join("")}
+              </div>
             </div>
           </div>
           <div class="ability-trend">
-            <div class="ability-trend-head">
-              <b>18 年能力变化曲线</b>
-              <span>从 18 岁走到 36 岁</span>
-            </div>
-            <svg class="ability-trend-chart" viewBox="0 0 ${chartWidth} ${chartHeight}" preserveAspectRatio="none" aria-hidden="true">
-              ${trendMeta.map(item => `
-                <path d="${trendPath(item.points, chartWidth, chartHeight, chartPadding)}" fill="none" stroke="${item.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"></path>
-              `).join("")}
-            </svg>
-            <div class="ability-trend-axis">
-              <span>18</span>
-              <span>22</span>
-              <span>30</span>
-              <span>36</span>
-            </div>
-            <div class="ability-trend-legend">
-              ${trendMeta.map(item => `
-                <span style="--legend-color:${item.color}"><i></i>${escapeHTML(item.label)}</span>
-              `).join("")}
-            </div>
+            <p class="ability-trend-body">${escapeHTML(buildHollandNarrative(code))}</p>
           </div>
         </div>
       `;
@@ -9398,8 +9841,20 @@
         .join("");
       els.resultInsights.innerHTML = `
         <section class="result-section">
-          <h3 class="result-section-title">你的结果页正在装订成册</h3>
-          <p>能力画像、关键片段、十八年编年史和朋友会回的话都在往这一页里合拢。</p>
+          <h3 class="result-section-title">霍兰德结果正在整理</h3>
+          <p>你的职业兴趣画像正在合成。</p>
+        </section>
+      `;
+      els.resultHighlights.innerHTML = `
+        <section class="result-section">
+          <h3 class="result-section-title">关键片段和编年史正在装订</h3>
+          <p>你这一局里最值得截图的片段、十八年编年史和朋友会回的话都在往这一页里合拢。</p>
+        </section>
+      `;
+      els.resultGuides.innerHTML = `
+        <section class="result-section">
+          <h3 class="result-section-title">选择习惯与心理准备正在整理</h3>
+          <p>你做选择的方式和接下来要提前准备的事正在生成。</p>
         </section>
       `;
     }
@@ -9416,11 +9871,14 @@
           <p>${escapeHTML(message)}</p>
         </section>
       `;
+      els.resultHighlights.innerHTML = "";
+      els.resultGuides.innerHTML = "";
     }
 
     function renderResult(result) {
       document.querySelector(".result-card")?.classList.remove("is-loading");
-      const tags = [majorLabel(), ...getTopTraits(3).map(([key]) => traits[key].label)];
+      const hollandSummary = getHollandSummaryData();
+      const tags = [majorLabel(), `霍兰德 ${hollandSummary.code}`, hollandTypes[hollandSummary.primary]?.label || "研究型"];
       const scenes = (Array.isArray(result.famousScenes) ? result.famousScenes : [])
         .slice(0, 3)
         .map(normalizeSceneBlock);
@@ -9449,11 +9907,11 @@
       els.resultOverview.innerHTML = careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities);
       els.resultInsights.innerHTML = `
         <section class="result-section">
-          <h3 class="result-section-title">能力特质画像</h3>
           ${buildAbilityPortraitHTML()}
         </section>
+      `;
+      els.resultHighlights.innerHTML = `
         <section class="result-section">
-          <h3 class="result-section-title">这一局最像你的三个片段</h3>
           <div class="result-scene-list">
             ${safeScenes.map(scene => `
               <div class="result-scene">
@@ -9478,6 +9936,8 @@
           <h3 class="result-section-title">朋友看完大概会这样回</h3>
           ${result.shareHooks.map(body => `<div class="result-hook">${escapeHTML(body)}</div>`).join("")}
         </section>
+      `;
+      els.resultGuides.innerHTML = `
         <section class="result-section">
           <h3 class="result-section-title">选择习惯与心理准备</h3>
           <div class="result-guide-list">

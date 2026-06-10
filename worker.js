@@ -191,6 +191,25 @@ const durationOverridePrompt = `
 - 如果旧规则里出现 25 年、25 次、第 25 年、第 26 年、42 岁或二十五年，以本覆盖规则为准。
 `.trim();
 
+const storyArcOverridePrompt = `
+连续剧情覆盖规则：
+- 放弃“每年随机弹出一个机会”的旧逻辑，改成 18 集连续人生故事。每一年都要像上一年的下一集，前因后果清楚，不能像随机题库抽卡。
+- 这 18 年必须围绕同一条成长主线展开：开局先连续遇到 2-3 个真实困难，例如专业不适配、家庭期待、经济压力、社交受挫、自我怀疑、身体报警、城市选择失误；后面通过玩家一次次选择，逐步拆解这些困难，最后形成明显进步和正向收束。
+- 最终结局必须是正向的：可以有代价、有遗憾、有绕路，但到第 18 年时，玩家已经解决了开局的大问题，或者至少把它变成了自己的优势，不能停在“还在迷茫”。
+- 五幕节奏强制改成：
+  1. 第 1-4 年：开局建人设，同时连续遇到 2-3 件麻烦，不能第一年就顺风顺水。
+  2. 第 5-8 年：第一次主动破局，拿到一点希望，但要伴随误判、代价或关系波动。
+  3. 第 9-12 年：出现一次中段反转，让早年吃过的亏、丢过的人、留下的梗或技能突然变成关键资源。
+  4. 第 13-15 年：进入更大的现实考题，事业、生活、家庭、关系并行拉扯，但主线仍然围绕同一个核心难题升级。
+  5. 第 16-18 年：收束主线，前面的伏笔、人物、旧选择回来产生最后回响，形成“原来前面都不是白走”的感觉。
+- 每一幕都必须回答“主角现在离解决开局难题更近了还是更远了”，不能只堆段子。
+- 允许幽默、社死、整活，但整活只能服务剧情推进，不能抢走主线。笑点要像剧情里的意外，不像单独插播。
+- “机会型事件”总量严格压缩：18 年里，主动送上门的创业邀请、贵人抛橄榄枝、天降大单、突然高薪挖人，这类事件总数最多 3 次，而且不能连着出现。更多题目应该来自后果、修补、取舍、承担、错过、再选择。
+- scene 的核心不是“来了什么机会”，而是“上一年的决定把你推到了什么处境，你现在怎么处理”。如果一个问题删掉上一年历史也能成立，说明它不够连续，必须重写。
+- 用户填写的信息只影响故事的行业背景、表达风格、具体场景、人物气质、家庭期待和包袱细节，不改变这条“先遇到困难，再一路解题，最后明显成长”的总结构。
+- 感情/陪伴线继续按副线长期推进，但不要喧宾夺主。它的作用是让人生更完整、让反转更有人味，不是把主线改成恋爱故事。
+`.trim();
+
 function normalizedBasePrompt() {
   return basePrompt
     .replaceAll("连续提出 25 个问题", "连续提出 18 个问题")
@@ -217,7 +236,7 @@ function normalizedBasePrompt() {
 }
 
 function systemPrompt(extra = "") {
-  return [normalizedBasePrompt(), feedbackOverridePrompt, durationOverridePrompt, plainLanguageOverridePrompt, extra].filter(Boolean).join("\n\n");
+  return [normalizedBasePrompt(), feedbackOverridePrompt, durationOverridePrompt, storyArcOverridePrompt, plainLanguageOverridePrompt, extra].filter(Boolean).join("\n\n");
 }
 
 function sendJson(status, data) {

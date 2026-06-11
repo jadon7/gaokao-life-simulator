@@ -1,9 +1,14 @@
 name = "gaokao-life-simulator"
 main = "worker.js"
 compatibility_date = "2026-06-08"
+account_id = "0eedb61d5ddbea42f84455c9455addb0"
 
 [assets]
 directory = "./public"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*"]
+
+[[routes]]
+pattern = "gaokao.dsxzai.com"
+custom_domain = true

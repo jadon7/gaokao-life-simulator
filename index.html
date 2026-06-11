@@ -247,7 +247,8 @@
 
     .setup-panel {
       background: var(--lime);
-      overflow: hidden;
+      isolation: isolate;
+      overflow: visible;
     }
 
     .panel-head {
@@ -3974,7 +3975,7 @@
     }
 
     .card-stack::after {
-      z-index: -1;
+      z-index: 0;
       transform: translateY(10px) rotate(2deg) scale(0.97);
       background: rgba(255, 255, 255, 0.62);
     }
@@ -5579,9 +5580,9 @@
     }
 
     .entry-panel {
-      width: min(560px, 100%);
-      min-height: min(860px, calc(var(--screen-h) - clamp(24px, 7vw, 72px)));
-      padding: clamp(34px, 5.8vw, 54px) clamp(24px, 5.8vw, 38px) clamp(24px, 5vw, 34px);
+      width: min(620px, 100%);
+      min-height: auto;
+      padding: clamp(28px, 4.8vw, 44px) clamp(22px, 5vw, 36px) clamp(22px, 4.6vw, 32px);
       border: 1px solid rgba(67, 82, 111, 0.08);
       border-radius: 32px;
       background:
@@ -5605,7 +5606,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 28px;
+      margin-bottom: 16px;
     }
 
     .entry-tag {
@@ -5623,7 +5624,7 @@
 
     .entry-title {
       max-width: 96%;
-      margin: 0 0 22px;
+      margin: 0 0 14px;
       color: rgba(26, 35, 52, 0.96);
       font-size: clamp(24px, 6.4vw, 30px);
       font-weight: 780;
@@ -5638,7 +5639,7 @@
 
     .entry-copy {
       max-width: 92%;
-      margin: 0 0 24px;
+      margin: 0 0 18px;
       color: rgba(84, 96, 118, 0.76);
       font-size: 15px;
       font-weight: 430;
@@ -5648,7 +5649,7 @@
     .entry-field {
       display: grid;
       gap: 9px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .entry-field label {
@@ -5658,7 +5659,7 @@
     }
 
     .entry-input-wrap {
-      min-height: 58px;
+      min-height: 48px;
       border: 1px solid rgba(67, 82, 111, 0.1);
       border-radius: 16px;
       padding: 0 8px 0 16px;
@@ -5669,16 +5670,21 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
     }
 
-    .entry-input-wrap input {
+.entry-input-wrap input {
       min-width: 0;
       flex: 1 1 auto;
-      height: 54px;
+      height: 46px;
       border: 0;
       outline: 0;
+      caret-color: #1677ff;
       color: rgba(28, 37, 55, 0.94);
       background: transparent;
       font-size: 16px;
       font-weight: 650;
+    }
+
+    .entry-input-wrap input:focus::placeholder {
+      color: transparent;
     }
 
     .entry-input-action {
@@ -5692,7 +5698,7 @@
 
     .entry-cta {
       width: 100%;
-      min-height: 62px;
+      min-height: 58px;
       border: 0;
       border-radius: 999px;
       color: #fff;
@@ -5707,7 +5713,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin: 2px 0 18px;
+      margin: 2px 0 12px;
     }
 
     body[data-flow="entry"] .flow-head {
@@ -5743,7 +5749,7 @@
 
     body[data-flow="entry"] .coverflow {
       position: relative;
-      height: 286px;
+      height: 216px;
       display: grid;
       place-items: center;
       overflow: hidden;
@@ -5758,8 +5764,8 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 176px;
-      height: 244px;
+      width: 146px;
+      height: 198px;
       border: 1px dashed rgba(67, 82, 111, 0.12);
       border-radius: 24px;
       box-shadow: 0 0 0 8px rgba(67, 82, 111, 0.04);
@@ -5783,10 +5789,10 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 176px;
-      height: 244px;
+      width: 146px;
+      height: 198px;
       min-height: 0;
-      margin: -122px 0 0 -88px;
+      margin: -99px 0 0 -73px;
       padding: 0;
       display: flex;
       flex-direction: column;
@@ -5836,8 +5842,8 @@
     body[data-flow="entry"] .gi {
       position: relative;
       z-index: 1;
-      width: 92px;
-      height: 92px;
+      width: 76px;
+      height: 76px;
     }
 
     body[data-flow="entry"] .gi-halo {
@@ -5865,20 +5871,20 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      padding: 12px 14px;
+      padding: 10px 12px;
       background: rgba(255, 255, 255, 0.95);
     }
 
     body[data-flow="entry"] .cf-body b {
       color: rgba(28, 37, 55, 0.94);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 760;
       line-height: 1.15;
     }
 
     body[data-flow="entry"] .cf-body span {
       color: rgba(84, 96, 118, 0.72);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 430;
       line-height: 1.35;
     }
@@ -5956,10 +5962,210 @@
       background: rgba(52, 125, 245, 0.78);
     }
 
+    body[data-flow="entry"] .entry-persona-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin: 4px 0 14px;
+    }
+
+    body[data-flow="entry"] .entry-persona-flow .flow-head h2 {
+      font-size: clamp(16px, 3.8vw, 20px);
+    }
+
+    body[data-flow="entry"] .entry-persona-flow .avatar-flow-hint {
+      display: block;
+      margin: -2px auto 0;
+      color: rgba(84, 96, 118, 0.72);
+      font-size: 12px;
+      font-weight: 650;
+      text-align: center;
+      opacity: 0.82;
+    }
+
+    body[data-flow="entry"] .persona-coverflow {
+      position: relative;
+      height: 196px;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      cursor: grab;
+      touch-action: pan-y;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body[data-flow="entry"] .persona-coverflow::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 128px;
+      height: 174px;
+      border: 1px dashed rgba(67, 82, 111, 0.11);
+      border-radius: 26px;
+      box-shadow: 0 0 0 7px rgba(67, 82, 111, 0.035);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    body[data-flow="entry"] .persona-grid {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    body[data-flow="entry"] .persona-card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 128px;
+      height: 174px;
+      margin: -87px 0 0 -64px;
+      padding: 0;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: stretch;
+      overflow: hidden;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 18px 38px rgba(53, 68, 96, 0.11);
+      transform: none;
+      will-change: transform, opacity;
+      transition: transform 0.42s cubic-bezier(.22,.61,.36,1), opacity 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    body[data-flow="entry"] .persona-card.no-anim {
+      transition: none;
+    }
+
+    body[data-flow="entry"] .persona-card.is-active {
+      border-color: transparent;
+      box-shadow: 0 24px 54px oklch(0.3 0.06 var(--persona-h) / 0.24);
+    }
+
+    body[data-flow="entry"] .persona-photo {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(120% 92% at 50% 15%, oklch(0.98 0.018 var(--persona-h)), oklch(0.92 0.055 var(--persona-h))),
+        rgba(255, 255, 255, 0.9);
+    }
+
+    body[data-flow="entry"] .persona-photo::before {
+      content: "";
+      position: absolute;
+      inset: 3px 0 -8px;
+      background-image: var(--persona-art);
+      background-position: center 12%, center 12%;
+      background-size: cover, cover;
+      background-repeat: no-repeat, no-repeat;
+      filter: saturate(var(--persona-sat, 1)) hue-rotate(var(--persona-rotate, 0deg));
+      transform: scale(1.05);
+    }
+
+    body[data-flow="entry"] .persona-photo::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 44%;
+      background: linear-gradient(transparent, oklch(0.93 0.045 var(--persona-h) / 0.62));
+    }
+
+    body[data-flow="entry"] .persona-body {
+      position: relative;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      min-height: 64px;
+      padding: 9px 11px;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    body[data-flow="entry"] .persona-body b {
+      color: rgba(28, 37, 55, 0.94);
+      font-size: 13px;
+      font-weight: 740;
+      line-height: 1.12;
+    }
+
+    body[data-flow="entry"] .persona-body span {
+      color: rgba(84, 96, 118, 0.72);
+      font-size: 10px;
+      font-weight: 430;
+      line-height: 1.32;
+    }
+
+    body[data-flow="entry"] .persona-body small {
+      margin-top: auto;
+      color: #347df5;
+      font-size: 9px;
+      font-weight: 730;
+      letter-spacing: 0.04em;
+    }
+
+    body[data-flow="entry"] .persona-nav {
+      position: absolute;
+      top: 50%;
+      z-index: 500;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid rgba(67, 82, 111, 0.1);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: rgba(28, 37, 55, 0.82);
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 10px 22px rgba(53, 68, 96, 0.09);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      font-size: 20px;
+      line-height: 1;
+      transform: translateY(-50%);
+      transition: transform 0.15s ease, color 0.15s ease;
+      display: none;
+    }
+
+    body[data-flow="entry"] .persona-nav.prev {
+      left: clamp(0px, 3vw, 22px);
+    }
+
+    body[data-flow="entry"] .persona-nav.next {
+      right: clamp(0px, 3vw, 22px);
+    }
+
+    body[data-flow="entry"] .persona-dots {
+      display: none;
+    }
+
+    body[data-flow="entry"] .persona-dot {
+      width: 5px;
+      height: 5px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(67, 82, 111, 0.14);
+      transition: all 0.2s ease;
+    }
+
+    body[data-flow="entry"] .persona-dot.is-active {
+      width: 14px;
+      background: rgba(52, 125, 245, 0.78);
+    }
+
     .entry-disclaimer {
       max-width: 94%;
       margin: auto 0 0;
-      padding-top: 28px;
+      padding-top: 14px;
       color: rgba(84, 96, 118, 0.68);
       font-size: 12px;
       font-weight: 430;
@@ -6307,9 +6513,9 @@
 
     body[data-flow="setup"] .creator-top {
       display: grid;
-      grid-template-columns: 244px minmax(0, 1fr);
+      grid-template-columns: minmax(250px, 0.82fr) minmax(0, 1.18fr);
       gap: clamp(20px, 3vw, 36px);
-      padding: clamp(20px, 2.6vw, 28px);
+      padding: clamp(22px, 2.8vw, 32px);
       border: 1px solid rgba(67, 82, 111, 0.07);
       border-radius: 30px;
       background: rgba(255, 255, 255, 0.78);
@@ -6321,8 +6527,14 @@
     body[data-flow="setup"] .creator-left {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
       min-width: 0;
+      padding: clamp(14px, 2vw, 18px);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 24% 0%, rgba(52, 125, 245, 0.14), transparent 34%),
+        rgba(247, 250, 255, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
     }
 
     body[data-flow="setup"] .id-portrait {
@@ -6348,7 +6560,10 @@
       width: auto;
       height: auto;
       border-radius: 0;
-      background: var(--portrait-art) center 8% / cover no-repeat;
+      background-image: var(--portrait-art);
+      background-position: center 8%, center;
+      background-size: cover, cover;
+      background-repeat: no-repeat, no-repeat;
       box-shadow: none;
       filter: var(--portrait-filter, none);
       transform: none;
@@ -6357,11 +6572,11 @@
     body[data-flow="setup"] .sel-info {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 7px;
     }
 
     body[data-flow="setup"] .sel-kicker {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 720;
       letter-spacing: 0.16em;
       color: rgba(83, 97, 123, 0.64);
@@ -6369,7 +6584,7 @@
 
     body[data-flow="setup"] #profilePreviewName {
       color: rgba(28, 37, 55, 0.94);
-      font-size: 22px;
+      font-size: clamp(24px, 3vw, 32px);
       font-weight: 850;
       line-height: 1.12;
       letter-spacing: 0;
@@ -6377,7 +6592,7 @@
 
     body[data-flow="setup"] .cta-seed {
       color: #2678ee;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 560;
       line-height: 1.5;
     }
@@ -6385,14 +6600,30 @@
     body[data-flow="setup"] .creator-right {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       min-width: 0;
+      padding: clamp(4px, 1vw, 8px) 0;
+    }
+
+    body[data-flow="setup"] .creator-right .col-tag {
+      width: max-content;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: rgba(38, 55, 82, 0.74);
+      background: rgba(236, 242, 250, 0.84);
+      font-size: 11px;
+      font-weight: 720;
+      letter-spacing: 0.04em;
     }
 
     body[data-flow="setup"] .field-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 13px 14px;
+    }
+
+    body[data-flow="setup"] .field-grid > input[type="hidden"] {
+      display: none;
     }
 
     body[data-flow="setup"] .field-grid label {
@@ -6412,7 +6643,7 @@
 
     body[data-flow="setup"] .field-grid input,
     body[data-flow="setup"] .field-grid select {
-      min-height: 46px;
+      min-height: 44px;
       padding: 0 13px;
       border: 1px solid rgba(67, 82, 111, 0.1);
       border-radius: 11px;
@@ -6437,7 +6668,7 @@
     }
 
     body[data-flow="setup"] .option-segment button {
-      min-height: 46px;
+      min-height: 44px;
       padding: 8px 10px;
       border: 1px solid rgba(67, 82, 111, 0.1);
       border-radius: 14px;
@@ -6526,7 +6757,7 @@
     body[data-flow="setup"] .flow-head h2 {
       margin: 0;
       color: rgba(28, 37, 55, 0.96);
-      font-size: clamp(20px, 2.8vw, 28px);
+      font-size: clamp(19px, 2.4vw, 25px);
       font-weight: 850;
       line-height: 1.1;
       letter-spacing: 0;
@@ -6726,11 +6957,11 @@
       }
 
       body[data-flow="setup"] .coverflow {
-        height: 322px;
+        height: 252px;
       }
 
       body[data-flow="setup"] .major-grid {
-        padding-inline: calc(50vw - 100px);
+        padding-inline: calc(50vw - 82px);
       }
     }
 
@@ -6929,19 +7160,15 @@
       border-radius: 26px;
       overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(16, 20, 30, 0.06) 0%, rgba(16, 20, 30, 0.26) 100%),
-        var(--ability-art) center top/cover no-repeat,
-        linear-gradient(135deg, color-mix(in srgb, var(--ability-accent) 72%, white) 0%, rgba(255, 255, 255, 0.94) 100%);
+        var(--ability-art) center center/contain no-repeat,
+        #fff;
       box-shadow: 0 18px 36px rgba(43, 54, 74, 0.12);
       isolation: isolate;
     }
 
     body[data-flow="result"] .ability-art::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(16, 20, 30, 0.18) 100%);
-      z-index: 0;
+      content: none;
+      display: none;
     }
 
     body[data-flow="result"] .ability-copy {
@@ -7161,6 +7388,25 @@
         padding-top: 82px;
       }
 
+      body[data-flow="play"] .life-card:has(> .previous-feedback) {
+        padding-top: 10px;
+      }
+
+      body[data-flow="play"] .life-card .previous-feedback {
+        position: relative;
+        top: auto;
+        left: auto;
+        right: auto;
+        z-index: 5;
+        width: fit-content;
+        max-width: min(88%, 330px);
+        margin: 0 10px 8px auto;
+      }
+
+      body[data-flow="play"] .card-scene-copy {
+        padding-top: 44px;
+      }
+
       body[data-flow="result"] .ability-top {
         grid-template-columns: 1fr;
       }
@@ -7180,6 +7426,389 @@
       body[data-flow="result"] .ability-radar {
         width: min(100%, 188px);
       }
+    }
+
+    /* Floating memory card: paper note pinned to the whole card corner. */
+    body[data-flow="play"] .life-card:has(> .previous-feedback) {
+      padding-top: 0;
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback {
+      position: absolute;
+      top: 18px;
+      left: auto;
+      right: 18px;
+      z-index: 8;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 4px;
+      width: clamp(126px, 30%, 156px);
+      aspect-ratio: 1 / 1;
+      max-width: none;
+      margin: 0;
+      padding: 14px 13px 13px;
+      border: 0;
+      border-radius: 19px;
+      color: rgba(50, 59, 42, 0.9);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 244, 0.95));
+      box-shadow:
+        0 20px 34px rgba(66, 74, 58, 0.16),
+        0 5px 11px rgba(66, 74, 58, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.86);
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 520;
+      letter-spacing: 0;
+      overflow: hidden;
+      transform: rotate(-8deg);
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback::before {
+      content: "";
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      display: block;
+      width: 42px;
+      height: 22px;
+      border-radius: 3px;
+      background:
+        linear-gradient(135deg, rgba(137, 163, 83, 0.92), rgba(178, 199, 126, 0.78));
+      box-shadow: 0 4px 10px rgba(82, 97, 57, 0.14);
+      transform: translateX(-50%) rotate(12deg);
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback::after {
+      content: "";
+      position: absolute;
+      inset: 28px 11px 10px;
+      display: block;
+      border-radius: 10px;
+      background: rgba(218, 226, 204, 0.74);
+      z-index: -1;
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback i,
+    body[data-flow="play"] .life-card .previous-feedback b,
+    body[data-flow="play"] .life-card .previous-feedback span {
+      position: relative;
+      z-index: 1;
+      display: block;
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback i {
+      color: rgba(123, 146, 71, 0.92);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 760;
+      line-height: 1;
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback b {
+      color: rgba(34, 42, 31, 0.94);
+      font-size: clamp(13px, 3vw, 15px);
+      font-weight: 860;
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    body[data-flow="play"] .life-card .previous-feedback span {
+      color: rgba(70, 79, 65, 0.68);
+      font-size: clamp(8px, 2vw, 9px);
+      font-weight: 560;
+      line-height: 1.2;
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+    }
+
+    body[data-flow="play"] .card-scene-copy {
+      padding-top: 40px;
+      padding-right: clamp(122px, 32%, 164px);
+    }
+
+    @media (max-width: 560px) {
+      body[data-flow="play"] .life-card .previous-feedback {
+        top: 16px;
+        right: 12px;
+        width: clamp(116px, 35vw, 132px);
+        padding: 12px 11px 10px;
+        border-radius: 16px;
+      }
+
+      body[data-flow="play"] .card-scene-copy {
+        padding-top: 34px;
+        padding-right: clamp(108px, 37vw, 140px);
+      }
+    }
+
+    /* Result hero: portrait-first card with copy anchored into the lower gradient. */
+    body[data-flow="result"] .result-hero {
+      position: relative;
+      display: grid;
+      min-height: clamp(430px, 68vh, 620px);
+      padding: clamp(22px, 4vw, 34px);
+      overflow: hidden;
+      border: 0;
+      border-radius: 32px;
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(15, 20, 28, 0.04) 0%, rgba(15, 20, 28, 0.04) 48%, rgba(15, 20, 28, 0.62) 100%),
+        var(--result-art),
+        linear-gradient(145deg, rgba(219, 228, 224, 0.96), rgba(182, 203, 199, 0.96));
+      background-repeat: no-repeat;
+      background-size: cover, cover, cover;
+      background-position: center top, center top, center;
+      box-shadow: inset 0 -160px 120px rgba(16, 20, 28, 0.36);
+      isolation: isolate;
+    }
+
+    body[data-flow="result"] .result-hero::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 48%;
+      z-index: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(18, 24, 32, 0.26) 28%, rgba(18, 24, 32, 0.72) 100%);
+      -webkit-backdrop-filter: blur(7px) saturate(1.04);
+      backdrop-filter: blur(7px) saturate(1.04);
+      -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.72) 34%, #000 100%);
+      mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.72) 34%, #000 100%);
+      pointer-events: none;
+    }
+
+    body[data-flow="result"] .result-copy {
+      position: relative;
+      z-index: 1;
+      align-self: end;
+      max-width: min(520px, 92%);
+      padding-top: clamp(160px, 34vh, 300px);
+    }
+
+    body[data-flow="result"] .result-portrait {
+      display: none;
+    }
+
+    body[data-flow="result"] .result-hero small {
+      border: 0;
+      color: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.16);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    body[data-flow="result"] .result-hero h2 {
+      max-width: 10ch;
+      margin-top: 12px;
+      color: #fff;
+      font-size: clamp(40px, 9vw, 72px);
+      line-height: 0.94;
+      letter-spacing: 0;
+      text-shadow: 0 3px 16px rgba(0, 0, 0, 0.24);
+    }
+
+    body[data-flow="result"] .result-status {
+      margin-top: 14px;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    body[data-flow="result"] .result-status-lead {
+      max-width: 34ch;
+      color: rgba(255, 255, 255, 0.92);
+      font-size: clamp(15px, 3vw, 20px);
+      line-height: 1.42;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+    }
+
+    body[data-flow="result"] .result-tags {
+      position: relative;
+      z-index: 2;
+      margin: 12px clamp(18px, 3vw, 34px) 0;
+    }
+
+    @media (max-width: 560px) {
+      body[data-flow="result"] .result-hero {
+        min-height: 500px;
+        padding: 22px;
+        border-radius: 30px;
+        background-position: center top, center top, center;
+      }
+
+      body[data-flow="result"] .result-copy {
+        max-width: 100%;
+        padding-top: 210px;
+      }
+
+      body[data-flow="result"] .result-hero h2 {
+        font-size: clamp(40px, 12vw, 58px);
+      }
+    }
+
+    /* Taller play cards: give the artwork and full decision card more breathing room. */
+    body[data-flow="play"] {
+      --card-min-h: clamp(688px, calc(var(--screen-h) - 90px), 800px);
+    }
+
+    body[data-flow="play"] .card-scene,
+    body[data-flow="play"] .life-card.layout-balanced .card-scene,
+    body[data-flow="play"] .life-card.layout-reading .card-scene {
+      min-height: clamp(382px, 47vh, 424px);
+    }
+
+    @media (max-width: 560px) {
+      body[data-flow="play"] {
+        --card-min-h: clamp(700px, calc(var(--screen-h) - 84px), 820px);
+      }
+
+      body[data-flow="play"] .card-scene,
+      body[data-flow="play"] .life-card.layout-balanced .card-scene,
+      body[data-flow="play"] .life-card.layout-reading .card-scene {
+        min-height: clamp(376px, 48vh, 430px);
+      }
+    }
+
+    /* Setup major cards: no side arrows; make the artwork panel fill the card width. */
+    body[data-flow="setup"] .entry-major-flow {
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    body[data-flow="setup"] .entry-major-flow .flow-head {
+      justify-content: flex-start;
+      padding: 0 0 2px;
+    }
+
+    body[data-flow="setup"] .entry-major-flow .major-flow-hint {
+      display: block;
+      margin: -2px auto 0;
+      color: rgba(84, 96, 118, 0.72);
+      font-size: 12px;
+      font-weight: 650;
+      text-align: center;
+      opacity: 0.82;
+    }
+
+    body[data-flow="setup"] .coverflow {
+      height: clamp(176px, 28vh, 196px);
+      margin-top: -2px;
+    }
+
+    body[data-flow="setup"] .coverflow::before {
+      width: clamp(88px, 21vw, 116px);
+      height: clamp(122px, 29vw, 156px);
+      border-radius: 20px;
+      transform: translate(-50%, -50%);
+    }
+
+    body[data-flow="setup"] .major-chip {
+      width: clamp(88px, 21vw, 116px);
+      height: clamp(122px, 29vw, 156px);
+      margin: calc(clamp(122px, 29vw, 156px) / -2) 0 0 calc(clamp(88px, 21vw, 116px) / -2);
+      border-radius: 20px;
+    }
+
+    body[data-flow="setup"] .cf-art {
+      height: 52%;
+    }
+
+    body[data-flow="setup"] .gi {
+      width: 58px;
+      height: 58px;
+    }
+
+    body[data-flow="setup"] .cf-body {
+      gap: 3px;
+      padding: 8px 10px;
+    }
+
+    body[data-flow="setup"] .cf-body b {
+      font-size: 12px;
+      line-height: 1.12;
+    }
+
+    body[data-flow="setup"] .cf-body span {
+      font-size: 9px;
+      line-height: 1.28;
+    }
+
+    body[data-flow="setup"] .cf-body small {
+      font-size: 9px;
+      letter-spacing: 0.03em;
+    }
+
+    body[data-flow="setup"] .cf-dots {
+      display: none;
+    }
+
+    @media (max-width: 560px) {
+      body[data-flow="setup"] .coverflow {
+        height: 154px;
+      }
+
+      body[data-flow="setup"] .major-chip {
+        width: clamp(84px, 21vw, 104px);
+        height: clamp(116px, 29vw, 142px);
+        margin: calc(clamp(116px, 29vw, 142px) / -2) 0 0 calc(clamp(84px, 21vw, 104px) / -2);
+        border-radius: 18px;
+      }
+
+      body[data-flow="setup"] .gi {
+        width: 52px;
+        height: 52px;
+      }
+
+      body[data-flow="setup"] .cf-body {
+        padding: 7px 9px;
+      }
+    }
+
+    body[data-flow="setup"] .cf-nav {
+      display: none;
+    }
+
+    body[data-flow="setup"] .cf-art {
+      height: 58%;
+      place-items: stretch;
+      background:
+        radial-gradient(120% 92% at 50% 16%, oklch(0.98 0.035 var(--h)), oklch(0.88 0.08 var(--h))),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), oklch(0.9 0.06 var(--h)));
+    }
+
+    body[data-flow="setup"] .cf-art::after {
+      height: 46%;
+      background: linear-gradient(180deg, transparent 0%, oklch(0.91 0.052 var(--h) / 0.48) 52%, rgba(255, 255, 255, 0.78) 100%);
+    }
+
+    body[data-flow="setup"] .gi {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      border-radius: 0;
+      background:
+        radial-gradient(circle at 50% 54%, oklch(0.72 0.25 var(--h) / 0.22), transparent 46%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent);
+    }
+
+    body[data-flow="setup"] .gi-halo {
+      inset: 18% 10%;
+      border-radius: 28px;
+      filter: blur(18px);
+    }
+
+    body[data-flow="setup"] .gi svg {
+      inset: 50% auto auto 50%;
+      width: 92px;
+      height: 92px;
+      transform: translate(-50%, -50%);
     }
 
     /* Exact first-screen coverflow behavior from the provided direction. */
@@ -7204,7 +7833,7 @@
     }
 
     body[data-flow="setup"] .coverflow {
-      height: 348px;
+      height: 258px;
       touch-action: pan-y;
     }
 
@@ -7224,9 +7853,9 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 200px;
-      height: 286px;
-      margin: -143px 0 0 -100px;
+      width: 164px;
+      height: 224px;
+      margin: -112px 0 0 -82px;
       padding: 0;
       display: flex;
       flex-direction: column;
@@ -7252,11 +7881,15 @@
 
     body[data-flow="setup"] .cf-art {
       position: relative;
-      height: 56%;
+      flex: 0 0 54%;
+      width: 100%;
+      height: auto;
       display: grid;
       place-items: center;
       overflow: hidden;
-      background: radial-gradient(125% 100% at 50% 16%, oklch(0.985 0.008 var(--h)), oklch(0.955 0.022 var(--h)));
+      background:
+        radial-gradient(112% 96% at 50% 24%, oklch(0.98 0.026 var(--h)), oklch(0.9 0.075 var(--h))),
+        linear-gradient(180deg, oklch(0.985 0.012 var(--h)), oklch(0.93 0.052 var(--h)));
     }
 
     body[data-flow="setup"] .cf-art::after {
@@ -7265,15 +7898,19 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 40%;
-      background: linear-gradient(transparent, oklch(0.9 0.05 var(--h) / 0.4));
+      height: 44%;
+      background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.32));
+      pointer-events: none;
     }
 
     body[data-flow="setup"] .gi {
       position: relative;
-      width: 112px;
-      height: 112px;
+      width: min(68%, 96px);
+      aspect-ratio: 1;
+      height: auto;
       z-index: 1;
+      display: grid;
+      place-items: center;
     }
 
     body[data-flow="setup"] .gi-halo {
@@ -7287,10 +7924,11 @@
 
     body[data-flow="setup"] .gi svg {
       position: absolute;
-      inset: 0;
+      inset: 50% auto auto 50%;
       z-index: 2;
       width: 100%;
       height: 100%;
+      transform: translate(-50%, -50%) scale(0.88);
       overflow: visible;
     }
 
@@ -7304,21 +7942,21 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      padding: 14px 16px;
+      gap: 4px;
+      padding: 11px 13px;
       background: rgba(255, 255, 255, 0.94);
     }
 
     body[data-flow="setup"] .cf-body b {
       color: rgba(28, 37, 55, 0.94);
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 850;
       line-height: 1.15;
     }
 
     body[data-flow="setup"] .cf-body span {
       color: rgba(84, 96, 118, 0.72);
-      font-size: 11.5px;
+      font-size: 10.5px;
       font-weight: 450;
       line-height: 1.4;
     }
@@ -7340,8 +7978,8 @@
       position: absolute;
       top: 50%;
       z-index: 500;
-      width: 44px;
-      height: 44px;
+      width: 38px;
+      height: 38px;
       padding: 0;
       border: 1px solid rgba(67, 82, 111, 0.1);
       border-radius: 50%;
@@ -7352,7 +7990,7 @@
       box-shadow: 0 12px 26px rgba(53, 68, 96, 0.09);
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
-      font-size: 24px;
+      font-size: 21px;
       line-height: 1;
       transform: translateY(-50%);
       transition: transform 0.15s ease, color 0.15s ease;
@@ -7435,23 +8073,20 @@
           <div class="entry-field">
             <label for="entryName">怎么称呼你？</label>
             <div class="entry-input-wrap">
-              <input id="entryName" placeholder="可选，例如：张同学" autocomplete="off" />
+              <input id="entryName" placeholder="张同学" autocomplete="off" />
               <span class="entry-input-action">可选</span>
             </div>
           </div>
-          <div class="flow-wrap entry-major-flow">
+          <div class="persona-flow entry-persona-flow" aria-label="选择你的形象">
             <div class="flow-head">
-              <h2>你希望是什么开局？</h2>
-              <span class="flow-hint"><span>←</span> 左右翻动选择 · <span id="pathCount">15 条路径</span> <span>→</span></span>
+              <h2>你想以什么状态出场？</h2>
             </div>
-            <div class="major-field coverflow">
-              <div class="major-grid" id="majorGrid" role="radiogroup" aria-label="意向专业方向"></div>
-              <button class="cf-nav prev" id="cfPrev" type="button" aria-label="上一个">‹</button>
-              <button class="cf-nav next" id="cfNext" type="button" aria-label="下一个">›</button>
+            <div class="persona-coverflow" id="avatarCoverflow">
+              <div class="persona-grid" id="avatarGrid" role="radiogroup" aria-label="角色形象"></div>
             </div>
-            <div class="cf-dots" id="cfDots" aria-hidden="true"></div>
+            <span class="flow-hint avatar-flow-hint">左右翻动选择你想要的形象</span>
           </div>
-          <button class="entry-cta" id="entryStart" type="button">我要验牌</button>
+          <button class="entry-cta" id="entryStart" type="button">生成我的开局</button>
           <p class="entry-disclaimer">结果仅供互动娱乐与专业理解参考，不构成志愿填报建议，不评价专业好坏，不替用户做决定。</p>
         </div>
       </section>
@@ -7459,18 +8094,6 @@
       <section class="panel setup-panel" aria-label="用户基础信息">
         <form class="profile-form" id="profileForm">
           <div class="setup-creator">
-            <div class="persona-flow" aria-label="选择你的形象">
-              <div class="flow-head">
-                <h2>选择你的形象</h2>
-                <span class="flow-hint"><span>←</span> 左右翻动选择 · <span id="avatarCount">6 张形象卡</span> <span>→</span></span>
-              </div>
-              <div class="persona-coverflow" id="avatarCoverflow">
-                <div class="persona-grid" id="avatarGrid" role="radiogroup" aria-label="角色形象"></div>
-                <button class="persona-nav prev" id="avatarPrev" type="button" aria-label="上一个形象">‹</button>
-                <button class="persona-nav next" id="avatarNext" type="button" aria-label="下一个形象">›</button>
-              </div>
-              <div class="persona-dots" id="avatarDots" aria-hidden="true"></div>
-            </div>
             <div class="creator-top">
               <aside class="creator-left">
                 <div class="id-portrait" aria-hidden="true">
@@ -7478,7 +8101,7 @@
                   <div class="profile-portrait" id="profilePreviewPortrait"></div>
                 </div>
                 <div class="sel-info">
-                  <span class="sel-kicker">已选方向</span>
+                  <span class="sel-kicker">你的开局身份</span>
                   <b id="profilePreviewName">计算机 / 算法</b>
                   <span class="cta-seed" id="seedLine">等待填写开局信息。</span>
                   <span id="profilePreviewLine" hidden>填写专业方向后，就可以生成第一张人生卡牌。</span>
@@ -7486,20 +8109,18 @@
               </aside>
 
               <div class="creator-right">
-                <span class="col-tag">角色资料</span>
+                <div class="flow-wrap entry-major-flow">
+                  <div class="flow-head">
+                    <h2>你希望怎么开局？</h2>
+                  </div>
+                  <div class="major-field coverflow">
+                    <div class="major-grid" id="majorGrid" role="radiogroup" aria-label="意向专业方向"></div>
+                  </div>
+                  <span class="flow-hint major-flow-hint">左右翻动选择你想要的专业</span>
+                </div>
+                <span class="col-tag">让剧情更准一点，可选</span>
                 <div class="field-grid">
-                  <label>
-                    名字
-                    <input id="studentName" placeholder="可选" autocomplete="off" />
-                  </label>
-                  <label>
-                    性别
-                    <select id="gender">
-                      <option>女生</option>
-                      <option>男生</option>
-                      <option>不限定</option>
-                    </select>
-                  </label>
+                  <input id="studentName" type="hidden" autocomplete="off" />
                   <label>
                     省份
                     <input id="province" placeholder="可选" autocomplete="off" />
@@ -7507,6 +8128,10 @@
                   <label>
                     分数
                     <input id="score" placeholder="可选" inputmode="numeric" autocomplete="off" />
+                  </label>
+                  <label class="wide">
+                    个人关键词
+                    <input id="keywords" placeholder="可选，例如：外向、稳、爱整活" autocomplete="off" />
                   </label>
                   <label class="wide">
                     家庭期待
@@ -7518,17 +8143,13 @@
                       <button type="button" data-value="自由探索" role="radio" aria-checked="false">自由探索</button>
                     </div>
                   </label>
-                  <label class="wide">
-                    个人关键词
-                    <input id="keywords" placeholder="可选，例如：外向、稳、爱整活" autocomplete="off" />
-                  </label>
                 </div>
               </div>
 
               <div class="setup-actions creator-actions">
                 <div class="setup-error" id="setupError" role="alert"></div>
                 <button class="dev-only" id="randomProfile" type="button">随机考生</button>
-                <button class="primary" id="applyProfile" type="submit">我要验牌</button>
+                <button class="primary" id="applyProfile" type="submit">开始验牌</button>
               </div>
             </div>
           </div>
@@ -7601,7 +8222,7 @@
 
   <section class="result-sheet" id="resultSheet" aria-modal="true" role="dialog" aria-labelledby="resultTitle">
     <div class="result-card">
-      <div class="result-hero">
+      <div class="result-hero" id="resultHero">
         <div class="result-copy">
           <small id="resultEyebrow">阶段结果</small>
           <h2 id="resultTitle">正在生成</h2>
@@ -7654,9 +8275,15 @@
       C: { label: "常规型", nick: "公人", word: "秩序", color: "#8bbf16", short: "流程、规则、数据、稳定执行", careerLabel: "流程运营", directions: ["财会审计", "合规风控", "数据运营", "行政管理", "流程管理"] }
     };
 
-    const coverflowStep = 120;
+    const coverflowStep = 88;
     let coverflowCenter = 0;
     let coverflowDrag = null;
+
+    function majorCoverflowStep() {
+      const width = els.majorGrid?.clientWidth || 0;
+      if (!width) return coverflowStep;
+      return Math.max(54, Math.min(coverflowStep, width / 5.8));
+    }
 
     const majorIconMeta = {
       cs: { h: 265, sym: "<path d='M9 8 L5 12 L9 16'/><path d='M15 8 L19 12 L15 16'/><path d='M13.2 6 L10.8 18'/>" },
@@ -8160,15 +8787,28 @@
     const majorKeys = Object.keys(majors);
 
     const profileAvatarArt = "url('assets/card_interaction/profile_avatar.png')";
+    const characterBasePath = "assets/characters";
     const avatarOptions = [
-      { id: "fresh", title: "清醒新生", desc: "看着乖，实际会自己拿主意", tag: "默认形象", hue: 215, rotate: "0deg", sat: 1 },
-      { id: "calm", title: "稳住型", desc: "先看清局面，再决定怎么出手", tag: "慢热靠谱", hue: 178, rotate: "12deg", sat: 0.92 },
-      { id: "bright", title: "外放型", desc: "人群里不怯场，机会来得快", tag: "表达在线", hue: 35, rotate: "-10deg", sat: 1.1 },
-      { id: "sharp", title: "锋利型", desc: "判断快，遇到难题先拆开", tag: "脑子很忙", hue: 284, rotate: "22deg", sat: 1.05 },
-      { id: "soft", title: "温和型", desc: "会照顾人，也不轻易乱答应", tag: "关系敏感", hue: 135, rotate: "-24deg", sat: 0.96 },
-      { id: "wild", title: "整活型", desc: "嘴上随便，关键时刻敢上桌", tag: "有点戏", hue: 332, rotate: "32deg", sat: 1.16 }
-    ].map(item => ({ ...item, art: profileAvatarArt }));
-    const avatarStep = 112;
+      { id: "男1", gender: "男生", title: "男 1", desc: "清爽理性，像会把题目拆开的人", tag: "男生 · 18岁", hue: 210, resultAge: 39 },
+      { id: "男2", gender: "男生", title: "男 2", desc: "松弛外放，适合先观察再出手", tag: "男生 · 18岁", hue: 184, resultAge: 38 },
+      { id: "男3", gender: "男生", title: "男 3", desc: "锋利直接，遇到难题先上桌", tag: "男生 · 18岁", hue: 270, resultAge: 28 },
+      { id: "男4", gender: "男生", title: "男 4", desc: "有点拽，但关键时刻不躲", tag: "男生 · 18岁", hue: 132, resultAge: 38 },
+      { id: "女1", gender: "女生", title: "女 1", desc: "温和清醒，看着乖但有主意", tag: "女生 · 18岁", hue: 35, resultAge: 38 },
+      { id: "女2", gender: "女生", title: "女 2", desc: "敏感细腻，适合慢慢长出边界", tag: "女生 · 18岁", hue: 118, resultAge: 38 },
+      { id: "女3", gender: "女生", title: "女 3", desc: "表达感强，人群里容易被看见", tag: "女生 · 18岁", hue: 350, resultAge: 38 },
+      { id: "女4", gender: "女生", title: "女 4", desc: "漂亮有锋芒，选择不会太客气", tag: "女生 · 18岁", hue: 22, resultAge: 38 },
+      { id: "女5", gender: "女生", title: "女 5", desc: "柔软但不糊涂，后劲很足", tag: "女生 · 18岁", hue: 320, resultAge: 38 }
+    ].map(item => {
+      return {
+        ...item,
+        startFile: `${item.id}-18.png`,
+        resultFile: `${item.id}-${item.resultAge}.png`,
+        rotate: item.rotate || "0deg",
+        sat: item.sat || 1,
+        art: `url('${characterBasePath}/${item.id}-18.png'), ${profileAvatarArt}`
+      };
+    });
+    const avatarStep = 98;
     let avatarCenter = 0;
     let avatarDrag = null;
     const questionSketchArt = [
@@ -8177,6 +8817,8 @@
       "url('assets/card_interaction/question_sketch_03.png')",
       "url('assets/card_interaction/question_sketch_04.png')"
     ];
+    const characterSceneBasePath = "assets/character_scenes";
+    const riasecTypeBasePath = "assets/riasec_types";
     const finalRoleArt = "url('assets/card_interaction/final_role_creator.png')";
     const batchSize = 10;
     const deepseekBatchSize = 5;
@@ -8190,7 +8832,7 @@
       index: 0,
       history: [],
       profile: {},
-      avatar: "fresh",
+      avatar: "男1",
       major: "cs",
       entryMajorText: "计算机科学与技术",
       deck: [],
@@ -8259,22 +8901,24 @@
       resultInsights: document.querySelector("#resultInsights"),
       resultHighlights: document.querySelector("#resultHighlights"),
       resultGuides: document.querySelector("#resultGuides"),
-      resultPortrait: document.querySelector("#resultPortrait")
+      resultPortrait: document.querySelector("#resultPortrait"),
+      resultHero: document.querySelector("#resultHero")
     };
 
     function readProfile() {
       const entryMajorText = cleanEntryMajor();
       const setupName = document.querySelector("#studentName")?.value.trim() || "";
       const entryName = els.entryName?.value?.trim() || "";
+      const avatar = currentAvatarOption();
       return {
         name: setupName || entryName || "未命名考生",
-        gender: document.querySelector("#gender").value,
+        gender: avatar.gender || "不限定",
         province: document.querySelector("#province").value.trim() || "未知省份",
         score: document.querySelector("#score").value.trim() || "未知分数",
         dream: "暂未填写",
         hope: document.querySelector("#familyHope")?.value || "稳定且体面",
         keywords: document.querySelector("#keywords").value.trim() || "观察中",
-        avatar: state.avatar || "fresh",
+        avatar: avatar.id || state.avatar || avatarOptions[0].id,
         major: entryMajorText || state.major,
         majorLabel: entryMajorText || majorLabel()
       };
@@ -8335,30 +8979,24 @@
     }
 
     const fixedQuestionSeeds = [
-      { title: "宿舍空调协议", prompt: "宿舍空调吵到凌晨，群里已经有人开始阴阳怪气。你发现不立个办法，今晚谁都睡不成。", left: "拉个投票定规则，先把今晚稳住", right: "先不开口，等大家自己消气", leftHint: "立规矩", rightHint: "先观察", tagA: "定规则", tagB: "低冲突", consequenceA: "你定下空调表，宿舍终于睡着了，但也有人嫌你太爱管事", consequenceB: "你没插手争论，表面少了冲突，半夜却又被吵醒一次", deltaA: { discipline: 5, stability: 4, pressure: 1 }, deltaB: { stability: 3, empathy: -2, pressure: 3 } },
-      { title: "朋友圈误发", prompt: "你发感悟时错配了食堂付款码，朋友已经开始点赞。删除会尴尬，不删更像公开处刑。", left: "立刻删除截图，先把损失止住", right: "顺势自嘲，把尴尬变成梗", leftHint: "删除", rightHint: "自嘲", tagA: "止损", tagB: "转梗", consequenceA: "你删得很快，截图没再扩散，但朋友群笑你手速像灭火", consequenceB: "你接住了这个梗，群里笑成一片，沈拓也第一次主动回你", deltaA: { stability: 4, pressure: 2, explore: -1 }, deltaB: { empathy: 4, explore: 5, pressure: -2 } },
-      { title: "家里转来长文", prompt: "家里转来一篇专业劝退长文，排版很旧，语气很重。你知道他们怕你走错，但也不能一直被吓着走。", left: "列出事实和路径，认真解释一次", right: "先接住担心，晚点再谈细节", leftHint: "解释", rightHint: "安抚", tagA: "讲事实", tagB: "先安抚", consequenceA: "你把路径讲清楚，家里少了几句催促，但开始盯你的成绩", consequenceB: "你先把家里安抚住了，晚饭电话短了很多，问题却还没真正解决", deltaA: { discipline: 3, empathy: 3, pressure: 1 }, deltaB: { empathy: 6, stability: 3, ambition: -1 } },
-      { title: "同学账号起飞", prompt: "常借你充电器的同学短视频爆了，转头邀你一起做号。机会看着真，麻烦也像会按月续费。", left: "先试一条内容，用数据再判断", right: "礼貌拒绝，别把时间全押上去", leftHint: "试一期", rightHint: "拒绝", tagA: "小试", tagB: "边界", consequenceA: "你试做一条视频，数据不错，但周末复习时间被吃掉一半", consequenceB: "你拒绝了邀约，时间表稳住了，那位同学之后少找你借充电器", deltaA: { explore: 6, ambition: 4, pressure: -2 }, deltaB: { stability: 5, discipline: 2, explore: -2 } },
-      { title: "活动临时救场", prompt: "活动前一小时主持人失声，所有人同时看向你。你只是路过，却被推到最亮的灯下面。", left: "硬着头皮上台，先把场面托住", right: "推荐更合适的人，自己做后援", leftHint: "上台", rightHint: "推荐", tagA: "救场", tagB: "调度", consequenceA: "你把场面撑住了，老师记住你的表达力，也顺手把下次活动交给你", consequenceB: "你推荐的人稳住现场，自己没露脸，但团队开始觉得你懂分工", deltaA: { ambition: 5, explore: 4, pressure: -2 }, deltaB: { empathy: 4, stability: 3, pressure: 1 } },
-      { title: "简历没人回复", prompt: "你投了十几份简历都没回音，只有一位学长指出项目描述太空。问题不玄，是你没讲清自己做成了什么。", left: "重写项目结果，把证据补齐", right: "继续海投，先用数量撞机会", leftHint: "重写", rightHint: "海投", tagA: "复盘", tagB: "广撒网", consequenceA: "你重写了项目结果，面试邀约少但更准，作息也没被海投拖垮", consequenceB: "你继续海投，邮箱热闹了，真正匹配的机会却还是不多", deltaA: { discipline: 5, ambition: 3, stability: 1 }, deltaB: { explore: 5, pressure: 2, discipline: -2 } },
-      { title: "饭局突然点名", prompt: "前辈让你讲两句未来规划，桌上瞬间安静。你筷子还没放下，就被迫把自己讲明白。", left: "认真讲清方向，顺便要建议", right: "轻松带过，不把饭局变答辩", leftHint: "认真讲", rightHint: "带过去", tagA: "表达", tagB: "卸力", consequenceA: "你讲清了方向，前辈饭后发来一个机会，也顺手加了压力", consequenceB: "你用玩笑带过了追问，饭局轻松了，前辈也没再继续深聊", deltaA: { ambition: 5, discipline: 2, pressure: -1 }, deltaB: { empathy: 5, stability: 2, pressure: 2 } },
-      { title: "凌晨项目消息", prompt: "凌晨一点，项目群弹出一句“都在吗”。你知道这不是问候，通常是任务披着睡衣来了。", left: "马上回复，先把问题接住", right: "明早处理，守住休息边界", leftHint: "回复", rightHint: "明早", tagA: "响应", tagB: "边界", consequenceA: "你半夜接住了问题，项目保住进度，你第二天早八差点迟到", consequenceB: "你没有半夜上线，睡眠保住了，群里却默认你不适合急活", deltaA: { pressure: -4, discipline: 4, ambition: 2 }, deltaB: { stability: 5, empathy: -1, pressure: 4 } },
-      { title: "朋友开口借钱", prompt: "多年朋友找你借一笔钱，说下个月一定还。你相信他，但也见过太多下个月变成下下个月。", left: "借钱但写清时间和金额", right: "不借现金，帮他找别的办法", leftHint: "写清楚", rightHint: "给方案", tagA: "边界", tagB: "支持", consequenceA: "你把钱借出去了，关系没伤，但还款日开始变成心里闹钟", consequenceB: "你没直接借钱，朋友有点失落，后来还是用了你的解决方案", deltaA: { empathy: 5, discipline: 3, pressure: -1 }, deltaB: { stability: 5, empathy: 2, ambition: -1 } },
-      { title: "体检一个红字", prompt: "体检报告冒出一个红色指标，医生说先别慌。你嘴上说淡定，搜索记录已经把自己送进医学剧。", left: "立刻调整作息，先管身体", right: "预约复查，用数据确认问题", leftHint: "调整", rightHint: "复查", tagA: "健康", tagB: "求证", consequenceA: "你停了几次熬夜，身体指标慢慢回落，项目进度也被迫降速", consequenceB: "你去复查确认了风险，心里稳了，也开始认真记睡眠时间", deltaA: { stability: 5, pressure: 4, ambition: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 } },
-      { title: "同学聚会比较", prompt: "聚会上有人把收入和职级聊成排行榜，你不想参赛，耳朵却已经自动记分。再坐下去，心态要被带跑。", left: "换个话题，保护自己的节奏", right: "正面接招，看看差距在哪", leftHint: "换话题", rightHint: "接招", tagA: "护心态", tagB: "竞争", consequenceA: "你换掉了比较话题，心态没被带跑，也少拿自己跟别人乱比", consequenceB: "你听完了差距，回家列了计划，焦虑也跟着一起到家", deltaA: { stability: 5, empathy: 2, ambition: -2 }, deltaB: { ambition: 6, pressure: -3, discipline: 2 } },
-      { title: "老师递来难活", prompt: "曾经帮过你的老师推荐你接一个难项目，名字听着很体面，工作量也很实在。机会这次没穿西装，穿的是加班外套。", left: "接下项目，换一个硬履历", right: "说清顾虑，争取缩小范围", leftHint: "接下", rightHint: "谈范围", tagA: "承接", tagB: "沟通", consequenceA: "你接下了难项目，履历多了一行，周末也少了一大半", consequenceB: "你谈清了范围，老师没生气，还把任务拆成能完成的两段", deltaA: { ambition: 5, discipline: 3, pressure: -2 }, deltaB: { empathy: 4, stability: 4, explore: -1 } },
-      { title: "房东突然涨租", prompt: "房东说附近新商场开业，所以房租要涨。你看着通勤时间，感觉自己也被城市当成订阅用户。", left: "搬远一点，先把成本降下来", right: "留下谈价，争取少涨一点", leftHint: "搬走", rightHint: "砍价", tagA: "控成本", tagB: "谈判", consequenceA: "你搬远了，房租降下来，通勤却每天多吞掉四十分钟", consequenceB: "你谈下了涨幅，住处保住了，也第一次认真算生活账", deltaA: { stability: 4, pressure: 3, explore: 2 }, deltaB: { discipline: 4, empathy: 1, ambition: 1 } },
-      { title: "婚礼同桌追问", prompt: "朋友婚礼把你安排到陌生人桌，大家从客气聊到人生进度。再不接话，你就要被问到三年规划。", left: "主动破冰，把话题拉回现场", right: "低调吃饭，减少无效社交", leftHint: "破冰", rightHint: "低调", tagA: "破冰", tagB: "省电", consequenceA: "你把话题拉回婚礼，陌生桌气氛活了，也多加了两个联系人", consequenceB: "你安静吃完这桌饭，能量保住了，后来没人记住你来过", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { stability: 4, pressure: 3, ambition: -1 } },
-      { title: "旧物翻出来", prompt: "你翻出早年留下的小物件，想起一次差点放弃的选择。它不值钱，但像把旧路重新亮了一下。", left: "留下它，提醒自己别忘来路", right: "拍照告别，轻装继续往前", leftHint: "留下", rightHint: "告别", tagA: "留锚点", tagB: "轻装", consequenceA: "你把旧物留在桌角，每次赶工都能想起当初为什么开始", consequenceB: "你拍照后收起旧物，心里轻了一点，也不再反复回头", deltaA: { empathy: 4, stability: 3, pressure: 1 }, deltaB: { explore: 4, stability: 2, ambition: 1 } },
-      { title: "领导一句自由发挥", prompt: "领导说这事很简单，你自由发挥。你听懂了：边界未知，责任明确，最后可能还有一口锅。", left: "先确认边界，再开始动手", right: "先做样稿，用结果换反馈", leftHint: "要边界", rightHint: "做样稿", tagA: "澄清", tagB: "试做", consequenceA: "你问清了边界，返工少了，领导也知道你不是盲接任务的人", consequenceB: "你先交了样稿，反馈来得很快，返工也一起排队来了", deltaA: { discipline: 5, stability: 3, empathy: 1 }, deltaB: { explore: 5, ambition: 3, pressure: -1 } },
-      { title: "亲戚临时咨询", prompt: "亲戚听说你懂这个专业，立刻把孩子分数和截图全发来。你只是回家吃饭，忽然变成半个咨询台。", left: "认真分析一次，讲清风险", right: "只给原则，不替别人拍板", leftHint: "分析", rightHint: "原则", tagA: "输出", tagB: "边界", consequenceA: "你认真分析完，亲戚很感谢，之后又把三个朋友推给你", consequenceB: "你只给了原则，饭桌轻松很多，也没人把结果全压到你身上", deltaA: { empathy: 6, discipline: 2, pressure: -2 }, deltaB: { stability: 4, empathy: 2, pressure: 3 } },
-      { title: "项目被转发", prompt: "你参与的小项目被陌生账号截图转发，评论区有人夸也有人挑刺。公共表达这扇门，自己开了。", left: "公开回应，把问题讲清楚", right: "暂时沉默，先观察舆论", leftHint: "回应", rightHint: "沉默", tagA: "回应", tagB: "冷处理", consequenceA: "你公开回应后，质疑少了不少，也有人开始私信找你合作", consequenceB: "你先沉默观察，风波慢慢散了，错过的合作也跟着散了", deltaA: { ambition: 5, empathy: 3, pressure: -3 }, deltaB: { stability: 5, discipline: 2, explore: -1 } },
-      { title: "搭子要去外地", prompt: "长期一起做事的搭子要去另一座城市，你们的节奏第一次错开。继续绑在一起，会累；直接散，也舍不得。", left: "继续远程合作，先试三个月", right: "体面拆伙，把关系留下来", leftHint: "远程", rightHint: "拆伙", tagA: "延续", tagB: "告别", consequenceA: "你们远程试了三个月，项目还能跑，但沟通成本明显变高", consequenceB: "你们体面拆伙，合作停了，关系反而没被拖到难看", deltaA: { empathy: 5, discipline: 3, pressure: -1 }, deltaB: { stability: 5, explore: 2, empathy: -1 } },
-      { title: "机会错过两天", prompt: "一个重要机会被你晚看到两天，对方已经找到别人。你第一次发现，免打扰也能改变剧情。", left: "补救争取，问是否还有位置", right: "复盘放下，重建消息机制", leftHint: "补救", rightHint: "复盘", tagA: "补救", tagB: "复盘", consequenceA: "你补救争取到候补位，机会没完全回来，联系人却记住了你", consequenceB: "你放下这次机会，重新整理提醒规则，后面少漏了两次消息", deltaA: { ambition: 5, pressure: -2, discipline: 2 }, deltaB: { stability: 5, discipline: 3, explore: -1 } },
-      { title: "家庭会议开场", prompt: "家里为你的选择开了小型会议，每个人都很爱你，也都想改你剧本。你得回应爱，也得保住自己。", left: "听多数意见，先降低冲突", right: "自己拍板，再解释代价", leftHint: "听多数", rightHint: "拍板", tagA: "协商", tagB: "自决", consequenceA: "你按多数意见退了一步，家里安心了，你心里却留了个问号", consequenceB: "你自己拍板定下方向，家里沉默了几天，后来开始看你行动", deltaA: { empathy: 5, stability: 3, ambition: -1 }, deltaB: { ambition: 5, explore: 3, pressure: -2 } },
-      { title: "计划突然偏航", prompt: "你写下今年三个变化，最重要那个完全不在计划里。计划没错，只是现实又多开了一条支线。", left: "重写计划，把变化纳入路线", right: "顺势调整，先抓住当下机会", leftHint: "重写", rightHint: "顺势", tagA: "计划", tagB: "应变", consequenceA: "你重写了计划，路径清楚很多，也删掉了两个不必要目标", consequenceB: "你顺势接住新机会，故事变热闹了，原计划被挤到后排", deltaA: { discipline: 5, stability: 3, pressure: 1 }, deltaB: { explore: 5, empathy: 2, ambition: 1 } },
-      { title: "证书广告命中", prompt: "一个证书广告精准命中焦虑，说拿下它就能升级人生。你看完价格，感觉升级包有点贵。", left: "报名系统学，逼自己补短板", right: "先问前辈，确认含金量", leftHint: "报名", rightHint: "询问", tagA: "投资", tagB: "求证", consequenceA: "你报名后按周学习，钱包薄了，但短板真的补上了一截", consequenceB: "你问完前辈避开了坑，省下钱，也多认识一个可靠信息源", deltaA: { discipline: 4, ambition: 3, pressure: -1 }, deltaB: { stability: 4, empathy: 2, explore: 1 } },
-      { title: "分享突然出圈", prompt: "你随手做的一次分享被行业前辈转发，机会突然变大。被看见很爽，也意味着以后不能乱写。", left: "顺势扩大，做成系列内容", right: "稳住节奏，先打磨质量", leftHint: "扩大", rightHint: "稳住", tagA: "放大", tagB: "打磨", consequenceA: "你把分享做成系列，关注涨得很快，更新压力也跟着上桌", consequenceB: "你先打磨内容质量，增长慢了，但每次发布都更站得住", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, ambition: -1 } }
+      { title: "群里点名", prompt: "新生群刚安静三分钟，室友周越就把你拉进第一个小项目，辅导员林知夏还在群里看着。隔壁班女生许闻笙也在同一间机房自习，你还没认全人，开学第一波活已经开始点名。", left: "先上桌", right: "先摸路", leftHint: "上桌", rightHint: "摸路", tagA: "露脸", tagB: "稳住", consequenceA: "林知夏记住你的名字，许闻笙开始在群里接话", consequenceB: "课表先稳住了，许闻笙记住你常坐靠窗位", deltaA: { ambition: 5, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, explore: 1 }, riasecA: { E: 4, S: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
+      { title: "文件失踪", prompt: "上一波活让你在群里有了姓名，展示前材料却突然空白，周越疯狂发问号。许闻笙给你留的靠窗座还在，你的电脑先进入职场预告片：人在大学，锅已到账。", left: "先补锅", right: "先查因", leftHint: "补锅", rightHint: "查因", tagA: "救场", tagB: "求证", consequenceA: "你补出展示材料，项目群默认你能当备用电源", consequenceB: "你查到文件源头，返工少了一半但群里安静了", deltaA: { discipline: 4, pressure: -2, ambition: 2 }, deltaB: { explore: 4, discipline: 3, stability: 1 }, riasecA: { C: 3, R: 2, E: 1 }, riasecB: { I: 4, C: 1, R: 1 } },
+      { title: "合照起哄", prompt: "补锅那晚之后，活动合照被周越发进群，顺手艾特你和隔壁班女生许闻笙。你想解释只是同框，她却回了一个表情，像在说：别把暧昧写成情况说明。", left: "接住梗", right: "讲清楚", leftHint: "接梗", rightHint: "讲清", tagA: "暧昧", tagB: "理清", consequenceA: "群里开始起哄，许闻笙没否认还顺手补了个表情", consequenceB: "话是讲清了，许闻笙把聊天气氛降到礼貌区", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { discipline: 3, stability: 3, empathy: 1 }, riasecA: { S: 4, A: 2 }, riasecB: { I: 3, C: 2, S: 1 } },
+      { title: "考研群炸", prompt: "你和许闻笙的合照梗还没冷，考研群、绩点表、项目邀约同天冒泡。林知夏说机会难得，周越说别卷死，手机像在开三方会，只差给你发会议纪要。", left: "闭门学", right: "冲项目", leftHint: "考研", rightHint: "项目", tagA: "深造", tagB: "机会", consequenceA: "你退掉两个项目群，复习表终于能被认真打开", consequenceB: "项目跑起来了，复习群沉底，许闻笙留了句别熬太晚", deltaA: { discipline: 5, stability: 3, explore: 1 }, deltaB: { ambition: 5, explore: 4, pressure: -2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 4, R: 1, A: 1 } },
+      { title: "展示出圈", prompt: "你前面为了项目压过复习，那份展示被学长转给合作方，截图一路飞到对方群里。被看见很爽，下一版催更也很快，像刚出圈就被加班实名认领。", left: "做系列", right: "磨质量", leftHint: "放大", rightHint: "打磨", tagA: "出圈", tagB: "耐磨", consequenceA: "关注涨得很快，合作方开始把下一版排进日程", consequenceB: "增长慢了，但每次发布更稳，许闻笙也少催你睡觉", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { A: 3, E: 3 }, riasecB: { C: 3, I: 2, A: 1 } },
+      { title: "约饭撞车", prompt: "合作方催更排进日程后，你和许闻笙约好的饭被临时工作撞掉。她回你一个没事，后面没有句号也没有表情，你第一次发现两个字也能带字幕：你最好真有事。", left: "先见她", right: "先交付", leftHint: "赴约", rightHint: "交付", tagA: "接人", tagB: "保活", consequenceA: "饭终于吃上了，项目群把你记成慢回但没炸", consequenceB: "项目按时交了，许闻笙撤回一条你没看见的消息", deltaA: { empathy: 6, stability: 1, ambition: -1 }, deltaB: { discipline: 5, pressure: -2, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, R: 1, E: 1 } },
+      { title: "两头夹击", prompt: "你刚把那顿饭补上，导师林知夏又点你去学院展示，合作方项目群同时喊数据卡住。许闻笙问你今晚还吃饭吗，你看着三个窗口，感觉自己被系统申请多开。", left: "冲展示", right: "救数据", leftHint: "体面", rightHint: "结果", tagA: "露脸", tagB: "交付", consequenceA: "林知夏记住了你，项目群开始用省略号表达意见", consequenceB: "数据救回来了，展示位让给别人，许闻笙也没再追问", deltaA: { ambition: 5, empathy: 1, pressure: -2 }, deltaB: { discipline: 5, stability: 3, pressure: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { C: 4, R: 1, I: 1 } },
+      { title: "你在躲吗", prompt: "两头夹击之后，你的聊天回复开始像月更连载。许闻笙在机房门口问你最近是在忙，还是在躲，周越路过装没听见，但耳朵已经完成签到。", left: "当面说", right: "继续忙", leftHint: "回应", rightHint: "推进", tagA: "说开", tagB: "硬扛", consequenceA: "你们把话说开，周末重新空出来给这段关系", consequenceB: "任务推进了，许闻笙把回复变短也变客气", deltaA: { empathy: 6, pressure: -2, stability: 1 }, deltaB: { ambition: 4, discipline: 3, empathy: -2 }, riasecA: { S: 4, E: 1, A: 1 }, riasecB: { E: 3, C: 2, R: 1 } },
+      { title: "群聊翻车", prompt: "你以为忙完就能补关系，项目群先把一次低级失误截图放大。周越私聊你说别硬扛，许闻笙也看见了那张图，手机不烫，脸先进入高温预警。", left: "自己修", right: "拉人修", leftHint: "动手", rightHint: "协作", tagA: "补锅", tagB: "组队", consequenceA: "锅补上了，你也熬成项目群里的深夜传说", consequenceB: "队友进场一起收拾，许闻笙说你终于会求救", deltaA: { discipline: 4, pressure: -2, explore: 2 }, deltaB: { empathy: 5, stability: 2, pressure: 1 }, riasecA: { R: 4, C: 1, I: 1 }, riasecB: { S: 4, E: 1, C: 1 } },
+      { title: "关系上桌", prompt: "群聊翻车被你们一起收住后，朋友又把你和许闻笙的合照顶上来起哄。含糊突然不够用了，默认关系像免费试用到期，弹窗只剩两个按钮。", left: "说出来", right: "私下谈", leftHint: "公开", rightHint: "私聊", tagA: "表达", tagB: "稳谈", consequenceA: "朋友群炸了，许闻笙却笑着没有否认", consequenceB: "你们私下谈完，群里反而安静得很懂事", deltaA: { explore: 5, empathy: 3, pressure: -1 }, deltaB: { empathy: 4, stability: 3, pressure: 1 }, riasecA: { A: 4, S: 1, E: 1 }, riasecB: { S: 3, C: 2, I: 1 } },
+      { title: "家里连环问", prompt: "关系刚被摆上桌，新平台又抛来更大的机会，家里把稳定两个字发成连环消息。许闻笙问你想去哪里，你看着屏幕，像被拉进家庭远程股东会。", left: "换平台", right: "算清账", leftHint: "换挡", rightHint: "算账", tagA: "机会", tagB: "求证", consequenceA: "平台换了，家里每天问进度，许闻笙开始问城市", consequenceB: "账算清了，机会窗口缩小，但家里终于少刷屏", deltaA: { ambition: 6, explore: 3, stability: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { I: 4, C: 2 } },
+      { title: "旧账翻出", prompt: "你为了新平台和家里拉扯，约会迟到十分钟，许闻笙翻出三个月旧账。迟到本身不大，账本很厚，厚到你怀疑她给你开了关系版项目管理表。", left: "先认错", right: "先理事", leftHint: "接情绪", rightHint: "理责任", tagA: "接住", tagB: "对账", consequenceA: "情绪先落地，但你欠下了一份真正能执行的行动表", consequenceB: "责任理清了，许闻笙沉默得更整齐", deltaA: { empathy: 6, pressure: -1, stability: 1 }, deltaB: { discipline: 4, stability: 3, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
+      { title: "家庭董事会", prompt: "旧账还没完全翻篇，家里又把你的选择开成小型董事会，亲戚都带着爱和修改意见入场。许闻笙没有插话，只问你一句：这次剧本是谁写？", left: "先安抚", right: "自己拍", leftHint: "安抚", rightHint: "拍板", tagA: "接人", tagB: "主张", consequenceA: "家里安心了一阵，你心里却留下一个没说出口的问号", consequenceB: "家里沉默几天，后来开始看你的行动而不是口号", deltaA: { empathy: 5, stability: 2, ambition: -1 }, deltaB: { ambition: 5, explore: 3, pressure: -2 }, riasecA: { S: 4, C: 1, A: 1 }, riasecB: { E: 4, A: 1, I: 1 } },
+      { title: "没人回复", prompt: "你拍板后投出去十几份材料，却只有一位学长回你：描述太空。许闻笙看见你盯着邮箱刷新，没安慰鸡汤，只把那句评价圈出来：先证明你做成了什么。", left: "重写证据", right: "继续海投", leftHint: "重写", rightHint: "海投", tagA: "复盘", tagB: "撞门", consequenceA: "邀约少但更准，许闻笙说你终于不像在投许愿瓶", consequenceB: "邮箱热闹了，靠谱机会还是不多，焦虑开始排队", deltaA: { discipline: 5, explore: 2, stability: 1 }, deltaB: { ambition: 4, pressure: -2, explore: 2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 3, C: 2, R: 1 } },
+      { title: "有没有位置", prompt: "材料重写后机会慢慢回来，你的日程也重新爆满。许闻笙不再问你忙不忙，只问这段关系有没有她的位置，你突然像在补考成年人，而且监考老师还是你喜欢的人。", left: "给行动", right: "排现实", leftHint: "行动", rightHint: "现实", tagA: "补考", tagB: "排期", consequenceA: "周末被你空出来，许闻笙终于重新坐回日常里", consequenceB: "现实排稳了，许闻笙也退到礼貌但疏远的位置", deltaA: { empathy: 6, pressure: -1, stability: 1 }, deltaB: { discipline: 4, stability: 3, empathy: -2 }, riasecA: { S: 4, E: 1, A: 1 }, riasecB: { C: 4, I: 1, R: 1 } },
+      { title: "别人来问路", prompt: "几年后，有个学弟拿着你的旧截图来问怎么选，说你像参考答案。周越在旁边笑出声，许闻笙也看着你，你才发现自己不是答案，只是被生活批改过很多遍。", left: "讲原则", right: "讲代价", leftHint: "原则", rightHint: "代价", tagA: "拆解", tagB: "接人", consequenceA: "学弟拿走了方法，你也重新看清自己的路线", consequenceB: "学弟听懂了代价，你少说了几句漂亮话", deltaA: { explore: 4, discipline: 3, empathy: 1 }, deltaB: { empathy: 5, stability: 2, pressure: 1 }, riasecA: { I: 4, C: 1, S: 1 }, riasecB: { S: 4, A: 1, I: 1 } },
+      { title: "不能再模糊", prompt: "被学弟一问，你和许闻笙也走到最后一层问题：关系不能再靠默认续费。你们都变忙了，也都更清楚自己要什么，沉默不是体面，是自动扣费。", left: "说出来", right: "好好告别", leftHint: "表态", rightHint: "告别", tagA: "公开", tagB: "体面", consequenceA: "话说出口，许闻笙把你认真排进以后", consequenceB: "告别很体面，你们没有把旧账摔碎", deltaA: { ambition: 4, empathy: 4, pressure: -2 }, deltaB: { empathy: 4, stability: 3, explore: 1 }, riasecA: { E: 3, A: 2, S: 1 }, riasecB: { A: 3, S: 2, C: 1 } },
+      { title: "最后一句", prompt: "最后一张牌不是问你成没成功，而是问你愿意把哪句真话留给十八岁的自己。许闻笙、周越和林知夏都成了回声，你终于不用把人生讲成完美简历。", left: "讲体面", right: "讲代价", leftHint: "体面", rightHint: "真实", tagA: "收束", tagB: "真话", consequenceA: "你把路线讲顺了，也诚实藏起几处疼", consequenceB: "你把代价说透，十八岁的自己反而松了一口气", deltaA: { stability: 3, empathy: 2, discipline: 2 }, deltaB: { explore: 3, empathy: 3, pressure: 1 }, riasecA: { C: 2, S: 2, E: 1, I: 1 }, riasecB: { A: 2, S: 2, I: 1, R: 1 } }
     ];
 
     function hashString(text) {
@@ -8398,17 +9036,13 @@
     }
 
     function getStoryCast() {
-      const maleNames = ["周竞", "程野", "陆一川", "贺闻", "沈拓"];
-      const femaleNames = ["沈枝", "许遥", "姜南", "林雾", "周栀"];
-      const neutralNames = ["许青禾", "陈泊", "林楠", "苏望", "乔予"];
-      const profile = state.profile || readProfile();
-      const relationPool = profile.gender === "男生"
-        ? femaleNames
-        : profile.gender === "女生"
-          ? maleNames
-          : [...neutralNames, ...maleNames.slice(0, 2), ...femaleNames.slice(0, 2)];
+      const maleNames = ["周竞", "程野", "陆一川", "沈拓"];
+      const neutralNames = ["宋禾", "陈泊", "林楠", "苏望", "乔予"];
       return {
-        relationName: pickFromPool(relationPool, 11),
+        relationName: "许闻笙",
+        relationGender: "女生",
+        relationIntro: "隔壁班女生，常在机房靠窗位自习",
+        supportingName: pickFromPool(maleNames, 12),
         roommateName: pickFromPool(neutralNames, 21),
         mentorName: pickFromPool(["林知夏", "孟回", "顾行舟", "周砚", "齐老师"], 31)
       };
@@ -8532,18 +9166,21 @@
           title: template.leftHint,
           desc: leftOption,
           tag: template.tagA,
-          consequence: template.consequenceA
+          consequence: template.consequenceA,
+          riasec: template.riasecA
         },
         b: {
           title: template.rightHint,
           desc: rightOption,
           tag: template.tagB,
-          consequence: template.consequenceB
+          consequence: template.consequenceB,
+          riasec: template.riasecB
         },
         left: {
           label: leftOption,
           tag: template.tagA,
           consequence: template.consequenceA,
+          riasec: template.riasecA,
           delta: template.deltaA,
           feedback: template.consequenceA || draftChoiceFeedback(template.title, { title: template.left, label: leftOption, tag: template.tagA }, "A")
         },
@@ -8551,6 +9188,7 @@
           label: rightOption,
           tag: template.tagB,
           consequence: template.consequenceB,
+          riasec: template.riasecB,
           delta: template.deltaB,
           feedback: template.consequenceB || draftChoiceFeedback(template.title, { title: template.right, label: rightOption, tag: template.tagB }, "B")
         }
@@ -8568,20 +9206,34 @@
         yearNumber: 1,
         question: `第 1 年 / ${state.totalYears}`,
         summary: "",
-        scene: `事件：录取群第一天就弹出人生岔路\n情境：${displayName}带着「${majorText}」方向进了新生群${keywordText}。辅导员林知夏刚发完通知，室友周越就拉你加入第一个小项目。机会像欢迎礼包，代价是开学第一周就要把作息交出去。`,
-        a: "A. 立刻加入项目，把专业新手村打出声响",
-        b: "B. 先稳住节奏，把大学地图摸清再行动",
+        scene: `事件：录取群第一天就弹出人生岔路\n情境：${displayName}带着「${majorText}」方向进了新生群${keywordText}。辅导员林知夏刚发完通知，室友周越就拉你加入第一个小项目，隔壁班女生许闻笙也在机房靠窗位自习。机会像欢迎礼包，代价是开学第一周就要把作息交出去。`,
+        a: {
+          title: "先上桌",
+          desc: "接下项目，开局露脸",
+          tag: "露脸",
+          consequence: `林知夏记住你，${cast.relationName}开始在群里接你的话`,
+          riasec: { E: 4, S: 1, C: 1 }
+        },
+        b: {
+          title: "先摸路",
+          desc: "稳住课表，再看机会",
+          tag: "稳住",
+          consequence: `课表稳住了，${cast.relationName}记住你常坐靠窗位`,
+          riasec: { C: 4, I: 1, S: 1 }
+        },
         left: {
           label: "立刻加入项目，把专业新手村打出声响",
           tag: "开局冲刺",
+          riasec: { E: 4, S: 1, C: 1 },
           delta: { explore: 5, ambition: 4, pressure: -2 },
-          feedback: `你接下了第一波活，室友和辅导员都记住了你这个开学就敢上桌的人。${cast.relationName}也开始在群里顺手接你的话。`
+          feedback: `你接下了第一波活，周越和林知夏都记住了你这个开学就敢上桌的人。隔壁班女生${cast.relationName}也开始在群里顺手接你的话。`
         },
         right: {
           label: "先稳住节奏，把大学地图摸清再行动",
           tag: "稳住节奏",
+          riasec: { C: 4, I: 1, S: 1 },
           delta: { stability: 5, discipline: 3, explore: 1 },
-          feedback: `你没让开学第一周直接炸掉，作息先稳了下来，专业课也没掉线。${cast.relationName}开始记住你总坐机房靠窗那一排。`
+          feedback: `你没让开学第一周直接炸掉，作息先稳了下来，专业课也没掉线。隔壁班女生${cast.relationName}开始记住你总坐机房靠窗那一排。`
         }
       });
     }
@@ -8607,18 +9259,21 @@
           title: template.leftHint,
           desc: leftOption,
           tag: template.tagA,
-          consequence: template.consequenceA
+          consequence: template.consequenceA,
+          riasec: template.riasecA
         },
         b: {
           title: template.rightHint,
           desc: rightOption,
           tag: template.tagB,
-          consequence: template.consequenceB
+          consequence: template.consequenceB,
+          riasec: template.riasecB
         },
         left: {
           label: leftOption,
           tag: template.tagA,
           consequence: template.consequenceA,
+          riasec: template.riasecA,
           delta: template.deltaA,
           feedback: template.consequenceA || draftChoiceFeedback(template.title, { title: template.left, label: leftOption, tag: template.tagA }, "A")
         },
@@ -8626,6 +9281,7 @@
           label: rightOption,
           tag: template.tagB,
           consequence: template.consequenceB,
+          riasec: template.riasecB,
           delta: template.deltaB,
           feedback: template.consequenceB || draftChoiceFeedback(template.title, { title: template.right, label: rightOption, tag: template.tagB }, "B")
         }
@@ -8655,17 +9311,43 @@
       return avatarOptions.find(item => item.id === state.avatar) || avatarOptions[0];
     }
 
+    function avatarGenderFolder(avatar = currentAvatarOption()) {
+      return avatar.gender === "男生" ? "male" : "female";
+    }
+
+    function selectedAvatarResultArt() {
+      const avatar = currentAvatarOption();
+      const resultFile = avatar.resultFile || `${avatar.id}-${avatar.resultAge || 38}.png`;
+      return `url('${characterBasePath}/${resultFile}'), ${finalRoleArt}`;
+    }
+
+    function hollandTypeArt(primary = "I") {
+      const code = String(primary || "I").trim().charAt(0).toUpperCase();
+      const safeCode = hollandTypes[code] ? code : "I";
+      const fileMap = {
+        R: "R_realistic.png",
+        I: "I_investigative.png",
+        A: "A_artistic.png",
+        S: "S_social.png",
+        E: "E_enterprising.png",
+        C: "C_conventional.png"
+      };
+      return `url('${riasecTypeBasePath}/${fileMap[safeCode]}')`;
+    }
+
     function avatarFilter(avatar = currentAvatarOption()) {
       return `saturate(${avatar.sat || 1}) hue-rotate(${avatar.rotate || "0deg"})`;
     }
 
     function applyProfile(profile = readProfile()) {
       state.profile = profile;
-      state.avatar = profile.avatar || state.avatar || "fresh";
+      const requestedAvatar = profile.avatar || state.avatar || avatarOptions[0].id;
+      state.avatar = avatarOptions.some(item => item.id === requestedAvatar) ? requestedAvatar : avatarOptions[0].id;
       if (profile.major && majors[profile.major]) state.major = profile.major;
       const shownMajor = profile.majorLabel || majorLabel();
       const avatar = currentAvatarOption();
       const seedParts = [
+        avatar.gender || "",
         profile.province !== "未知省份" ? profile.province : "",
         profile.score !== "未知分数" ? `${profile.score} 分` : "",
         `意向「${shownMajor}」`,
@@ -8673,7 +9355,7 @@
       ].filter(Boolean);
       els.seedLine.textContent = seedParts.join("，") || "等待填写开局信息。";
       els.profileName.textContent = profile.name;
-      els.profileSummary.textContent = `${profile.province !== "未知省份" ? profile.province : "地区未知"} · ${profile.score !== "未知分数" ? `${profile.score} 分` : "分数未知"} · ${shownMajor}`;
+      els.profileSummary.textContent = `${avatar.gender || "性别随形象"} · ${profile.province !== "未知省份" ? profile.province : "地区未知"} · ${profile.score !== "未知分数" ? `${profile.score} 分` : "分数未知"} · ${shownMajor}`;
       els.portrait.style.setProperty("--portrait-art", avatar.art);
       els.portrait.style.setProperty("--portrait-filter", avatarFilter(avatar));
       els.profilePreviewPortrait.style.setProperty("--portrait-art", avatar.art);
@@ -8742,8 +9424,9 @@
     function layoutAvatarCoverflow(centerFloat, animate = true) {
       if (!els.avatarGrid) return;
       const cards = Array.from(els.avatarGrid.children);
+      const total = cards.length;
       cards.forEach((card, index) => {
-        const offset = index - centerFloat;
+        const offset = shortestLoopOffset(index, centerFloat, total);
         const abs = Math.abs(offset);
         card.classList.toggle("no-anim", !animate);
         if (abs > 3.4) {
@@ -8765,17 +9448,17 @@
         card.classList.toggle("is-active", abs < 0.5);
         card.setAttribute("aria-checked", abs < 0.5 ? "true" : "false");
       });
-      const activeIndex = clamp(Math.round(centerFloat), 0, Math.max(0, avatarOptions.length - 1));
+      const activeIndex = wrapIndex(Math.round(centerFloat), avatarOptions.length);
       document.querySelectorAll("#avatarDots .persona-dot").forEach((dot, index) => {
         dot.classList.toggle("is-active", index === activeIndex);
       });
     }
 
     function selectAvatarByIndex(index, animate = true) {
-      const nextIndex = clamp(Math.round(index), 0, Math.max(0, avatarOptions.length - 1));
-      avatarCenter = nextIndex;
+      const nextIndex = wrapIndex(Math.round(index), avatarOptions.length);
+      avatarCenter = index;
       state.avatar = avatarOptions[nextIndex]?.id || avatarOptions[0].id;
-      layoutAvatarCoverflow(nextIndex, animate);
+      layoutAvatarCoverflow(index, animate);
       applyProfile(readProfile());
       scheduleWarmup();
     }
@@ -8793,7 +9476,7 @@
         if (!avatarDrag || avatarDrag.id !== event.pointerId) return;
         const dx = event.clientX - avatarDrag.startX;
         if (Math.abs(dx) > 4) avatarDrag.moved = true;
-        const floatIndex = clamp(avatarDrag.base - dx / avatarStep, -0.45, avatarOptions.length - 0.55);
+        const floatIndex = avatarDrag.base - dx / avatarStep;
         layoutAvatarCoverflow(floatIndex, false);
       });
       const finishDrag = event => {
@@ -8858,7 +9541,7 @@
           card.classList.remove("is-active");
           return;
         }
-        const tx = offset * coverflowStep;
+        const tx = offset * majorCoverflowStep();
         const ty = abs * 28 - Math.max(0, 1 - abs) * 8;
         const rotate = Math.max(-3, Math.min(3, offset)) * 7;
         const scale = (1 - abs * 0.08) + Math.max(0, 1 - abs) * 0.08;
@@ -8898,14 +9581,14 @@
         if (!coverflowDrag || coverflowDrag.id !== event.pointerId) return;
         const dx = event.clientX - coverflowDrag.startX;
         if (Math.abs(dx) > 4) coverflowDrag.moved = true;
-        const floatIndex = coverflowDrag.base - dx / coverflowStep;
+        const floatIndex = coverflowDrag.base - dx / majorCoverflowStep();
         layoutMajorCoverflow(floatIndex, false);
       });
       const finishDrag = event => {
         if (!coverflowDrag || coverflowDrag.id !== event.pointerId) return;
         const dx = event.clientX - coverflowDrag.startX;
         const moved = coverflowDrag.moved;
-        const next = Math.round(coverflowDrag.base - dx / coverflowStep);
+        const next = Math.round(coverflowDrag.base - dx / majorCoverflowStep());
         coverflowDrag = null;
         if (moved) selectMajorByIndex(next, true);
       };
@@ -8927,7 +9610,13 @@
     }
 
     function sketchArt(index) {
-      return questionSketchArt[index % questionSketchArt.length];
+      const fallback = questionSketchArt[index % questionSketchArt.length];
+      const avatar = currentAvatarOption();
+      const genderFolder = avatarGenderFolder(avatar);
+      const assetId = avatar.id;
+      const year = String((index % state.totalYears) + 1).padStart(2, "0");
+      const scene = String((index % 3) + 1).padStart(2, "0");
+      return `url('${characterSceneBasePath}/${genderFolder}/${assetId}/year_${year}/scene_${scene}.png'), ${fallback}`;
     }
 
     function showFlow(flow) {
@@ -9059,13 +9748,13 @@
     function applyRandomProfile() {
       const profile = randomProfiles[Math.floor(Math.random() * randomProfiles.length)];
       document.querySelector("#studentName").value = profile.name;
-      document.querySelector("#gender").value = profile.gender;
       document.querySelector("#province").value = profile.province;
       document.querySelector("#score").value = profile.score;
       setFamilyHope(profile.hope);
       document.querySelector("#keywords").value = profile.keywords;
       state.major = (profile.major && majors[profile.major]) ? profile.major : majorKeys[0];
       state.entryMajorText = majors[state.major]?.label || "计算机科学与技术";
+      state.avatar = avatarOptions.find(item => item.gender === profile.gender)?.id || state.avatar || avatarOptions[0].id;
       if (els.entryName) els.entryName.value = profile.name;
       applyProfile(readProfile());
     }
@@ -9140,7 +9829,7 @@
 
     function setSetupPending(isPending) {
       els.applyProfileButton.disabled = isPending;
-      els.applyProfileButton.textContent = isPending ? "验牌中" : "我要验牌";
+      els.applyProfileButton.textContent = isPending ? "发牌中" : "开始验牌";
       if (isPending) showSetupError("");
     }
 
@@ -9305,6 +9994,48 @@
       const offstage = compactFeedbackPart(track, 18);
       const combined = [previousOutcome, offstage].filter(Boolean).join("，");
       return shortFeedbackText(combined || previousOutcome || modelFeedback);
+    }
+
+    function previousFeedbackTitle(card, feedback = "") {
+      const previousInfo = card.previous || reconstructPreviousInfo(card);
+      const source = [previousInfo?.sceneTitle, previousInfo?.choice, previousInfo?.tag, feedback].filter(Boolean).join("，");
+      const rules = [
+        [/借钱|还款|钱包|金额/, "朋友借钱"],
+        [/外地|远程|拆伙|搭子/, "搭子远行"],
+        [/周末|回复|消息|邀约|排进/, "关系排期"],
+        [/项目|版本|交付|进度/, "项目压身"],
+        [/老师|导师|展示|难活/, "老师递活"],
+        [/家里|家庭|亲戚|父母/, "家里开会"],
+        [/比赛|路演|创业园|机会/, "机会上桌"],
+        [/考试|绩点|保研|考研|论文/, "学业分岔"],
+        [/实习|公司|offer|工作/, "工作岔路"],
+        [/误会|晚到|解释|含糊/, "关系翻面"],
+        [/合照|表白|公开|态度/, "暧昧推进"],
+        [/翻车|事故|失误|补漏/, "翻车收尾"],
+        [/城市|搬|租|通勤/, "城市成本"],
+        [/证书|广告|报名|前辈/, "证书焦虑"]
+      ];
+      const matched = rules.find(([pattern]) => pattern.test(source));
+      if (matched) return matched[1];
+      const title = cleanFeedbackText(previousInfo?.sceneTitle || previousInfo?.choice || previousInfo?.tag || feedback)
+        .replace(/^第\s*\d+\s*年[\/／、:\s-]*/g, "")
+        .replace(/[，。！？!?；;：:].*$/g, "")
+        .replace(/你|自己|一次|一个/g, "")
+        .trim();
+      return (title || "上一年回响").slice(0, 8);
+    }
+
+    function previousFeedbackHTML(card) {
+      const body = composePreviousFeedback(card) || "上一年的事已经留下后果，另一条线也没停下";
+      const title = previousFeedbackTitle(card, body);
+      const previousYear = Math.max(1, Number(card.yearNumber || 1) - 1);
+      return `
+        <p class="previous-feedback">
+          <i>{${previousYear}}</i>
+          <b>${escapeHTML(title)}</b>
+          <span>${escapeHTML(body)}</span>
+        </p>
+      `;
     }
 
     function chooseOffstageTrack(card, modelFeedback = "") {
@@ -9491,6 +10222,7 @@
         dream: profile.dream,
         hope: profile.hope,
         keywords: profile.keywords,
+        avatar: profile.avatar,
         major: profile.major,
         majorLabel: profile.majorLabel
       });
@@ -9942,7 +10674,7 @@
           <div class="swipe-badge left">左选择</div>
           <div class="swipe-badge right">右选择</div>
           <div class="card-cover" aria-hidden="true"><span class="card-cover-burst">✳</span></div>
-          ${shouldShowPreviousFeedback(card) ? `<p class="previous-feedback">${escapeHTML(composePreviousFeedback(card) || "上一年的事已经留下后果，另一条线也没停下")}</p>` : ""}
+          ${shouldShowPreviousFeedback(card) ? previousFeedbackHTML(card) : ""}
           <div class="card-scene">
             <div class="card-scene-copy">
               <small>${escapeHTML(card.year)} · ${escapeHTML(card.age)}</small>
@@ -10625,6 +11357,26 @@
       return Math.round((scores[code] / total) * 100);
     }
 
+    function getHollandVisualPercents(scores) {
+      const order = ["R", "I", "A", "S", "E", "C"];
+      const values = order.map(key => Math.max(0, Number(scores?.[key] || 0)));
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      if (max <= 0 || max === min) {
+        return Object.fromEntries(order.map((key, index) => [key, index === 0 ? 76 : 58]));
+      }
+      const ranked = order
+        .map((key, index) => ({ key, value: values[index] }))
+        .sort((a, b) => b.value - a.value);
+      const rankBoost = new Map(ranked.map((item, index) => [item.key, [16, 10, 6, 2, -2, -5][index] || 0]));
+      return Object.fromEntries(order.map((key, index) => {
+        const normalized = (values[index] - min) / (max - min);
+        const curved = Math.pow(normalized, 0.7);
+        const visual = 42 + curved * 42 + (rankBoost.get(key) || 0);
+        return [key, clamp(Math.round(visual), 36, 96)];
+      }));
+    }
+
     function getHollandDirections(code) {
       const seen = new Set();
       code.split("").forEach(key => {
@@ -10707,7 +11459,8 @@
         E: "企业型",
         C: "传统型"
       };
-      const points = order.map((key, index) => radarPoint(index, getHollandPercent(key, scores), center, radius));
+      const visualPercents = getHollandVisualPercents(scores);
+      const points = order.map((key, index) => radarPoint(index, visualPercents[key], center, radius));
       const axes = order.map((key, index) => {
         const outer = radarPoint(index, 100, center, radius);
         const label = radarPoint(index, 100, center, radius + 22);
@@ -10755,7 +11508,7 @@
       const summary = getHollandSummaryData();
       const { scores, code, titleLine, directions, primaryMeta } = summary;
       return `
-        <div class="ability-card" style="--ability-accent:${primaryMeta.color};--ability-art:${finalRoleArt};">
+        <div class="ability-card" style="--ability-accent:${primaryMeta.color};--ability-art:${hollandTypeArt(summary.primary)};">
           <div class="ability-top">
             <div class="ability-hero">
               <div class="ability-art" aria-hidden="true"></div>
@@ -10771,20 +11524,23 @@
                 ${buildHollandRadarSVG(scores)}
               </div>
               <div class="ability-score-list">
-              ${Object.entries(hollandTypes).map(([key, trait]) => {
-                const value = getHollandPercent(key, scores);
-                return `
-                  <div class="ability-row">
-                    <div class="ability-row-head">
-                      <label>${escapeHTML(key)} ${escapeHTML(trait.label)}</label>
-                      <span class="ability-score">${value}%</span>
+              ${(() => {
+                const visualPercents = getHollandVisualPercents(scores);
+                return Object.entries(hollandTypes).map(([key, trait]) => {
+                  const value = visualPercents[key];
+                  return `
+                    <div class="ability-row">
+                      <div class="ability-row-head">
+                        <label>${escapeHTML(key)} ${escapeHTML(trait.label)}</label>
+                        <span class="ability-score">${value}%</span>
+                      </div>
+                      <div class="ability-track" style="--ability-color:${trait.color}">
+                        <span style="width:${value}%"></span>
+                      </div>
                     </div>
-                    <div class="ability-track" style="--ability-color:${trait.color}">
-                      <span style="width:${value}%"></span>
-                    </div>
-                  </div>
-                `;
-              }).join("")}
+                  `;
+                }).join("");
+              })()}
               </div>
             </div>
           </div>
@@ -10834,7 +11590,9 @@
 
     async function showResult() {
       els.progressFill.style.width = "100%";
-      els.resultPortrait.style.setProperty("--result-art", finalRoleArt);
+      const resultArt = selectedAvatarResultArt();
+      els.resultPortrait.style.setProperty("--result-art", resultArt);
+      els.resultHero?.style.setProperty("--result-art", resultArt);
       showFlow("result");
       renderResultLoading();
       try {
@@ -11115,20 +11873,20 @@
       const primary = hollandSummary.primary || code[0] || "I";
       const topCareer = normalizeCareerLabel(possibilities[0]?.label || getHollandDirections(code).split("、")[0] || "专业路上的靠谱大人");
       const emotionalMap = {
-        R: "动手很快但嘴硬",
-        I: "脑子很忙但情绪稳",
-        A: "有表达欲但不乱飘",
-        S: "会接住人但也会累",
-        E: "敢冲场子但会复盘",
-        C: "秩序感强但心里加班"
+        R: "动手嘴硬",
+        I: "脑忙心稳",
+        A: "有梗不飘",
+        S: "接人也累",
+        E: "敢冲会复盘",
+        C: "秩序心累"
       };
       const realityMap = {
-        R: "靠实操把日子焊牢",
-        I: "靠分析把坑绕过去",
-        A: "靠作品把机会熬出来",
-        S: "靠口碑把路越走越宽",
-        E: "靠资源把局面做大",
-        C: "靠稳字把账本做漂亮"
+        R: "实操焊牢",
+        I: "分析避坑",
+        A: "作品出圈",
+        S: "口碑开路",
+        E: "资源上桌",
+        C: "账本漂亮"
       };
       const career = /师|员|人|主理人|经理|工程|研究|顾问|策划|开发|分析|运营|产品|教师/.test(topCareer)
         ? topCareer
@@ -11235,33 +11993,70 @@
       }
       if (parts.length < 3) {
         const compact = raw.replace(/\s+/g, "");
-        const first = compact.match(/[^，]{0,8}但[^，]{2,8}/)?.[0] || "情绪稳定但会嘴硬";
-        const second = compact.match(/靠[^，]{2,12}|[^，]{0,8}但[^，]{2,8}/)?.[0] || "现实账本还算漂亮";
+        const first = compact.match(/[^，]{0,8}但[^，]{2,8}/)?.[0] || "稳定嘴硬";
+        const second = compact.match(/靠[^，]{2,12}|[^，]{0,8}但[^，]{2,8}/)?.[0] || "账本漂亮";
         const third = result?.famousScenes?.[0]?.title
           ? `${String(result.famousScenes[0].title).replace(/[，。！？!?；;]/g, "").slice(0, 8)}相关人`
-          : "专业路上的靠谱大人";
+          : "靠谱大人";
         parts = [first, second, third];
       }
       return parts.slice(0, 3).map((part, index) => {
-        const clean = part.replace(/^(一个|你是|你像)/, "").trim();
-        const fallback = ["情绪稳定但会嘴硬", "现实账本还算漂亮", "专业路上的靠谱大人"][index];
-        return (clean || fallback).slice(0, 16);
+        const clean = compactResultTitleSegment(part, index);
+        const fallback = ["稳定嘴硬", "账本漂亮", "靠谱大人"][index];
+        return (clean || fallback).slice(0, 7);
       });
+    }
+
+    function compactResultTitleSegment(part, index = 0) {
+      let clean = String(part || "")
+        .replace(/^(一个|你是|你像|一种)/, "")
+        .replace(/的人$/, "")
+        .trim();
+      if (index === 0) {
+        clean = clean
+          .replace("秩序感强但心里加班", "秩序心累")
+          .replace("情绪稳定但会嘴硬", "稳定嘴硬")
+          .replace("脑子很忙但情绪稳", "脑忙心稳")
+          .replace("动手很快但嘴硬", "动手嘴硬");
+      }
+      if (index === 1) {
+        clean = clean
+          .replace("靠资源把局面做大", "资源上桌")
+          .replace("靠分析把坑绕过去", "分析避坑")
+          .replace("现实账本还算漂亮", "账本漂亮")
+          .replace("靠稳字把账本做漂亮", "账本漂亮");
+      }
+      if (index === 2) {
+        const rules = [
+          [/生物|医药|制药|药企/, "生物PM"],
+          [/心理|咨询/, "咨询师"],
+          [/架构|算法|计算机|代码|工程师/, "工程师"],
+          [/教师|教育|老师/, "明星教师"],
+          [/新闻|传媒|内容/, "内容主理人"],
+          [/法学|法律|律师/, "法律人"],
+          [/医学|医生|临床/, "医生"],
+          [/金融|财务|会计/, "财务人"],
+          [/设计|艺术|创意/, "设计师"]
+        ];
+        const hit = rules.find(([pattern]) => pattern.test(clean));
+        if (hit) clean = hit[1];
+      }
+      return clean;
     }
 
     function normalizeResultStatus(status, scenes = []) {
       const raw = String(status || "").replace(/\s+/g, "").trim();
       const highLight = scenes.find(scene => scene?.title)?.title || "几次救场";
-      if (!raw) return `靠${highLight.slice(0, 8)}混成靠谱大人，代价是手机静音也会心虚。`;
+      if (!raw) return `靠${highLight.slice(0, 8)}混成靠谱大人，手机静音也会心虚。`;
       const cleaned = raw
         .replace(/^你走了\d+年[，,]?/, "")
         .replace(/^从[^，。！？!?；;]{2,24}到[^，。！？!?；;]{2,24}[，,]?/, "")
         .replace(/18年/g, "这些年");
-      if (cleaned.length <= 52 && !/^从/.test(cleaned)) return cleaned;
+      if (cleaned.length <= 36 && !/^从/.test(cleaned)) return cleaned;
       const firstSentence = cleaned.split(/[。！？!?；;]/).find(Boolean) || cleaned;
-      const clipped = firstSentence.slice(0, 48);
+      const clipped = firstSentence.slice(0, 36);
       const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"));
-      return (boundary >= 26 ? clipped.slice(0, boundary) : clipped).replace(/[，。！？!?；;]+$/g, "") || `靠${highLight.slice(0, 8)}混成靠谱大人，代价是手机静音也会心虚`;
+      return (boundary >= 20 ? clipped.slice(0, boundary) : clipped).replace(/[，。！？!?；;]+$/g, "") || `靠${highLight.slice(0, 8)}混成靠谱大人，手机静音也会心虚`;
     }
 
     let resultImageModulePromise = null;
@@ -11399,6 +12194,13 @@
         if (event.key === "ArrowRight") choose("right");
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") undo();
       }
+    });
+
+    window.addEventListener("resize", () => {
+      window.requestAnimationFrame(() => {
+        if (els.majorGrid?.children.length) layoutMajorCoverflow(coverflowCenter, false);
+        if (els.avatarGrid?.children.length) layoutAvatarCoverflow(avatarCenter, false);
+      });
     });
 
     function isTypingTarget(target) {

@@ -217,7 +217,7 @@ function validateAnnual(data, history = [], repeatHistory = history) {
   const normalized = {};
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
   if (typeof data?.question !== "string" && !Number.isFinite(Number(data?.year))) throw new Error("Invalid annual JSON: missing question");
-  normalized.summary = data.summary.trim();
+  normalized.summary = clampTextBySentence(data.summary, 36, 1);
   const yearNumberFromData = Number(data?.year || 0);
   normalized.question = typeof data?.question === "string" && data.question.trim()
     ? data.question.trim()
@@ -237,10 +237,10 @@ function validateAnnual(data, history = [], repeatHistory = history) {
     throw new Error("Invalid annual JSON: bad question field");
   }
   const yearNumber = normalized.year;
-  normalized.summary = yearNumber === 1 ? "" : deDuplicateSummary(normalized, history);
+  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(deDuplicateSummary(normalized, history), 36, 1);
   if (yearNumber > 1 && !normalized.summary) {
     const sceneText = [normalized.scene?.title, normalized.scene?.body].filter(Boolean).join("");
-    normalized.summary = mergeFeedbackParts(buildHistoryConsequence(history), buildOffstageFallback(textCategories(sceneText)));
+    normalized.summary = clampTextBySentence(mergeFeedbackParts(buildHistoryConsequence(history), buildOffstageFallback(textCategories(sceneText))), 36, 1);
   }
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
@@ -342,7 +342,7 @@ function mergeFeedbackParts(consequence, offstage) {
   const left = optionalCleanText(consequence).replace(/[，。！？!?；;]+$/g, "");
   const right = optionalCleanText(offstage).replace(/^(上一年|上一年的决定|这一年)[，,]*/g, "").replace(/[，。！？!?；;]+$/g, "");
   const merged = [left, right].filter(Boolean).join("，");
-  return `${merged.slice(0, 64)}。`;
+  return clampTextBySentence(merged, 36, 1);
 }
 
 function textCategories(value) {
@@ -397,14 +397,32 @@ function uniqueTextTokens(value) {
 }
 
 function optionalCleanText(value) {
-  return String(value || "").trim();
+  return String(value || "")
+    .replace(/关系线核心角色/g, "贺闻")
+    .replace(/室友\/同伴/g, "周越")
+    .replace(/导师\/老师|辅导员\/导师背景声/g, "林知夏")
+    .replace(/外部机会角色背景压力|外部机会角色/g, "合作方")
+    .replace(/家庭型角色/g, "家里")
+    .replace(/团队群像/g, "项目群")
+    .trim();
+}
+
+function clampTextBySentence(value, maxLength, maxSentences = 1) {
+  const text = optionalCleanText(value).replace(/\s+/g, "");
+  if (!text) return "";
+  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [text];
+  const joined = parts.slice(0, maxSentences).join("").replace(/[。！？!?；;]+$/g, "");
+  if (joined.length <= maxLength) return joined;
+  const clipped = joined.slice(0, maxLength);
+  const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
+  return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
 }
 
 function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
-      title: optionalCleanText(value.title).slice(0, 28),
-      body: optionalCleanText(value.body)
+      title: clampTextBySentence(value.title, 10, 1),
+      body: clampTextBySentence(value.body, 52, 2)
     };
   }
   const raw = optionalCleanText(value);
@@ -412,14 +430,14 @@ function normalizeSceneData(value) {
   const contextMatch = raw.match(/(?:^|\n)\s*情境[:：]\s*([\s\S]+)/);
   if (eventMatch || contextMatch) {
     return {
-      title: optionalCleanText(eventMatch?.[1] || "这一年的岔路口").slice(0, 28),
-      body: optionalCleanText(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""))
+      title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 10, 1),
+      body: clampTextBySentence(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""), 52, 2)
     };
   }
   const sentenceMatch = raw.match(/^(.{8,28}?[。！？!?])([\s\S]*)$/);
   return {
-    title: optionalCleanText(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口").slice(0, 28),
-    body: optionalCleanText(sentenceMatch?.[2] || raw)
+    title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 10, 1),
+    body: clampTextBySentence(sentenceMatch?.[2] || raw, 52, 2)
   };
 }
 
@@ -439,7 +457,7 @@ function normalizeChoiceData(value, prefix) {
 }
 
 function normalizeChoiceConsequence(value) {
-  return optionalCleanText(value).slice(0, 48);
+  return clampTextBySentence(value, 24, 1);
 }
 
 function normalizeRiasecPayload(value) {
@@ -460,7 +478,7 @@ function normalizeChoiceTitle(value, prefix) {
     .replace(new RegExp(`^${prefix}[.。]\\s*`), "")
     .replace(/[，,。.!！?？；;].*$/g, "")
     .replace(/\s+/g, "");
-  if (text) return text.slice(0, 6);
+  if (text) return text.slice(0, 5);
   return prefix === "A" ? "直接推进" : "先稳住";
 }
 
@@ -470,13 +488,13 @@ function normalizeChoiceDesc(value, title, prefix) {
     .replace(title, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
-  if (text.length >= 8) return text.slice(0, 28);
+  if (text.length >= 8) return clampTextBySentence(text, 16, 1);
   return prefix === "A" ? "把问题摊开当场处理" : "留出余地再判断";
 }
 
 function normalizeChoiceTag(value, prefix) {
   const text = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "").replace(/\s+/g, "");
-  if (text && text !== "A" && text !== "B") return text.slice(0, 6);
+  if (text && text !== "A" && text !== "B") return text.slice(0, 4);
   return prefix === "A" ? "主动处理" : "稳住节奏";
 }
 
@@ -586,13 +604,13 @@ function normalizeResultTitle(value) {
     .replace(/[：:][^，,。！？!?；;]+的人/g, "")
     .replace(/[：:]/g, "，");
   const parts = raw.split(/[，,、｜|/]+/).map(item => item.trim()).filter(Boolean);
-  if (parts.length >= 3) return parts.slice(0, 3).map((item, index) => cleanTitleSegment(item, index)).join("，").slice(0, 30);
-  if (/但|且|的/.test(raw) && raw.length >= 10) return raw.slice(0, 26);
-  return ["情绪稳定但会嘴硬", "现实账本还算漂亮", "专业路上的靠谱大人"].join("，");
+  if (parts.length >= 3) return parts.slice(0, 3).map((item, index) => cleanTitleSegment(item, index)).join("，").slice(0, 24);
+  if (/但|且|的/.test(raw) && raw.length >= 10) return raw.slice(0, 21);
+  return ["稳定嘴硬", "账本漂亮", "靠谱大人"].join("，");
 }
 
 function cleanTitleSegment(value, index = 0) {
-  const fallback = ["情绪稳定但会嘴硬", "现实账本还算漂亮", "专业路上的靠谱大人"][index] || "专业路上的靠谱大人";
+  const fallback = ["稳定嘴硬", "账本漂亮", "靠谱大人"][index] || "靠谱大人";
   let text = optionalCleanText(value)
     .replace(/^(你是|一个|一种)/, "")
     .replace(/方向[:：]?$/, "")
@@ -604,13 +622,14 @@ function cleanTitleSegment(value, index = 0) {
   }
   if (index === 1) {
     text = text
+      .replace("靠资源把局面做大", "资源上桌")
       .replace("靠分析把坑绕过去", "分析避坑")
       .replace("现实账本还算漂亮", "账本漂亮");
   }
   if (index === 2) {
     text = normalizeCareerTitleSegment(text);
   }
-  return text.slice(0, 9) || fallback;
+  return text.slice(0, 7) || fallback;
 }
 
 function normalizeCareerTitleSegment(value) {
@@ -622,6 +641,7 @@ function normalizeCareerTitleSegment(value) {
     [/新闻|传媒|内容/, "内容主理人"],
     [/法学|法律|律师/, "硬核法律人"],
     [/医学|医生|临床/, "靠谱医生"],
+    [/生物|医药|制药|药企/, "生物PM"],
     [/金融|财务|会计/, "清醒财务人"],
     [/设计|艺术|创意/, "创意主理人"]
   ];
@@ -630,10 +650,15 @@ function normalizeCareerTitleSegment(value) {
 }
 
 function normalizeResultStatus(value) {
-  return optionalCleanText(value)
+  const cleaned = optionalCleanText(value)
     .replace(/^你走了\d+年[，,]?/, "")
     .replace(/^从[^，。！？!?；;]{2,24}到[^，。！？!?；;]{2,24}[，,]?/, "")
-    .slice(0, 64);
+    .replace(/18年/g, "这些年")
+    .replace(/[。！？!?；;]+$/g, "");
+  if (cleaned.length <= 36) return cleaned;
+  const clipped = cleaned.slice(0, 36);
+  const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"));
+  return (boundary >= 20 ? clipped.slice(0, boundary) : clipped).replace(/[，。！？!?；;]+$/g, "");
 }
 
 function fallbackResultCard(field) {
@@ -685,8 +710,8 @@ function mockResponse(messages) {
   const content = messages.at(-1).content;
   if (content.includes("\"title\": \"\"") && content.includes("\"timelineBlocks\"")) {
     return {
-      title: "嘴上很稳但心里加班，现实账本还算漂亮，专业路上的项目统筹人",
-      status42: "靠几次救场混成靠谱大人，代价是手机静音也会心虚。",
+      title: "稳定嘴硬，账本漂亮，项目统筹",
+      status42: "靠几次救场混成靠谱大人，手机静音也会心虚。",
       majorCareerNote: "这只是故事内估计，不是现实建议。你的专业提供了第一套工具，但后面每次选择都会改写路标。专业决定起点，不决定你一辈子的工牌。",
       careerPossibilities: [
         { percent: 28, label: "专业骨干" },

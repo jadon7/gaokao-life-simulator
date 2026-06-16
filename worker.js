@@ -9,11 +9,13 @@ import {
   vNextSystemPrompt
 } from "./deepseek-prompt-vnext.js";
 
-const defaultDeepSeekModel = "deepseek-v4-flash";
+const defaultDeepSeekModel = "deepseek-v4-pro";
 const defaultDeepSeekStream = true;
 const defaultDeepSeekTimeoutMs = 26000;
 const totalGameYears = 18;
 const finalResultAge = 36;
+const riasecTypes = ["R", "I", "A", "S", "E", "C"];
+const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
 const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "shareHooks"];
@@ -66,6 +68,7 @@ function compactHistory(history = []) {
     callbackSeeds: item.callbackSeeds,
     choice: item.choice,
     choiceText: item.choiceText,
+    consequence: item.consequence,
     tag: item.tag,
     holland: item.holland
   }));
@@ -168,6 +171,7 @@ async function callDeepSeek(messages, validator, env) {
       return validator(parseJsonContent(content));
     } catch (error) {
       lastError = error;
+      console.error(`DeepSeek attempt ${attempt + 1}/2 failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
     }
   }
   console.error("DeepSeek unavailable, using fallback content:", lastError?.message || lastError);
@@ -217,7 +221,7 @@ function validateAnnual(data, history = [], repeatHistory = history) {
   const normalized = {};
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
   if (typeof data?.question !== "string" && !Number.isFinite(Number(data?.year))) throw new Error("Invalid annual JSON: missing question");
-  normalized.summary = clampTextBySentence(data.summary, 36, 1);
+  normalized.summary = clampTextBySentence(data.summary, 52, 2);
   const yearNumberFromData = Number(data?.year || 0);
   normalized.question = typeof data?.question === "string" && data.question.trim()
     ? data.question.trim()
@@ -233,15 +237,17 @@ function validateAnnual(data, history = [], repeatHistory = history) {
   normalized.scene = normalizeSceneData(data.scene);
   normalized.a = normalizeChoiceData(data.a, "A");
   normalized.b = normalizeChoiceData(data.b, "B");
+  validateRiasecAgainstOutline(normalized);
   if (!new RegExp(`^第\\s*\\d+\\s*年\\s*\\/\\s*${totalGameYears}$`).test(normalized.question)) {
     throw new Error("Invalid annual JSON: bad question field");
   }
   const yearNumber = normalized.year;
-  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(deDuplicateSummary(normalized, history), 36, 1);
+  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(deDuplicateSummary(normalized, history), 52, 2);
   if (yearNumber > 1 && !normalized.summary) {
     const sceneText = [normalized.scene?.title, normalized.scene?.body].filter(Boolean).join("");
-    normalized.summary = clampTextBySentence(mergeFeedbackParts(buildHistoryConsequence(history), buildOffstageFallback(textCategories(sceneText))), 36, 1);
+    normalized.summary = clampTextBySentence(mergeFeedbackParts(buildHistoryConsequence(history), buildOffstageFallback(textCategories(sceneText))), 52, 2);
   }
+  validateContinuityText(normalized, history);
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
@@ -308,7 +314,7 @@ function buildOffstageFallback(sceneCategories) {
     return "你把作息往回拽了一点，家里这才没继续追着问你几点睡";
   }
   if (sceneCategories.has("work") || sceneCategories.has("study")) {
-    return "许青禾已经会顺手给你留位置，你忙归忙，对方没把你从日常里划掉";
+    return "暧昧升温，沈晚晴已经会顺手给你留位置";
   }
   return "你这边刚处理完一头，另一头也没闲着，身边几个人对你的站位已经变了";
 }
@@ -342,7 +348,60 @@ function mergeFeedbackParts(consequence, offstage) {
   const left = optionalCleanText(consequence).replace(/[，。！？!?；;]+$/g, "");
   const right = optionalCleanText(offstage).replace(/^(上一年|上一年的决定|这一年)[，,]*/g, "").replace(/[，。！？!?；;]+$/g, "");
   const merged = [left, right].filter(Boolean).join("，");
-  return clampTextBySentence(merged, 36, 1);
+  return clampTextBySentence(merged, 52, 2);
+}
+
+function validateContinuityText(card, history = []) {
+  if (card.year > 1) {
+    const summary = optionalCleanText(card.summary);
+    if (/(^|[^核])关系线|生活线|现实线|主线|副线|当前趋势/.test(summary)) {
+      throw new Error("Invalid annual JSON: summary exposes internal track wording");
+    }
+    if (/接[住着下]?或错失|错失或接|错过或接|或错失|或错过|要么|无论|分叉|两条路|取决于|A或B|A\/B/.test(summary)) {
+      throw new Error("Invalid annual JSON: summary contains parallel opposite outcomes");
+    }
+    if (/关系|沈晚晴|沈晚晴|她/.test(summary) && !relationshipStagePattern.test(summary)) {
+      throw new Error("Invalid annual JSON: summary mentions relationship without a clear stage");
+    }
+    const lastConsequence = optionalCleanText(Array.isArray(history) ? history.at(-1)?.consequence : "");
+    if (lastConsequence && textSimilarityScore(summary.slice(0, Math.min(24, summary.length)), lastConsequence) < 0.08) {
+      throw new Error("Invalid annual JSON: summary does not inherit previous selected consequence");
+    }
+  }
+  const relationshipTrack = optionalCleanText(card.relationshipTrack);
+  if (relationshipTrack) {
+    if (/(^|[^核])关系线|生活线|现实线|主线|副线/.test(relationshipTrack)) {
+      throw new Error("Invalid annual JSON: relationshipTrack exposes internal wording");
+    }
+    if (!relationshipStagePattern.test(relationshipTrack)) {
+      throw new Error("Invalid annual JSON: relationshipTrack missing clear relationship stage");
+    }
+  }
+}
+
+function validateRiasecAgainstOutline(card) {
+  const outline = getOutlineCard(card.year);
+  const axis = Array.isArray(outline?.riasecAxis) ? outline.riasecAxis : [];
+  if (axis.length < 2) return;
+  validateChoiceAxis(card.a, axis[0], "A");
+  validateChoiceAxis(card.b, axis[1], "B");
+}
+
+function validateChoiceAxis(choice, expectedMain, label) {
+  const scores = choice?.riasec;
+  if (!scores) throw new Error(`Invalid annual JSON: ${label} missing riasec`);
+  const keys = ["R", "I", "A", "S", "E", "C"];
+  const ranked = keys.slice().sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+  const main = ranked[0];
+  const mainScore = Number(scores[expectedMain] || 0);
+  const positiveSecondary = keys.filter(key => key !== expectedMain && Number(scores[key] || 0) > 0);
+  const total = keys.reduce((sum, key) => sum + Number(scores[key] || 0), 0);
+  if (main !== expectedMain || mainScore < 4 || mainScore > 6) {
+    throw new Error(`Invalid annual JSON: ${label} riasec main must be ${expectedMain} with 4-6 points`);
+  }
+  if (positiveSecondary.length > 1 || positiveSecondary.some(key => Number(scores[key] || 0) > 2) || total > 7) {
+    throw new Error(`Invalid annual JSON: ${label} riasec secondary weights invalid`);
+  }
 }
 
 function textCategories(value) {
@@ -398,9 +457,9 @@ function uniqueTextTokens(value) {
 
 function optionalCleanText(value) {
   return String(value || "")
-    .replace(/关系线核心角色/g, "贺闻")
-    .replace(/室友\/同伴/g, "周越")
-    .replace(/导师\/老师|辅导员\/导师背景声/g, "林知夏")
+    .replace(/关系线核心角色/g, "总坐靠窗位、笔记写得像攻略的同班女生沈晚晴")
+    .replace(/室友\/同伴/g, "总在上课路上边走边吃早餐的吃货舍友周越")
+    .replace(/导师\/老师|辅导员\/导师背景声/g, "辅导员兼专业导师林老师")
     .replace(/外部机会角色背景压力|外部机会角色/g, "合作方")
     .replace(/家庭型角色/g, "家里")
     .replace(/团队群像/g, "项目群")
@@ -422,7 +481,7 @@ function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
       title: clampTextBySentence(value.title, 10, 1),
-      body: clampTextBySentence(value.body, 52, 2)
+      body: clampTextBySentence(value.body, 130, 3)
     };
   }
   const raw = optionalCleanText(value);
@@ -431,13 +490,13 @@ function normalizeSceneData(value) {
   if (eventMatch || contextMatch) {
     return {
       title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 10, 1),
-      body: clampTextBySentence(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""), 52, 2)
+      body: clampTextBySentence(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""), 130, 3)
     };
   }
   const sentenceMatch = raw.match(/^(.{8,28}?[。！？!?])([\s\S]*)$/);
   return {
     title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 10, 1),
-    body: clampTextBySentence(sentenceMatch?.[2] || raw, 52, 2)
+    body: clampTextBySentence(sentenceMatch?.[2] || raw, 130, 3)
   };
 }
 
@@ -457,7 +516,7 @@ function normalizeChoiceData(value, prefix) {
 }
 
 function normalizeChoiceConsequence(value) {
-  return clampTextBySentence(value, 24, 1);
+  return clampTextBySentence(value, 36, 1);
 }
 
 function normalizeRiasecPayload(value) {
@@ -488,7 +547,7 @@ function normalizeChoiceDesc(value, title, prefix) {
     .replace(title, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
-  if (text.length >= 8) return clampTextBySentence(text, 16, 1);
+  if (text.length >= 8) return clampTextBySentence(text, 22, 1);
   return prefix === "A" ? "把问题摊开当场处理" : "留出余地再判断";
 }
 
@@ -555,6 +614,14 @@ function validateResult(data) {
     normalized.shareHooks.length < 2
   ) {
     throw new Error("Invalid result JSON: insufficient list items");
+  }
+  // title 第三段强制与 careerPossibilities[0] 对齐，杜绝“资深工程师”兜底化
+  const topCareer = String(normalized.careerPossibilities[0]?.label || "").trim();
+  if (topCareer && topCareer.length <= 10) {
+    const parts = normalized.title.split(/[，,]/).map(part => part.trim()).filter(Boolean);
+    if (parts.length === 3 && parts[2] !== topCareer) {
+      normalized.title = `${parts[0]}，${parts[1]}，${topCareer}`;
+    }
   }
   return normalized;
 }
@@ -743,7 +810,7 @@ function mockResponse(messages) {
       shareHooks: ["这条线像我，但比我会复盘。", "原来专业只是新手村。", "测完想给志愿表道个歉。"]
     };
   }
-  if (content.includes("\"cards\": []")) {
+  if (content.includes("\"batchCount\"")) {
     const parsed = parseJsonFromPrompt(content);
     const startYear = Number(parsed?.gameMeta?.startYear || 1);
     const count = Number(parsed?.gameMeta?.batchCount || 5);
@@ -751,21 +818,22 @@ function mockResponse(messages) {
       cards: Array.from({ length: count }, (_, index) => {
         const year = startYear + index;
         const outlineCard = getOutlineCard(year);
+        const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
         return {
           year,
           phase: outlineCard?.phase || "试播阶段",
           mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-          summary: year === 1 ? "" : `你把上一轮麻烦兜住后，群里开始默认你能补位；许青禾对你也明显不再只是客气。`,
+          summary: mockSummary(year, parsed?.history, "暧昧升温，沈晚晴开始给你留座"),
           question: `第 ${year} 年 / ${totalGameYears}`,
           lifeTrack: "项目节奏更紧了，老师和同学开始把难活往你这里递",
-          relationshipTrack: "许青禾开始记你下课时间，偶尔会替你留机房靠窗的位置",
+          relationshipTrack: "暧昧升温：沈晚晴开始固定留座",
           callbacks: outlineCard?.callbacks?.slice(0, 3) || ["朋友群新梗"],
           scene: {
-            title: outlineCard?.phase ? `${outlineCard.phase.slice(0, 8)}的岔口` : `第${year}年的新机会弹窗`,
-            body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人许青禾把一个看起来很香的机会推到你面前。机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。你必须当场表态。"
+            title: `第${year}年·${(outlineCard?.phase || "新机会").slice(0, 8)}`,
+            body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。沈晚晴刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
           },
-          a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: { R: 1, I: 2, A: 0, S: 0, E: 4, C: 1 } },
-          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: "你把时间从杂活里抢了回来，作业没再连夜补，许青禾却开始认真记你到底在躲什么", riasec: { R: 0, I: 2, A: 0, S: 1, E: 0, C: 4 } }
+          a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: mockRiasec(axis[0]) },
+          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: "你把时间从杂活里抢了回来，沈晚晴却开始认真记你到底在躲什么", riasec: mockRiasec(axis[1]) }
         };
       })
     };
@@ -773,52 +841,75 @@ function mockResponse(messages) {
   const parsed = parseJsonFromPrompt(content);
   const year = Number(parsed?.gameMeta?.currentYear || 1);
   const outlineCard = getOutlineCard(year);
+  const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
   return {
     year,
     phase: outlineCard?.phase || "试播阶段",
     mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-    summary: year === 1 ? "" : `你把上一轮风波先压住了，手头没炸；许青禾嘴上没提，见面却不再绕开你。`,
+    summary: mockSummary(year, parsed?.history, "冷战后撤，沈晚晴把见面时间往后挪"),
     question: `第 ${year} 年 / ${totalGameYears}`,
     lifeTrack: "新机会把你的日程重新排了一遍，老师默认你该顶上更难的位置",
-    relationshipTrack: "许青禾已经能看出你是真忙还是在躲，态度比以前更直接了",
+    relationshipTrack: "冷战后撤：沈晚晴直接问你是不是在躲",
     callbacks: outlineCard?.callbacks?.slice(0, 3) || ["茶水间吐槽"],
     scene: {
-      title: outlineCard?.phase ? `${outlineCard.phase.slice(0, 8)}的人生弹窗` : `第${year}年的人生弹窗`,
-      body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友许青禾又带来一个新岔路。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。你知道这次选完，后面几年的节奏都会变。"
+      title: `第${year}年·${(outlineCard?.phase || "人生弹窗").slice(0, 8)}`,
+      body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，沈晚晴的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。"
     },
-    a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: { R: 1, I: 1, A: 0, S: 0, E: 4, C: 1 } },
-    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，作息稳回来了，可许青禾那边也明显把手收了半步", riasec: { R: 0, I: 2, A: 0, S: 1, E: 0, C: 4 } }
+    a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: mockRiasec(axis[0]) },
+    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，可沈晚晴那边也明显把手收了半步", riasec: mockRiasec(axis[1]) }
   };
 }
 
+function mockRiasec(mainType, secondaryType = "I") {
+  const main = riasecTypes.includes(mainType) ? mainType : "E";
+  const secondary = riasecTypes.includes(secondaryType) && secondaryType !== main ? secondaryType : "";
+  const scores = Object.fromEntries(riasecTypes.map(key => [key, 0]));
+  scores[main] = 4;
+  if (secondary) scores[secondary] = 1;
+  return scores;
+}
+
+function mockSummary(year, history, relationshipState) {
+  if (Number(year) <= 1) return "";
+  return mergeFeedbackParts(buildHistoryConsequence(history), relationshipState);
+}
+
 function parseJsonFromPrompt(content) {
-  try {
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
-    if (start >= 0 && end > start) {
+  const end = content.lastIndexOf("}");
+  if (end < 0) return null;
+  // 任务 prompt 文本里也含 JSON 示例，从前往后逐个 "{" 试解析，直到命中末尾的输入 JSON
+  let start = content.indexOf("{");
+  while (start >= 0 && start < end) {
+    try {
       return JSON.parse(content.slice(start, end + 1));
-    }
-  } catch {}
+    } catch {}
+    start = content.indexOf("{", start + 1);
+  }
   return null;
 }
 
 async function handleApi(request, env, pathname) {
+  if (pathname === "/api/health") {
+    return sendJson(200, {
+      ok: true,
+      service: "gaokao-life-simulator",
+      runtime: "cloudflare-worker",
+      hasDeepSeekKey: isUsableDeepSeekKey(env?.DEEPSEEK_API_KEY),
+      model: env?.DEEPSEEK_MODEL || defaultDeepSeekModel,
+      time: new Date().toISOString()
+    });
+  }
+
+  let body = {};
+  let profile = normalizeProfile();
+  let history = [];
   try {
-    if (pathname === "/api/health") {
-      return sendJson(200, {
-        ok: true,
-        service: "gaokao-life-simulator",
-        runtime: "cloudflare-worker",
-        hasDeepSeekKey: isUsableDeepSeekKey(env?.DEEPSEEK_API_KEY),
-        model: env?.DEEPSEEK_MODEL || defaultDeepSeekModel,
-        time: new Date().toISOString()
-      });
-    }
+    body = await readJson(request);
+    profile = normalizeProfile(body.profile);
+    history = Array.isArray(body.history) ? body.history : [];
+  } catch {}
 
-    const body = await readJson(request);
-    const profile = normalizeProfile(body.profile);
-    const history = Array.isArray(body.history) ? body.history : [];
-
+  try {
     if (pathname === "/api/game/start") {
       const data = await callDeepSeek(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), env);
       return sendJson(200, { ok: true, card: annualCardFromData(data) });
@@ -844,6 +935,31 @@ async function handleApi(request, env, pathname) {
     }
     return sendJson(404, { ok: false, error: "API route not found" });
   } catch (error) {
+    // 兜底降级：任何异常都返回 200 + 本地模拟内容，避免把上游 5xx 透传给前端
+    console.error(`API degraded fallback for ${pathname}:`, error?.message || error);
+    try {
+      if (pathname === "/api/game/start") {
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), []);
+        return sendJson(200, { ok: true, degraded: true, card: annualCardFromData(data) });
+      }
+      if (pathname === "/api/game/next") {
+        const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history);
+        return sendJson(200, { ok: true, degraded: true, card: annualCardFromData(data) });
+      }
+      if (pathname === "/api/game/batch") {
+        const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
+        const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
+        const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history);
+        return sendJson(200, { ok: true, degraded: true, cards: data.cards.map(annualCardFromData) });
+      }
+      if (pathname === "/api/game/result") {
+        const result = validateResult(mockResponse(buildResultMessages({ profile, history })));
+        return sendJson(200, { ok: true, degraded: true, result: { ...result, degraded: true } });
+      }
+    } catch (fallbackError) {
+      console.error("API fallback failed:", fallbackError?.message || fallbackError);
+    }
     return sendJson(error.status || 500, { ok: false, error: error.message || "Request failed" });
   }
 }
@@ -852,13 +968,30 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
-      if (url.pathname === "/api/health") {
-        return handleApi(request, env, url.pathname);
-      }
-      if (request.method !== "POST") {
+      if (url.pathname !== "/api/health" && request.method !== "POST") {
         return sendJson(405, { ok: false, error: "Method not allowed" });
       }
-      return handleApi(request, env, url.pathname);
+      const startedAt = Date.now();
+      try {
+        const response = await handleApi(request, env, url.pathname);
+        console.log(JSON.stringify({
+          evt: "api",
+          path: url.pathname,
+          status: response.status,
+          ms: Date.now() - startedAt,
+          ua: (request.headers.get("user-agent") || "").slice(0, 60)
+        }));
+        return response;
+      } catch (error) {
+        // handleApi 内部已有兜底，这里是最后防线
+        console.error(JSON.stringify({
+          evt: "api_crash",
+          path: url.pathname,
+          ms: Date.now() - startedAt,
+          error: String(error?.message || error)
+        }));
+        return sendJson(500, { ok: false, error: "Internal error" });
+      }
     }
     return env.ASSETS.fetch(request);
   }

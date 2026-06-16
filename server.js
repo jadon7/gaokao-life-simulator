@@ -17,12 +17,14 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const rootDir = resolve(__dirname);
 const port = Number(process.env.PORT || loadEnvValue("PORT") || 8765);
 const host = process.env.HOST || loadEnvValue("HOST") || "127.0.0.1";
-const deepseekModel = process.env.DEEPSEEK_MODEL || loadEnvValue("DEEPSEEK_MODEL") || "deepseek-v4-flash";
-const deepseekApiKey = process.env.DEEPSEEK_API_KEY || loadEnvValue("DEEPSEEK_API_KEY");
-const mockMode = (process.env.DEEPSEEK_MOCK || loadEnvValue("DEEPSEEK_MOCK")) === "1";
-const deepseekStream = (process.env.DEEPSEEK_STREAM || loadEnvValue("DEEPSEEK_STREAM") || "1") !== "0";
+const mockMode = (process.env.LLM_MOCK || loadEnvValue("LLM_MOCK") || process.env.DEEPSEEK_MOCK || loadEnvValue("DEEPSEEK_MOCK")) === "1";
+const llmStream = (process.env.LLM_STREAM || loadEnvValue("LLM_STREAM") || process.env.DEEPSEEK_STREAM || loadEnvValue("DEEPSEEK_STREAM") || "1") !== "0";
+const modelConfigs = buildModelConfigs();
+const defaultModel = resolveDefaultModel();
 const totalGameYears = 18;
 const finalResultAge = 36;
+const riasecTypes = ["R", "I", "A", "S", "E", "C"];
+const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
 const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "shareHooks"];
@@ -51,6 +53,82 @@ function loadEnvValue(key) {
     .find(item => item.trim().startsWith(`${key}=`));
   if (!line) return "";
   return line.slice(line.indexOf("=") + 1).trim().replace(/^["']|["']$/g, "");
+}
+
+function envValue(key, fallback = "") {
+  return process.env[key] || loadEnvValue(key) || fallback;
+}
+
+function buildModelConfigs() {
+  const mimoApiKey = envValue("MIMO_API_KEY");
+  const deepseekApiKey = envValue("DEEPSEEK_API_KEY");
+  const mimoBaseUrl = envValue("MIMO_BASE_URL", "https://api.xiaomimimo.com/v1");
+  const deepseekBaseUrl = envValue("DEEPSEEK_BASE_URL", "https://api.deepseek.com");
+  return [
+    {
+      id: "mimo-v2.5-pro",
+      label: "Xiaomi MiMo V2.5 Pro",
+      provider: "mimo",
+      baseUrl: mimoBaseUrl,
+      apiKey: mimoApiKey,
+      authHeader: "api-key",
+      maxTokensField: "max_completion_tokens",
+      supportsThinking: true,
+      supportsResponseFormat: true
+    },
+    {
+      id: "deepseek-v4-pro",
+      label: "DeepSeek V4 Pro",
+      provider: "deepseek",
+      baseUrl: deepseekBaseUrl,
+      apiKey: deepseekApiKey,
+      authHeader: "authorization",
+      maxTokensField: "max_tokens",
+      supportsThinking: true,
+      supportsResponseFormat: true
+    },
+    {
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
+      provider: "deepseek",
+      baseUrl: deepseekBaseUrl,
+      apiKey: deepseekApiKey,
+      authHeader: "authorization",
+      maxTokensField: "max_tokens",
+      supportsThinking: true,
+      supportsResponseFormat: true
+    }
+  ];
+}
+
+function modelIsConfigured(config) {
+  return mockMode || isUsableApiKey(config?.apiKey);
+}
+
+function resolveDefaultModel() {
+  const requested = envValue("LLM_MODEL") || envValue("MIMO_MODEL") || envValue("DEEPSEEK_MODEL");
+  if (modelConfigs.some(config => config.id === requested)) return requested;
+  return modelConfigs.find(modelIsConfigured)?.id || modelConfigs[0]?.id || "mimo-v2.5-pro";
+}
+
+function publicModelOptions() {
+  return modelConfigs.map(config => ({
+    id: config.id,
+    label: config.label,
+    provider: config.provider,
+    configured: modelIsConfigured(config)
+  }));
+}
+
+function availableModelIds() {
+  const configured = publicModelOptions().filter(option => option.configured).map(option => option.id);
+  return configured.length ? configured : publicModelOptions().map(option => option.id);
+}
+
+function resolveModelConfig(value) {
+  const requested = String(value || "").trim();
+  const selected = modelConfigs.find(config => config.id === requested) || modelConfigs.find(config => config.id === defaultModel) || modelConfigs[0];
+  return selected;
 }
 
 function sendJson(res, status, data) {
@@ -97,6 +175,7 @@ function compactHistory(history = []) {
     callbackSeeds: item.callbackSeeds,
     choice: item.choice,
     choiceText: item.choiceText,
+    consequence: item.consequence,
     tag: item.tag,
     holland: item.holland
   }));
@@ -150,51 +229,66 @@ function buildResultMessages({ profile, history }) {
   ];
 }
 
-async function callDeepSeek(messages, validator) {
+async function callModel(messages, validator, model = defaultModel) {
   if (mockMode) return validator(mockResponse(messages));
-  if (!isUsableDeepSeekKey(deepseekApiKey)) {
-    const error = new Error("DeepSeek API Key 未配置或格式不正确。请在 .env 中填写 sk- 开头的真实 key，或用 DEEPSEEK_MOCK=1 npm start 先测试 UI。");
+  const config = resolveModelConfig(model);
+  if (!isUsableApiKey(config?.apiKey)) {
+    const error = new Error(`${config?.label || model} API Key 未配置或格式不正确。请在 .env 中填写对应 provider 的 sk- key，或用 LLM_MOCK=1 npm start 先测试 UI。`);
     error.status = 500;
     throw error;
   }
 
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const useStream = deepseekStream && attempt === 0;
+    const useStream = llmStream && attempt === 0;
     try {
-      const response = await fetch("https://api.deepseek.com/chat/completions", {
+      const response = await fetch(`${String(config.baseUrl).replace(/\/+$/g, "")}/chat/completions`, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${deepseekApiKey}`
-        },
-        body: JSON.stringify({
-          model: deepseekModel,
-          messages,
-          response_format: { type: "json_object" },
-          thinking: { type: "disabled" },
-          temperature: 0.95,
-          stream: useStream,
-          max_tokens: 3200
-        })
+        headers: requestHeaders(config),
+        body: JSON.stringify(requestBody(config, messages, useStream))
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload?.error?.message || `DeepSeek request failed: ${response.status}`);
+        throw new Error(payload?.error?.message || `${config.label} request failed: ${response.status}`);
       }
       const content = useStream
-        ? await readDeepSeekStream(response)
+        ? await readChatStream(response)
         : (await response.json().catch(() => ({})))?.choices?.[0]?.message?.content;
-      if (!content) throw new Error("DeepSeek returned empty content");
+      if (!content) throw new Error(`${config.label} returned empty content`);
       return validator(parseJsonContent(content));
     } catch (error) {
       lastError = error;
     }
   }
-  throw lastError;
+  console.error(`${config.label} unavailable, using fallback content:`, lastError?.message || lastError);
+  const fallback = validator(mockResponse(messages));
+  return { ...fallback, degraded: true };
 }
 
-async function readDeepSeekStream(response) {
+function requestHeaders(config) {
+  const headers = { "content-type": "application/json" };
+  if (config.authHeader === "api-key") {
+    headers["api-key"] = config.apiKey;
+  } else {
+    headers.authorization = `Bearer ${config.apiKey}`;
+  }
+  return headers;
+}
+
+function requestBody(config, messages, useStream) {
+  const body = {
+    model: config.id,
+    messages,
+    temperature: 0.95,
+    stream: useStream
+  };
+  body[config.maxTokensField || "max_tokens"] = 3200;
+  if (config.supportsResponseFormat) body.response_format = { type: "json_object" };
+  if (config.supportsThinking) body.thinking = { type: "disabled" };
+  return body;
+}
+
+async function readChatStream(response) {
   const decoder = new TextDecoder();
   let buffer = "";
   let content = "";
@@ -215,7 +309,7 @@ async function readDeepSeekStream(response) {
   return content.trim();
 }
 
-function isUsableDeepSeekKey(value) {
+function isUsableApiKey(value) {
   const key = String(value || "").trim();
   return /^sk-[A-Za-z0-9_-]{20,}$/.test(key);
 }
@@ -228,7 +322,7 @@ function parseJsonContent(content) {
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
     if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
-    throw new Error("DeepSeek returned invalid JSON");
+    throw new Error("Model returned invalid JSON");
   }
 }
 
@@ -252,15 +346,19 @@ function validateAnnual(data, history = [], repeatHistory = history) {
   normalized.scene = normalizeSceneData(data.scene);
   normalized.a = normalizeChoiceData(data.a, "A");
   normalized.b = normalizeChoiceData(data.b, "B");
+  validateRiasecAgainstOutline(normalized);
   if (!new RegExp(`^第\\s*\\d+\\s*年\\s*\\/\\s*${totalGameYears}$`).test(normalized.question)) {
     throw new Error("Invalid annual JSON: bad question field");
   }
   const yearNumber = normalized.year;
   normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(deDuplicateSummary(normalized, history), 52, 2);
+  normalized.summary = repairSummaryRelationshipStage(normalized.summary, normalized.relationshipTrack);
   if (yearNumber > 1 && !normalized.summary) {
     const sceneText = [normalized.scene?.title, normalized.scene?.body].filter(Boolean).join("");
     normalized.summary = clampTextBySentence(mergeFeedbackParts(buildHistoryConsequence(history), buildOffstageFallback(textCategories(sceneText))), 52, 2);
+    normalized.summary = repairSummaryRelationshipStage(normalized.summary, normalized.relationshipTrack);
   }
+  validateContinuityText(normalized, history);
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
@@ -327,9 +425,24 @@ function buildOffstageFallback(sceneCategories) {
     return "你把作息往回拽了一点，家里这才没继续追着问你几点睡";
   }
   if (sceneCategories.has("work") || sceneCategories.has("study")) {
-    return "许闻笙已经会顺手给你留位置，你忙归忙，她没把你从日常里划掉";
+    return "暧昧升温，沈晚晴已经会顺手给你留位置";
   }
   return "你这边刚处理完一头，另一头也没闲着，身边几个人对你的站位已经变了";
+}
+
+function repairSummaryRelationshipStage(summary, relationshipTrack) {
+  const text = optionalCleanText(summary);
+  if (!text || !/(关系|沈晚晴|沈晚晴|她)/.test(text) || relationshipStagePattern.test(text)) return text;
+  const track = optionalCleanText(relationshipTrack);
+  const match = track.match(relationshipStagePattern);
+  if (!match) return text;
+  const firstClause = text.split(/[，。！？!?；;]/).map(item => item.trim()).find(Boolean) || text;
+  const signal = track
+    .replace(new RegExp(`^${match[0]}[：:，,]?`), "")
+    .replace(/[。！？!?；;]+$/g, "")
+    .trim();
+  const staged = signal ? `${match[0]}，${signal}` : match[0];
+  return mergeFeedbackParts(firstClause, staged);
 }
 
 function extractConsequenceClause(summary, sceneText) {
@@ -362,6 +475,59 @@ function mergeFeedbackParts(consequence, offstage) {
   const right = optionalCleanText(offstage).replace(/^(上一年|上一年的决定|这一年)[，,]*/g, "").replace(/[，。！？!?；;]+$/g, "");
   const merged = [left, right].filter(Boolean).join("，");
   return clampTextBySentence(merged, 52, 2);
+}
+
+function validateContinuityText(card, history = []) {
+  if (card.year > 1) {
+    const summary = optionalCleanText(card.summary);
+    if (/(^|[^核])关系线|生活线|现实线|主线|副线|当前趋势/.test(summary)) {
+      throw new Error("Invalid annual JSON: summary exposes internal track wording");
+    }
+    if (/接[住着下]?或错失|错失或接|错过或接|或错失|或错过|要么|无论|分叉|两条路|取决于|A或B|A\/B/.test(summary)) {
+      throw new Error("Invalid annual JSON: summary contains parallel opposite outcomes");
+    }
+    if (/关系|沈晚晴|沈晚晴|她/.test(summary) && !relationshipStagePattern.test(summary)) {
+      throw new Error("Invalid annual JSON: summary mentions relationship without a clear stage");
+    }
+    const lastConsequence = optionalCleanText(Array.isArray(history) ? history.at(-1)?.consequence : "");
+    if (lastConsequence && textSimilarityScore(summary.slice(0, Math.min(24, summary.length)), lastConsequence) < 0.08) {
+      throw new Error("Invalid annual JSON: summary does not inherit previous selected consequence");
+    }
+  }
+  const relationshipTrack = optionalCleanText(card.relationshipTrack);
+  if (relationshipTrack) {
+    if (/(^|[^核])关系线|生活线|现实线|主线|副线/.test(relationshipTrack)) {
+      throw new Error("Invalid annual JSON: relationshipTrack exposes internal wording");
+    }
+    if (!relationshipStagePattern.test(relationshipTrack)) {
+      throw new Error("Invalid annual JSON: relationshipTrack missing clear relationship stage");
+    }
+  }
+}
+
+function validateRiasecAgainstOutline(card) {
+  const outline = getOutlineCard(card.year);
+  const axis = Array.isArray(outline?.riasecAxis) ? outline.riasecAxis : [];
+  if (axis.length < 2) return;
+  validateChoiceAxis(card.a, axis[0], "A");
+  validateChoiceAxis(card.b, axis[1], "B");
+}
+
+function validateChoiceAxis(choice, expectedMain, label) {
+  const scores = choice?.riasec;
+  if (!scores) throw new Error(`Invalid annual JSON: ${label} missing riasec`);
+  const keys = ["R", "I", "A", "S", "E", "C"];
+  const ranked = keys.slice().sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+  const main = ranked[0];
+  const mainScore = Number(scores[expectedMain] || 0);
+  const positiveSecondary = keys.filter(key => key !== expectedMain && Number(scores[key] || 0) > 0);
+  const total = keys.reduce((sum, key) => sum + Number(scores[key] || 0), 0);
+  if (main !== expectedMain || mainScore < 4 || mainScore > 6) {
+    throw new Error(`Invalid annual JSON: ${label} riasec main must be ${expectedMain} with 4-6 points`);
+  }
+  if (positiveSecondary.length > 1 || positiveSecondary.some(key => Number(scores[key] || 0) > 2) || total > 7) {
+    throw new Error(`Invalid annual JSON: ${label} riasec secondary weights invalid`);
+  }
 }
 
 function textCategories(value) {
@@ -417,9 +583,9 @@ function uniqueTextTokens(value) {
 
 function optionalCleanText(value) {
   return String(value || "")
-    .replace(/关系线核心角色/g, "许闻笙")
-    .replace(/室友\/同伴/g, "周越")
-    .replace(/导师\/老师|辅导员\/导师背景声/g, "林知夏")
+    .replace(/关系线核心角色/g, "总坐靠窗位、笔记写得像攻略的同班女生沈晚晴")
+    .replace(/室友\/同伴/g, "总在上课路上边走边吃早餐的吃货舍友周越")
+    .replace(/导师\/老师|辅导员\/导师背景声/g, "辅导员兼专业导师林老师")
     .replace(/外部机会角色背景压力|外部机会角色/g, "合作方")
     .replace(/家庭型角色/g, "家里")
     .replace(/团队群像/g, "项目群")
@@ -574,6 +740,14 @@ function validateResult(data) {
     normalized.shareHooks.length < 2
   ) {
     throw new Error("Invalid result JSON: insufficient list items");
+  }
+  // title 第三段强制与 careerPossibilities[0] 对齐，杜绝“资深工程师”兜底化
+  const topCareer = String(normalized.careerPossibilities[0]?.label || "").trim();
+  if (topCareer && topCareer.length <= 10) {
+    const parts = normalized.title.split(/[，,]/).map(part => part.trim()).filter(Boolean);
+    if (parts.length === 3 && parts[2] !== topCareer) {
+      normalized.title = `${parts[0]}，${parts[1]}，${topCareer}`;
+    }
   }
   return normalized;
 }
@@ -762,7 +936,7 @@ function mockResponse(messages) {
       shareHooks: ["这条线像我，但比我会复盘。", "原来专业只是新手村。", "测完想给志愿表道个歉。"]
     };
   }
-  if (content.includes("\"cards\": []")) {
+  if (content.includes("\"batchCount\"")) {
     const parsed = parseJsonFromPrompt(content);
     const startYear = Number(parsed?.gameMeta?.startYear || 1);
     const count = Number(parsed?.gameMeta?.batchCount || 5);
@@ -770,21 +944,22 @@ function mockResponse(messages) {
       cards: Array.from({ length: count }, (_, index) => {
         const year = startYear + index;
         const outlineCard = getOutlineCard(year);
+        const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
         return {
           year,
           phase: outlineCard?.phase || "试播阶段",
           mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-          summary: year === 1 ? "" : `你把上一轮麻烦兜住后，群里开始默认你能补位；许闻笙对你也明显不再只是客气。`,
+          summary: mockSummary(year, parsed?.history, "暧昧升温，沈晚晴开始给你留座"),
           question: `第 ${year} 年 / ${totalGameYears}`,
           lifeTrack: "项目节奏更紧了，老师和同学开始把难活往你这里递",
-          relationshipTrack: "许闻笙开始记你下课时间，偶尔会替你留机房靠窗的位置",
+          relationshipTrack: "暧昧升温：沈晚晴开始固定留座",
           callbacks: outlineCard?.callbacks?.slice(0, 3) || ["朋友群新梗"],
           scene: {
-            title: outlineCard?.phase ? `${outlineCard.phase.slice(0, 8)}的岔口` : `第${year}年的新机会弹窗`,
-            body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。许闻笙刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
+            title: `第${year}年·${(outlineCard?.phase || "新机会").slice(0, 8)}`,
+            body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。沈晚晴刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
           },
-          a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: { R: 1, I: 2, A: 0, S: 0, E: 4, C: 1 } },
-          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: "你把时间从杂活里抢了回来，许闻笙却开始认真记你到底在躲什么", riasec: { R: 0, I: 2, A: 0, S: 1, E: 0, C: 4 } }
+          a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: mockRiasec(axis[0]) },
+          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: "你把时间从杂活里抢了回来，沈晚晴却开始认真记你到底在躲什么", riasec: mockRiasec(axis[1]) }
         };
       })
     };
@@ -792,69 +967,136 @@ function mockResponse(messages) {
   const parsed = parseJsonFromPrompt(content);
   const year = Number(parsed?.gameMeta?.currentYear || 1);
   const outlineCard = getOutlineCard(year);
+  const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
   return {
     year,
     phase: outlineCard?.phase || "试播阶段",
     mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-    summary: year === 1 ? "" : `你把上一轮风波先压住了，手头没炸；许闻笙嘴上没提，见面却不再绕开你。`,
+    summary: mockSummary(year, parsed?.history, "冷战后撤，沈晚晴把见面时间往后挪"),
     question: `第 ${year} 年 / ${totalGameYears}`,
     lifeTrack: "新机会把你的日程重新排了一遍，老师默认你该顶上更难的位置",
-    relationshipTrack: "许闻笙已经能看出你是真忙还是在躲，态度比以前更直接了",
+    relationshipTrack: "冷战后撤：沈晚晴直接问你是不是在躲",
     callbacks: outlineCard?.callbacks?.slice(0, 3) || ["茶水间吐槽"],
     scene: {
-      title: outlineCard?.phase ? `${outlineCard.phase.slice(0, 8)}的人生弹窗` : `第${year}年的人生弹窗`,
-      body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，许闻笙的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。"
+      title: `第${year}年·${(outlineCard?.phase || "人生弹窗").slice(0, 8)}`,
+      body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，沈晚晴的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。"
     },
-    a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: { R: 1, I: 1, A: 0, S: 0, E: 4, C: 1 } },
-    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，可许闻笙那边也明显把手收了半步", riasec: { R: 0, I: 2, A: 0, S: 1, E: 0, C: 4 } }
+    a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: mockRiasec(axis[0]) },
+    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，可沈晚晴那边也明显把手收了半步", riasec: mockRiasec(axis[1]) }
   };
 }
 
+function mockRiasec(mainType, secondaryType = "I") {
+  const main = riasecTypes.includes(mainType) ? mainType : "E";
+  const secondary = riasecTypes.includes(secondaryType) && secondaryType !== main ? secondaryType : "";
+  const scores = Object.fromEntries(riasecTypes.map(key => [key, 0]));
+  scores[main] = 4;
+  if (secondary) scores[secondary] = 1;
+  return scores;
+}
+
+function mockSummary(year, history, relationshipState) {
+  if (Number(year) <= 1) return "";
+  return mergeFeedbackParts(buildHistoryConsequence(history), relationshipState);
+}
+
 function parseJsonFromPrompt(content) {
-  try {
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
-    if (start >= 0 && end > start) {
+  const end = content.lastIndexOf("}");
+  if (end < 0) return null;
+  // 任务 prompt 文本里也含 JSON 示例，从前往后逐个 "{" 试解析，直到命中末尾的输入 JSON
+  let start = content.indexOf("{");
+  while (start >= 0 && start < end) {
+    try {
       return JSON.parse(content.slice(start, end + 1));
-    }
-  } catch {}
+    } catch {}
+    start = content.indexOf("{", start + 1);
+  }
   return null;
 }
 
 async function handleApi(req, res, pathname) {
+  if (pathname === "/api/health") {
+    sendJson(res, 200, {
+      ok: true,
+      service: "gaokao-life-simulator",
+      runtime: "node-local",
+      mock: mockMode,
+      hasModelKey: modelIsConfigured(resolveModelConfig(defaultModel)),
+      hasDeepSeekKey: modelConfigs.some(config => config.provider === "deepseek" && isUsableApiKey(config.apiKey)),
+      hasMimoKey: modelConfigs.some(config => config.provider === "mimo" && isUsableApiKey(config.apiKey)),
+      model: defaultModel,
+      availableModels: availableModelIds(),
+      modelOptions: publicModelOptions(),
+      time: new Date().toISOString()
+    });
+    return;
+  }
+  let body = {};
+  let profile = normalizeProfile();
+  let history = [];
   try {
-    const body = await readJson(req);
-    const profile = normalizeProfile(body.profile);
-    const history = Array.isArray(body.history) ? body.history : [];
+    body = await readJson(req);
+    profile = normalizeProfile(body.profile);
+    history = Array.isArray(body.history) ? body.history : [];
+    const requestModel = resolveModelConfig(body.model).id;
 
     if (pathname === "/api/game/start") {
-      const data = await callDeepSeek(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []));
-      sendJson(res, 200, { ok: true, card: annualCardFromData(data) });
+      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), requestModel);
+      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data) });
       return;
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callDeepSeek(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history));
-      sendJson(res, 200, { ok: true, card: annualCardFromData(data) });
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history), requestModel);
+      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data) });
       return;
     }
     if (pathname === "/api/game/batch") {
       const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
       const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
-      const data = await callDeepSeek(
+      const data = await callModel(
         buildBatchMessages({ profile, history, startYear, count }),
-        value => validateBatch(value, count, startYear, history)
+        value => validateBatch(value, count, startYear, history),
+        requestModel
       );
-      sendJson(res, 200, { ok: true, cards: data.cards.map(annualCardFromData) });
+      sendJson(res, 200, { ok: true, model: requestModel, cards: data.cards.map(annualCardFromData) });
       return;
     }
     if (pathname === "/api/game/result") {
-      const result = await callDeepSeek(buildResultMessages({ profile, history }), validateResult);
-      sendJson(res, 200, { ok: true, result });
+      const result = await callModel(buildResultMessages({ profile, history }), validateResult, requestModel);
+      sendJson(res, 200, { ok: true, model: requestModel, result });
       return;
     }
     sendJson(res, 404, { ok: false, error: "API route not found" });
   } catch (error) {
+    console.error(`API degraded fallback for ${pathname}:`, error?.message || error);
+    try {
+      if (pathname === "/api/game/start") {
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), []);
+        sendJson(res, 200, { ok: true, degraded: true, card: annualCardFromData(data) });
+        return;
+      }
+      if (pathname === "/api/game/next") {
+        const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history);
+        sendJson(res, 200, { ok: true, degraded: true, card: annualCardFromData(data) });
+        return;
+      }
+      if (pathname === "/api/game/batch") {
+        const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
+        const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
+        const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history);
+        sendJson(res, 200, { ok: true, degraded: true, cards: data.cards.map(annualCardFromData) });
+        return;
+      }
+      if (pathname === "/api/game/result") {
+        const result = validateResult(mockResponse(buildResultMessages({ profile, history })));
+        sendJson(res, 200, { ok: true, degraded: true, result: { ...result, degraded: true } });
+        return;
+      }
+    } catch (fallbackError) {
+      console.error("API fallback failed:", fallbackError?.message || fallbackError);
+    }
     sendJson(res, error.status || 500, { ok: false, error: error.message || "Request failed" });
   }
 }
@@ -874,7 +1116,7 @@ async function serveStatic(res, pathname) {
 createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
   if (url.pathname.startsWith("/api/")) {
-    if (req.method !== "POST") {
+    if (url.pathname !== "/api/health" && req.method !== "POST") {
       sendJson(res, 405, { ok: false, error: "Method not allowed" });
       return;
     }
@@ -885,6 +1127,9 @@ createServer(async (req, res) => {
 }).listen(port, host, () => {
   const displayHost = host === "0.0.0.0" ? "127.0.0.1" : host;
   console.log(`高考人生模拟器本地服务已启动: http://${displayHost}:${port}/`);
-  if (mockMode) console.log("DEEPSEEK_MOCK=1，当前使用本地模拟内容。");
-  if (!deepseekApiKey && !mockMode) console.log("未检测到 DEEPSEEK_API_KEY，API 调用会返回配置错误。");
+  if (mockMode) console.log("LLM_MOCK=1，当前使用本地模拟内容。");
+  if (!mockMode) {
+    const missingProviders = [...new Set(modelConfigs.filter(config => !isUsableApiKey(config.apiKey)).map(config => config.provider))];
+    if (missingProviders.length) console.log(`未检测到这些 provider 的可用 API Key：${missingProviders.join(", ")}。相关模型会走降级内容。`);
+  }
 });

@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2026-06-08"
 account_id = "0eedb61d5ddbea42f84455c9455addb0"
 
+# Workers Logs：保留每次请求的结构化日志，可在 Dashboard 或 `npx wrangler tail` 查看
+[observability]
+enabled = true
+
 [assets]
 directory = "./public"
 binding = "ASSETS"

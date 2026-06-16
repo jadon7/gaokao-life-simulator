@@ -12,6 +12,8 @@
 - [6 张实验幕设计稿](./pilot-arc-6-cards.md)
 - [6 张实验幕 JSON 样例](./pilot-arc-6-cards.sample.json)
 - [vNext 落地清单](./vnext-implementation-checklist.md)
+- [卡片视觉资产生图交接文档](./visual-asset-generation-handoff.md)
+- [内容、AI 对接与霍兰德结果审计文档](./content-ai-holland-integration-audit.md)
 
 这份协议文档用于统一：
 

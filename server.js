@@ -319,10 +319,17 @@ function requestBody(config, messages, useStream) {
     temperature: 0.95,
     stream: useStream
   };
-  body[config.maxTokensField || "max_tokens"] = 3200;
+  body[config.maxTokensField || "max_tokens"] = maxTokensForMessages(messages);
   if (config.supportsResponseFormat) body.response_format = { type: "json_object" };
   if (config.supportsThinking) body.thinking = { type: "disabled" };
   return body;
+}
+
+function maxTokensForMessages(messages) {
+  const task = String(messages?.[1]?.content || "");
+  if (task.includes('"cards"')) return 3200;
+  if (task.includes('"careerPossibilities"')) return 2400;
+  return 1200;
 }
 
 async function readChatStream(response, onDelta = null) {

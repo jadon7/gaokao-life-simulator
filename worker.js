@@ -201,8 +201,15 @@ function deepSeekRequestBody(env, messages, stream) {
     thinking: { type: "disabled" },
     temperature: 0.95,
     stream,
-    max_tokens: 3200
+    max_tokens: maxTokensForMessages(messages)
   };
+}
+
+function maxTokensForMessages(messages) {
+  const task = String(messages?.[1]?.content || "");
+  if (task.includes('"cards"')) return 3200;
+  if (task.includes('"careerPossibilities"')) return 2400;
+  return 1200;
 }
 
 function attachModelDebug(value, enabled, debug) {

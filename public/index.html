@@ -4057,6 +4057,8 @@
       const rightTitle = normalizeStreamChoiceTitle(extractPartialJsonString(rightSection, "title"), "B");
       return {
         summary: clampStreamTextBySentence(extractPartialJsonString(text, "summary"), 52, 2),
+        lifeTrack: clampStreamTextBySentence(extractPartialJsonString(text, "lifeTrack"), 26, 1),
+        relationshipTrack: clampStreamTextBySentence(extractPartialJsonString(text, "relationshipTrack"), 34, 1),
         sceneTitle: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "title"), 10, 1),
         sceneBody: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "body"), 130, 3),
         leftTitle,
@@ -4328,6 +4330,32 @@
       const title = previousFeedbackTitle(card, body);
       return `
         <aside class="previous-note" aria-label="上一年回响">
+          <i class="pin" aria-hidden="true"></i>
+          <b>${escapeHTML(title)}</b>
+          <span>${escapeHTML(body)}</span>
+        </aside>
+      `;
+    }
+
+    function streamPreviousFeedbackHTML(stream, isNew) {
+      if (state.loadError || state.index <= 0) return "";
+      const streamCard = {
+        yearNumber: state.index + 1,
+        scene: stream.sceneTitle || "",
+        eventTitle: stream.sceneTitle || "",
+        prompt: stream.sceneBody || "",
+        modelHeader: stream.summary || "",
+        summary: stream.summary || "",
+        context: stream.summary || "",
+        lifeTrack: stream.lifeTrack || "",
+        relationshipTrack: stream.relationshipTrack || "",
+        previous: previousInfoForYear(state.index + 1)
+      };
+      const body = composePreviousFeedback(streamCard);
+      if (!body) return "";
+      const title = previousFeedbackTitle(streamCard, body);
+      return `
+        <aside class="previous-note stream-field${isNew("summary")}" aria-label="上一年回响">
           <i class="pin" aria-hidden="true"></i>
           <b>${escapeHTML(title)}</b>
           <span>${escapeHTML(body)}</span>
@@ -5038,7 +5066,6 @@
       const stream = state.streamFields || {};
       const now = performance.now();
       const isNew = key => Number(state.streamNewFields?.[key] || 0) > now ? " is-stream-new" : "";
-      const summaryText = stream.summary || "";
       const titleHTML = stream.sceneTitle
         ? `<span class="stream-field${isNew("sceneTitle")}">${escapeHTML(stream.sceneTitle)}</span>`
         : `<span class="stream-placeholder" aria-label="标题生成中"></span>`;
@@ -5056,13 +5083,7 @@
         ? `<span class="stream-field${isNew("rightDesc")}">${escapeHTML(rightDesc)}</span>`
         : `<span class="stream-placeholder" aria-label="选项生成中"></span>`;
       article.innerHTML = `
-        ${!state.loadError && state.index > 0 && summaryText ? `
-          <aside class="previous-note stream-field${isNew("summary")}" aria-label="上一年回响">
-            <i class="pin" aria-hidden="true"></i>
-            <b>上一年回响</b>
-            <span>${escapeHTML(summaryText)}</span>
-          </aside>
-        ` : ""}
+        ${streamPreviousFeedbackHTML(stream, isNew)}
         <div class="card-head">
           <h3 class="card-title">${state.loadError ? "这一年卡住了" : titleHTML}</h3>
         </div>

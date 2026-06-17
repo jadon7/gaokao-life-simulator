@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-「高考人生模拟器」：18 张牌的连续人生短剧 + 霍兰德（RIASEC）兴趣隐藏计分。前端是翻牌 UI，剧情内容由后端调用 DeepSeek 分幕批量生成并预缓存，降低翻牌等待感。仓库内文档与文案均为中文。
+「高考人生模拟器」：18 张牌的连续人生短剧 + 霍兰德（RIASEC）兴趣隐藏计分。前端是翻牌 UI，剧情内容由后端调用 DeepSeek 逐年生成，保证每一年的提示词都拿到玩家已经做出的完整历史选择。仓库内文档与文案均为中文。
 
 ## 常用命令
 
@@ -32,9 +32,19 @@ npm run cf:deploy              # 部署到 Cloudflare（生产域名 gaokao.dsxz
 
 API 端点（两个后端一致）：
 
-- `POST /api/game/batch` — 按 `startYear/count` 批量生成一幕卡牌。**前端主流程用的是这个**，在填写资料阶段就预热第一批牌（见 index.html 的 `startWarmup`）。
+- `POST /api/game/start` — 生成第 1 年卡牌。
+- `POST /api/game/next` — 根据当前完整 `history` 逐年生成下一张卡牌。**index.html 主流程和 prompt-lab.html 都必须使用这条逐年机制**。
+- `POST /api/game/batch` — 按 `startYear/count` 批量生成多张卡牌。仅作为兼容/实验接口保留，不能在主流程里替代逐年机制。
 - `POST /api/game/result` — 18 年结束后生成结果页 JSON。
-- `POST /api/game/start` / `POST /api/game/next` — 单张生成，旧接口仍保留。
+
+### 提示词调用机制一致性（必须遵守）
+
+`index.html` 和 `prompt-lab.html` 是同一套提示词效果的生产入口与测试入口。凡是修改提示词调用机制时，必须同时检查并同步两边：
+
+- 请求节奏：第 1 年走 `/api/game/start`，之后每次只生成 1 年，走 `/api/game/next`。
+- 历史输入：每次 `/api/game/next` 都必须传入当前已选择的完整 `history`。
+- 模型选择、降级策略、结果页调用和请求 payload 字段，不能只改一边。
+- 如果未来要重新启用批量生成、预热、桥接题或本地固定题，必须让 `prompt-lab.html` 也能用同一机制复现实验；否则不要接入 `index.html` 主流程。
 
 DeepSeek 调用细节：`response_format: json_object`、流式 SSE 解析、超时控制、失败重试一次（第二次降级为非流式）。两次都失败后**不报错**，而是回落到 `mockResponse` 并在返回中标记 `degraded: true`。返回内容经 `validateAnnual/validateBatch/validateResult` 校验并补默认值后才返回前端。
 

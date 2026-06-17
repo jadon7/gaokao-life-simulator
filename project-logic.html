@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>高考人生模拟器 · 项目功能与逻辑地图</title>
+  <style>
+    :root {
+      --paper: #f7f3ea;
+      --ink: #18211f;
+      --muted: #64706b;
+      --line: #d9d0c2;
+      --panel: #fffdf7;
+      --panel-2: #f0e9dc;
+      --rust: #b84d2b;
+      --teal: #13756f;
+      --moss: #617b2d;
+      --violet: #6250a4;
+      --gold: #b7832f;
+      --shadow: 0 14px 36px rgba(40, 32, 20, 0.12);
+      --radius: 8px;
+      color-scheme: light;
+      font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(24, 33, 31, 0.045) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(0deg, rgba(24, 33, 31, 0.04) 1px, transparent 1px) 0 0 / 34px 34px,
+        var(--paper);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.45;
+      background-image:
+        radial-gradient(rgba(24, 33, 31, 0.09) 0.55px, transparent 0.55px);
+      background-size: 5px 5px;
+      mix-blend-mode: multiply;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    .page {
+      position: relative;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px clamp(18px, 4vw, 48px);
+      border-bottom: 1px solid rgba(24, 33, 31, 0.14);
+      background: rgba(247, 243, 234, 0.9);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 190px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--ink);
+      display: grid;
+      place-items: center;
+      background: var(--rust);
+      color: #fffdf7;
+      font-size: 13px;
+      line-height: 1;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    .topnav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .topnav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .topnav a {
+      flex: none;
+      padding: 6px 10px;
+      border: 1px solid rgba(24, 33, 31, 0.22);
+      background: rgba(255, 253, 247, 0.72);
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      color: #2c3734;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+      gap: clamp(24px, 5vw, 70px);
+      align-items: center;
+      padding: clamp(38px, 8vw, 96px) clamp(18px, 5vw, 72px) 36px;
+      min-height: min(780px, calc(100vh - 56px));
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 5px 9px;
+      border: 1px solid rgba(24, 33, 31, 0.22);
+      background: #fffdf7;
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--teal);
+      transform: rotate(45deg);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    h1 {
+      max-width: 820px;
+      font-size: clamp(34px, 6vw, 84px);
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      min-width: 0;
+    }
+
+    .hero-copy p {
+      max-width: 670px;
+      margin: 22px 0 0;
+      color: #3f4b46;
+      font-size: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 7px 12px;
+      border: 2px solid var(--ink);
+      background: var(--ink);
+      color: #fffdf7;
+      font-weight: 850;
+      box-shadow: 4px 4px 0 rgba(24, 33, 31, 0.2);
+    }
+
+    .action.secondary {
+      background: #fffdf7;
+      color: var(--ink);
+    }
+
+    .action .icon {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border: 1px solid currentColor;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .artifact {
+      position: relative;
+      min-height: 520px;
+      min-width: 0;
+    }
+
+    .artifact-card {
+      position: absolute;
+      border: 2px solid var(--ink);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .artifact-main {
+      inset: 18px 42px auto auto;
+      width: min(72%, 420px);
+      transform: rotate(2deg);
+    }
+
+    .artifact-main img {
+      aspect-ratio: 1200 / 1410;
+      object-fit: cover;
+      background: #e8ded0;
+    }
+
+    .artifact-main .caption {
+      padding: 13px 14px 16px;
+      border-top: 2px solid var(--ink);
+      background: #fffdf7;
+    }
+
+    .artifact-main b {
+      display: block;
+      font-size: 15px;
+    }
+
+    .artifact-main span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .artifact-person {
+      left: 0;
+      bottom: 28px;
+      width: min(44%, 230px);
+      transform: rotate(-4deg);
+      background: #f4d9bd;
+    }
+
+    .artifact-person img {
+      width: 100%;
+      aspect-ratio: 1 / 1.16;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .artifact-note {
+      right: 0;
+      bottom: 4px;
+      width: min(54%, 280px);
+      padding: 16px;
+      background: #ffe7a8;
+      transform: rotate(-2deg);
+    }
+
+    .artifact-note b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .artifact-note p {
+      margin: 0;
+      color: #4b3b22;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-top: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      background: #fffdf7;
+    }
+
+    .stat {
+      padding: 20px clamp(14px, 3vw, 28px);
+      border-right: 1px solid var(--line);
+    }
+
+    .stat:last-child {
+      border-right: 0;
+    }
+
+    .stat b {
+      display: block;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section {
+      padding: 72px clamp(18px, 5vw, 72px);
+    }
+
+    .section.alt {
+      background: rgba(255, 253, 247, 0.56);
+      border-top: 1px solid rgba(24, 33, 31, 0.12);
+      border-bottom: 1px solid rgba(24, 33, 31, 0.12);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(260px, 0.45fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    .section-label {
+      color: var(--rust);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin-top: 7px;
+      font-size: clamp(30px, 4vw, 50px);
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .flow-card,
+    .logic-card,
+    .file-card,
+    .risk-card,
+    .api-card,
+    .act-card {
+      border: 2px solid rgba(24, 33, 31, 0.78);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 5px 5px 0 rgba(24, 33, 31, 0.12);
+    }
+
+    .flow-card {
+      position: relative;
+      min-height: 190px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .flow-card::after {
+      content: attr(data-step);
+      position: absolute;
+      right: -8px;
+      bottom: -30px;
+      color: rgba(24, 33, 31, 0.08);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 98px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .flow-card b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .flow-card p {
+      margin: 0;
+      color: #4c5854;
+      font-size: 13px;
+    }
+
+    .flow-card .chip {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 3px 7px;
+      background: #efe4d0;
+      color: #4d3825;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .logic-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.5fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .phone-frame {
+      position: sticky;
+      top: 86px;
+      border: 2px solid var(--ink);
+      border-radius: 28px;
+      padding: 12px;
+      background: #181f1d;
+      box-shadow: var(--shadow);
+    }
+
+    .phone-screen {
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f8efe1;
+      min-height: 520px;
+    }
+
+    .phone-screen img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      object-position: center;
+      background: #e3d3c0;
+    }
+
+    .phone-body {
+      padding: 16px;
+    }
+
+    .phone-body small {
+      display: inline-block;
+      margin-bottom: 9px;
+      padding: 3px 8px;
+      background: #18211f;
+      color: #fffdf7;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .phone-body h3 {
+      font-size: 25px;
+    }
+
+    .phone-body p {
+      margin: 12px 0 16px;
+      color: #3f4b46;
+      font-size: 14px;
+    }
+
+    .choice-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .choice-pair span {
+      min-height: 62px;
+      padding: 9px;
+      border: 2px solid var(--ink);
+      background: #fffdf7;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .logic-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .logic-card {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .logic-card .num {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border: 2px solid var(--ink);
+      background: var(--panel-2);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .logic-card h3 {
+      margin-bottom: 5px;
+      font-size: 20px;
+    }
+
+    .logic-card p {
+      margin: 0;
+      color: #4b5652;
+      font-size: 14px;
+    }
+
+    .pipe {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .pipe span {
+      position: relative;
+      padding: 13px 10px;
+      border: 2px solid rgba(24, 33, 31, 0.72);
+      background: #fffdf7;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .pipe span:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      width: 10px;
+      height: 2px;
+      background: var(--ink);
+      transform: translateY(-50%);
+    }
+
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .schema-panel {
+      border: 2px solid rgba(24, 33, 31, 0.75);
+      border-radius: var(--radius);
+      background: #fffdf7;
+      overflow: hidden;
+    }
+
+    .schema-panel h3 {
+      padding: 13px 15px;
+      border-bottom: 2px solid rgba(24, 33, 31, 0.75);
+      background: #eadcc7;
+      font-size: 20px;
+    }
+
+    .schema-panel ul {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 15px;
+      list-style: none;
+    }
+
+    .schema-panel li {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 9px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line);
+      font-size: 13px;
+    }
+
+    .schema-panel li:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    code {
+      padding: 2px 5px;
+      border: 1px solid rgba(24, 33, 31, 0.16);
+      background: #f2ecdf;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .act-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .act-card {
+      min-height: 210px;
+      padding: 14px;
+      background: #fffdf7;
+    }
+
+    .act-card b {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--rust);
+      font-size: 12px;
+    }
+
+    .act-card h3 {
+      font-size: 18px;
+    }
+
+    .act-card p {
+      margin: 9px 0 0;
+      color: #4b5652;
+      font-size: 13px;
+    }
+
+    .model-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.62fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .ai-panel {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: #17201e;
+      color: #fffdf7;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .ai-panel h3 {
+      font-size: 24px;
+      color: #ffe7a8;
+    }
+
+    .ai-panel p {
+      margin: 10px 0 0;
+      color: #d9e0da;
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .check {
+      padding: 11px;
+      border: 1px solid rgba(255, 253, 247, 0.2);
+      background: rgba(255, 253, 247, 0.07);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .check b {
+      display: block;
+      color: #ffe7a8;
+      font-size: 12px;
+    }
+
+    .api-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .api-card {
+      padding: 14px;
+      background: #fffdf7;
+    }
+
+    .api-card b {
+      display: block;
+      color: var(--violet);
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .api-card p {
+      margin: 5px 0 0;
+      color: #4b5652;
+      font-size: 13px;
+    }
+
+    .riasec-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.76fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .riasec-visual {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: #fffdf7;
+      box-shadow: var(--shadow);
+    }
+
+    .riasec-visual img {
+      border: 2px solid var(--ink);
+      background: #e9e0d2;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+    }
+
+    .bars {
+      display: grid;
+      gap: 9px;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr) 42px;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .bar i {
+      display: block;
+      height: 12px;
+      border: 1px solid rgba(24, 33, 31, 0.2);
+      background: #eadcc7;
+      overflow: hidden;
+    }
+
+    .bar i::before {
+      content: "";
+      display: block;
+      width: var(--v);
+      height: 100%;
+      background: var(--c);
+    }
+
+    .riasec-copy {
+      display: grid;
+      gap: 12px;
+    }
+
+    .riasec-copy .logic-card {
+      grid-template-columns: 58px minmax(0, 1fr);
+      box-shadow: none;
+    }
+
+    .files-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .file-card {
+      min-height: 220px;
+      padding: 15px;
+    }
+
+    .file-card b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--teal);
+      font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .file-card p {
+      margin: 0;
+      color: #4b5652;
+      font-size: 13px;
+    }
+
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .risk-card {
+      padding: 16px;
+    }
+
+    .risk-card b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--rust);
+    }
+
+    .risk-card p {
+      margin: 0;
+      color: #4b5652;
+      font-size: 13px;
+    }
+
+    .deploy-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .deploy-item {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: #fffdf7;
+    }
+
+    .deploy-item h3 {
+      font-size: 22px;
+    }
+
+    .deploy-item p {
+      margin: 10px 0 0;
+      color: #4b5652;
+      font-size: 13px;
+    }
+
+    .footer {
+      padding: 30px clamp(18px, 5vw, 72px) 48px;
+      border-top: 2px solid var(--ink);
+      background: #18211f;
+      color: #fffdf7;
+      font-size: 13px;
+    }
+
+    .footer a {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 1120px) {
+      .hero,
+      .section-head,
+      .logic-layout,
+      .model-board,
+      .riasec-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .artifact {
+        min-height: 460px;
+      }
+
+      .phone-frame {
+        position: relative;
+        top: auto;
+        max-width: 430px;
+      }
+
+      .flow-grid,
+      .act-grid,
+      .files-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .pipe {
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .topnav {
+        width: 100%;
+      }
+
+      .hero {
+        display: block;
+        min-height: auto;
+        padding-top: 36px;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .hero-copy {
+        width: calc(100vw - 50px);
+        max-width: 100%;
+      }
+
+      h1 {
+        width: min(320px, calc(100vw - 50px));
+        max-width: calc(100vw - 50px);
+        font-size: 30px;
+        line-height: 1.18;
+      }
+
+      .hero-copy p {
+        font-size: 16px;
+        max-width: calc(100vw - 50px);
+      }
+
+      .hero-actions {
+        max-width: calc(100vw - 50px);
+      }
+
+      .artifact {
+        width: calc(100vw - 50px);
+        max-width: calc(100vw - 50px);
+      }
+
+      .artifact {
+        min-height: 430px;
+      }
+
+      .artifact-main {
+        width: 72%;
+        right: 12px;
+      }
+
+      .artifact-person {
+        width: 42%;
+      }
+
+      .artifact-note {
+        width: 68%;
+      }
+
+      .quick-stats,
+      .flow-grid,
+      .schema-grid,
+      .act-grid,
+      .checklist,
+      .files-grid,
+      .risk-grid,
+      .deploy-strip,
+      .pipe {
+        grid-template-columns: 1fr;
+      }
+
+      .stat {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .stat:last-child {
+        border-bottom: 0;
+      }
+
+      .logic-card {
+        grid-template-columns: 1fr;
+      }
+
+      .riasec-visual {
+        grid-template-columns: 1fr;
+      }
+
+      .schema-panel li,
+      .bar {
+        grid-template-columns: 1fr;
+      }
+
+      .pipe span:not(:last-child)::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="返回顶部">
+        <span class="brand-mark">18</span>
+        <span>项目逻辑地图</span>
+      </a>
+      <nav class="topnav" aria-label="页面导航">
+        <a href="#overview">产品</a>
+        <a href="#runtime">运行链路</a>
+        <a href="#ai">AI 协议</a>
+        <a href="#riasec">RIASEC</a>
+        <a href="#files">代码地图</a>
+        <a href="#deploy">部署</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" id="overview" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <span class="kicker">Gaokao Life Simulator</span>
+          <h1 id="hero-title">一个用 18 张牌讲完高考后人生分岔的互动短剧系统</h1>
+          <p>
+            项目不是传统测评，也不是志愿填报工具。它把用户的高考起点、专业方向、家庭期待和 18 次 A/B 选择，组织成连续人生短剧，并在背后累计霍兰德 RIASEC 兴趣倾向，最后生成一张可分享的未来画像。
+          </p>
+          <div class="hero-actions">
+            <a class="action" href="index.html"><span class="icon">↗</span>打开主游戏</a>
+            <a class="action secondary" href="prompt-lab.html"><span class="icon">#</span>打开提示词实验台</a>
+          </div>
+        </div>
+
+        <div class="artifact" aria-label="项目视觉资产组合">
+          <figure class="artifact-card artifact-main">
+            <img src="assets/life_illustrations/contact_sheet_preview.png" alt="人生卡牌插画预览" />
+            <figcaption class="caption">
+              <b>卡牌主体验</b>
+              <span>18 年连续翻牌，当前只展示顶牌，后方用骨架牌防剧透。</span>
+            </figcaption>
+          </figure>
+          <figure class="artifact-card artifact-person">
+            <img src="assets/characters/女1-18.webp" alt="18 岁角色形象" />
+          </figure>
+          <aside class="artifact-card artifact-note">
+            <b>核心判断</b>
+            <p>项目已经是“固定剧情骨架 + LLM 批量生成 + 前端牌堆管理 + 本地兜底 + RIASEC 画像”的混合系统。</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="quick-stats" aria-label="项目关键数字">
+        <div class="stat">
+          <b>18</b>
+          <span>张人生选择牌，从 18 岁推进到 36 岁。</span>
+        </div>
+        <div class="stat">
+          <b>6</b>
+          <span>幕剧情结构，每 3 张形成一个小回合。</span>
+        </div>
+        <div class="stat">
+          <b>4</b>
+          <span>核心 API，负责卡牌生成、批量预取和结果页。</span>
+        </div>
+        <div class="stat">
+          <b>RIASEC</b>
+          <span>选择背后的隐藏职业兴趣侧写，不直接暴露给用户。</span>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="flow-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">User Journey</span>
+            <h2 id="flow-title">用户实际体验</h2>
+          </div>
+          <p>页面上的体验被压成五个动作：选形象、填开局、翻牌、生成结果、保存分享。复杂性主要藏在牌堆预取和结果合成里。</p>
+        </div>
+        <div class="flow-grid">
+          <article class="flow-card" data-step="1">
+            <b>入口选形象</b>
+            <p>用户先选择 18 岁角色形象，输入称呼。头像资产来自 <code>assets/characters</code>。</p>
+            <span class="chip">entry-screen</span>
+          </article>
+          <article class="flow-card" data-step="2">
+            <b>填写开局变量</b>
+            <p>选择专业，填写省份、分数、家庭期待。前端开始 warmup，提前请求第一批牌。</p>
+            <span class="chip">setup-screen</span>
+          </article>
+          <article class="flow-card" data-step="3">
+            <b>翻 18 张牌</b>
+            <p>每张牌展示一个事故场景和两个选择。点击按钮或左右滑卡，都会进入同一个 <code>choose()</code> 流程。</p>
+            <span class="chip">play-screen</span>
+          </article>
+          <article class="flow-card" data-step="4">
+            <b>累计选择画像</b>
+            <p>每次选择写入 <code>history</code>，同时更新六项前端特质和隐藏 RIASEC 分数。</p>
+            <span class="chip">state.history</span>
+          </article>
+          <article class="flow-card" data-step="5">
+            <b>结果页成片</b>
+            <p>第 18 张结束后请求结果 JSON，并渲染职业概率、名场面、编年史、选择习惯和结果图。</p>
+            <span class="chip">result-sheet</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section alt" id="runtime" aria-labelledby="runtime-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">Runtime Loop</span>
+            <h2 id="runtime-title">前端牌堆如何跑起来</h2>
+          </div>
+          <p>前端不是等模型一次性生成完整剧情，而是用即时卡、预热卡、桥接卡和后台补牌保证翻牌不中断。</p>
+        </div>
+
+        <div class="logic-layout">
+          <div class="phone-frame" aria-label="卡牌界面示意">
+            <div class="phone-screen">
+              <img src="assets/card_interaction/question_sketch_02.webp" alt="卡牌问题插画" />
+              <div class="phone-body">
+                <small>第 7 年 / 18</small>
+                <h3>两头夹击</h3>
+                <p>导师点你上台，项目群同时爆雷。你要决定先保体面，还是今晚先救交付。</p>
+                <div class="choice-pair">
+                  <span>先冲展示，把公开场合稳住</span>
+                  <span>先救交付，把结果救回来</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="logic-stack">
+            <article class="logic-card">
+              <span class="num">01</span>
+              <div>
+                <h3>资料变化触发预热</h3>
+                <p><code>scheduleWarmup()</code> 在表单输入后延迟触发，调用 <code>/api/game/batch</code> 预取前 3 张。这样用户点“开始验牌”时大概率已经有牌可用。</p>
+              </div>
+            </article>
+            <article class="logic-card">
+              <span class="num">02</span>
+              <div>
+                <h3>开局先进入游戏</h3>
+                <p><code>startGame()</code> 会重置状态，读取 profile，优先使用 warmup deck。如果还没拿到模型结果，就用 <code>buildInstantFirstCard()</code> 先把首牌亮出来。</p>
+              </div>
+            </article>
+            <article class="logic-card">
+              <span class="num">03</span>
+              <div>
+                <h3>后台补足牌堆</h3>
+                <p><code>ensureDeckBuffer()</code> 找到当前窗口里的第一张缺牌，按最多 5 张一批请求后端。用户看到的是连续翻牌，后台实际在分批填坑。</p>
+              </div>
+            </article>
+            <article class="logic-card">
+              <span class="num">04</span>
+              <div>
+                <h3>选择后重写未来</h3>
+                <p><code>choose()</code> 写入历史、应用特质增量、把后果交给下一张便签，然后 <code>invalidateStaleFutureCards()</code> 只保留少量未来牌，避免预生成剧情和真实选择冲突。</p>
+              </div>
+            </article>
+            <article class="logic-card">
+              <span class="num">05</span>
+              <div>
+                <h3>缺牌时用桥接卡托底</h3>
+                <p>如果当前年份还没生成完，前端会临时放入 <code>buildBridgeCard()</code>，等远程卡回来再替换。模型失败时还能落到本地 mock，不至于白屏。</p>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="pipe" aria-label="运行数据管道">
+          <span>readProfile</span>
+          <span>warmup batch</span>
+          <span>deck buffer</span>
+          <span>renderDeck</span>
+          <span>choose</span>
+          <span>history + scores</span>
+          <span>showResult</span>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="schema-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">Data Contract</span>
+            <h2 id="schema-title">一张牌到底由什么组成</h2>
+          </div>
+          <p>模型输出的是 StoryStateCard。后端负责把它校验、裁剪和转换为前端更容易渲染的卡片结构。</p>
+        </div>
+        <div class="schema-grid">
+          <article class="schema-panel">
+            <h3>故事层</h3>
+            <ul>
+              <li><code>year</code><span>第几年，必须和接口请求一致。</span></li>
+              <li><code>phase</code><span>六幕中的阶段名，用于节奏控制。</span></li>
+              <li><code>mainTrack</code><span>本年主线，只能是 <code>life</code> 或 <code>relationship</code>。</span></li>
+              <li><code>lifeTrack</code><span>学业、职业、家庭、健康、财务等现实状态。</span></li>
+              <li><code>relationshipTrack</code><span>必须带明确阶段，如暧昧升温、冷战后撤、体面告别。</span></li>
+            </ul>
+          </article>
+          <article class="schema-panel">
+            <h3>展示层</h3>
+            <ul>
+              <li><code>summary</code><span>下一张牌右上角便签，写上一年后果和另一条线近况。</span></li>
+              <li><code>scene.title</code><span>6 到 10 个汉字，像短剧集名。</span></li>
+              <li><code>scene.body</code><span>60 到 110 字，讲一个可拍出来的事故。</span></li>
+              <li><code>a/b.title</code><span>按钮动作，不能是抽象价值观。</span></li>
+              <li><code>a/b.desc</code><span>解释行动、优先级和代价。</span></li>
+            </ul>
+          </article>
+          <article class="schema-panel">
+            <h3>测量层</h3>
+            <ul>
+              <li><code>a/b.riasec</code><span>隐藏分值，前端不直接展示在卡牌上。</span></li>
+              <li><code>consequence</code><span>选择后的直接后果，下一张便签要承接。</span></li>
+              <li><code>callbacks</code><span>后续可回收的人、事、道具和旧梗。</span></li>
+              <li><code>holland</code><span>写入 history 后用于结果页三字母画像。</span></li>
+              <li><code>delta</code><span>前端六项特质的增量，主要用于本地兜底结果。</span></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="acts-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">18 Card Arc</span>
+            <h2 id="acts-title">18 张牌的叙事骨架</h2>
+          </div>
+          <p>项目的内容不是自由散点，而是固定六幕节奏。每幕 3 张牌，生活线和关系线交替推进。</p>
+        </div>
+        <div class="act-grid">
+          <article class="act-card">
+            <b>第 1-3 年</b>
+            <h3>开局上桌</h3>
+            <p>被现实推着走，建立角色、专业场景和第一批 callback。关系线只种子出现，不抢主戏。</p>
+          </article>
+          <article class="act-card">
+            <b>第 4-6 年</b>
+            <h3>第一次上头</h3>
+            <p>机会开始看起来能走通，出现高光和加速感，同时关系线开始有镜头。</p>
+          </article>
+          <article class="act-card">
+            <b>第 7-9 年</b>
+            <h3>第一次付代价</h3>
+            <p>前面抢机会的代价落地，承诺撞车，玩家开始意识到不是每条线都能同时赢。</p>
+          </article>
+          <article class="act-card">
+            <b>第 10-12 年</b>
+            <h3>双线翻面</h3>
+            <p>现实和关系互相反噬，过去那套做法不够用了，角色被迫重新判断自己。</p>
+          </article>
+          <article class="act-card">
+            <b>第 13-15 年</b>
+            <h3>压力做实</h3>
+            <p>成长靠硬选择体现，前文埋下的梗和人物开始集中回收。</p>
+          </article>
+          <article class="act-card">
+            <b>第 16-18 年</b>
+            <h3>最终回响</h3>
+            <p>不追求完美人生，而是给出明显成长后的正向落点和给 18 岁自己的回信。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="ai" aria-labelledby="ai-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">LLM Boundary</span>
+            <h2 id="ai-title">AI 生成链路和校验边界</h2>
+          </div>
+          <p>本地 Node 服务和 Cloudflare Worker 都承担同一个职责：把前端历史转换成模型输入，调用模型，校验 JSON，再返回可渲染数据。</p>
+        </div>
+
+        <div class="model-board">
+          <article class="ai-panel">
+            <h3>模型拿到的不是空白 prompt，而是导演台本</h3>
+            <p>后端会把 profile、storyCast、对应年份 outline、最近 6 条历史、最近 callback、最近场景标题、lifeTrack 和 relationshipTrack 一起给模型。模型只负责在约束内写下一张或下一批 StoryStateCard。</p>
+            <div class="checklist">
+              <div class="check"><b>结构硬约束</b>只输出 JSON，不输出 Markdown，不增加未要求字段。</div>
+              <div class="check"><b>手机字数预算</b>标题、题干、选项、后果都有限长，后端再二次裁剪。</div>
+              <div class="check"><b>双线规则</b>scene 只拍一条主线，summary 推另一条线。</div>
+              <div class="check"><b>RIASEC 轴</b>A/B 的主分必须命中当年题纲里的两个类型。</div>
+              <div class="check"><b>连续性</b>便签必须继承上一年实际 consequence，不能写 A/B 两种可能。</div>
+              <div class="check"><b>降级策略</b>模型失败后重试，仍失败则走 <code>mockResponse()</code>。</div>
+            </div>
+          </article>
+
+          <div class="api-stack">
+            <article class="api-card">
+              <b>POST /api/game/start</b>
+              <p>生成第 1 年单张卡。当前主流程保留此接口，但更依赖 batch。</p>
+            </article>
+            <article class="api-card">
+              <b>POST /api/game/next</b>
+              <p>按当前历史生成下一年单张卡。也是保留接口。</p>
+            </article>
+            <article class="api-card">
+              <b>POST /api/game/batch</b>
+              <p>前端主流程使用的核心接口。按 <code>startYear/count</code> 批量生成最多 5 张，服务于预热和后台补牌。</p>
+            </article>
+            <article class="api-card">
+              <b>POST /api/game/result</b>
+              <p>18 张结束后生成最终结果页 JSON，包含标题、职业概率、名场面、时间线和选择建议。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt" id="riasec" aria-labelledby="riasec-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">Hidden Scoring</span>
+            <h2 id="riasec-title">霍兰德侧写如何从选择里长出来</h2>
+          </div>
+          <p>RIASEC 在卡牌阶段隐藏，结果页才把它翻译成三字母代码、雷达图、职业可能性和解释文案。</p>
+        </div>
+
+        <div class="riasec-layout">
+          <figure class="riasec-visual">
+            <img src="assets/riasec_types/I_investigative.webp" alt="研究型 RIASEC 角色图" />
+            <figcaption class="bars">
+              <div class="bar" style="--v: 44%; --c: #315c9a"><span>R 实用</span><i></i><b>44</b></div>
+              <div class="bar" style="--v: 86%; --c: #6250a4"><span>I 研究</span><i></i><b>86</b></div>
+              <div class="bar" style="--v: 62%; --c: #b84d2b"><span>A 艺术</span><i></i><b>62</b></div>
+              <div class="bar" style="--v: 58%; --c: #13756f"><span>S 社会</span><i></i><b>58</b></div>
+              <div class="bar" style="--v: 49%; --c: #d46a28"><span>E 企业</span><i></i><b>49</b></div>
+              <div class="bar" style="--v: 71%; --c: #617b2d"><span>C 常规</span><i></i><b>71</b></div>
+            </figcaption>
+          </figure>
+
+          <div class="riasec-copy">
+            <article class="logic-card">
+              <span class="num">A/B</span>
+              <div>
+                <h3>每个选项自带隐藏分</h3>
+                <p>后端要求每个选项主分 4 到 6 分，副分最多 1 项且不超过 2 分，总分不超过 7。这样结果不是从按钮文案猜出来的。</p>
+              </div>
+            </article>
+            <article class="logic-card">
+              <span class="num">Σ</span>
+              <div>
+                <h3>历史选择聚合成三字母</h3>
+                <p><code>getHollandScoresFromHistory()</code> 把 18 次选择里的 <code>holland</code> 累加，再取前三名组成代码，如 <code>ICE</code>、<code>ESA</code>。</p>
+              </div>
+            </article>
+            <article class="logic-card">
+              <span class="num">UI</span>
+              <div>
+                <h3>结果页负责解释，不做诊断</h3>
+                <p>页面强调“这局更像哪几类人”，避免“你天生就是某类人格”的判定口吻。它是娱乐和专业理解参考，不是心理测评。</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="files" aria-labelledby="files-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">Code Map</span>
+            <h2 id="files-title">主要文件职责</h2>
+          </div>
+          <p>项目体量集中在少数几个文件里。接手时最好按这张表读，而不是从 HTML 顶部一路硬翻到底。</p>
+        </div>
+        <div class="files-grid">
+          <article class="file-card">
+            <b>index.html</b>
+            <p>主前端。包含入口、设置、翻牌、结果页 UI，状态对象，牌堆缓存，选择处理，RIASEC 聚合和保存结果图。</p>
+          </article>
+          <article class="file-card">
+            <b>server.js</b>
+            <p>本地 Node 服务。读取环境变量，提供静态文件，代理模型 API，校验年度卡、批量卡和结果页。</p>
+          </article>
+          <article class="file-card">
+            <b>worker.js</b>
+            <p>Cloudflare Worker 版本。生产环境跑同一套 API 逻辑，静态资源走 Worker Assets。</p>
+          </article>
+          <article class="file-card">
+            <b>deepseek-prompt-vnext.js</b>
+            <p>Prompt 和 18 张黄金题纲的事实源，构建 annual、batch、result 三种模型输入。</p>
+          </article>
+          <article class="file-card">
+            <b>prompt-lab.html</b>
+            <p>提示词实验台。用于批量跑不同策略、查看 QA、耗时、RIASEC 分布和结果页输出。</p>
+          </article>
+          <article class="file-card">
+            <b>docs/story-state-card-protocol.md</b>
+            <p>协议文档。定义故事层、展示层、测量层，以及字段预算和 RIASEC 计分原则。</p>
+          </article>
+          <article class="file-card">
+            <b>docs/18-card-route-map.md</b>
+            <p>18 张牌的六幕节奏蓝图。解释每幕该推进什么情绪和冲突。</p>
+          </article>
+          <article class="file-card">
+            <b>assets/</b>
+            <p>角色、卡牌插画、RIASEC 公仔、Figma 导出图和预览图。当前视觉体验高度依赖这些本地资产。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="state-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">Current Shape</span>
+            <h2 id="state-title">当前系统的真实形态</h2>
+          </div>
+          <p>代码和审计文档都指向同一个结论：这是一个混合编剧系统，优点是稳，代价是有时会出现“接缝”。</p>
+        </div>
+        <div class="risk-grid">
+          <article class="risk-card">
+            <b>模型负责内容，但不完全负责体验</b>
+            <p>模型生成卡牌和结果页；前端还会 normalize、补便签、插固定卡、做桥接卡、推断缺失的 RIASEC。</p>
+          </article>
+          <article class="risk-card">
+            <b>批量预生成提升速度，也限制贴脸程度</b>
+            <p>未来卡在用户选择前就生成，不能假设玩家未来选 A 或 B，所以批量卡天然更偏“趋势型”。</p>
+          </article>
+          <article class="risk-card">
+            <b>固定卡保底节奏，但可能带来模板感</b>
+            <p>前端有固定插卡机制，用于关键节点兜底。它能稳住体验，也可能让多次重玩更容易重复。</p>
+          </article>
+          <article class="risk-card">
+            <b>后端校验很强，但没有完全消除重写</b>
+            <p>后端会拦截缺字段、重复场景、关系阶段不清、RIASEC 分值错误等问题，但前端仍会做二次加工。</p>
+          </article>
+          <article class="risk-card">
+            <b>结果页有双轨兜底</b>
+            <p>模型结果优先。若内容缺失或异常，前端还能基于专业、特质、历史选择生成 fallback 片段。</p>
+          </article>
+          <article class="risk-card">
+            <b>产品边界写得很明确</b>
+            <p>页面声明结果仅供互动娱乐与专业理解参考，不构成志愿填报建议，也不替用户做决定。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="deploy" aria-labelledby="deploy-title">
+        <div class="section-head">
+          <div>
+            <span class="section-label">Run And Deploy</span>
+            <h2 id="deploy-title">运行和部署方式</h2>
+          </div>
+          <p>本地和生产是同构思路：静态前端加一个模型代理 API。区别是本地用 Node，生产用 Cloudflare Worker。</p>
+        </div>
+        <div class="deploy-strip">
+          <article class="deploy-item">
+            <h3>本地预览</h3>
+            <p>复制 <code>.env.example</code> 为 <code>.env</code>，填入模型 key 后运行 <code>npm start</code>。不想调用模型时用 <code>DEEPSEEK_MOCK=1 npm start</code>。</p>
+          </article>
+          <article class="deploy-item">
+            <h3>生产部署</h3>
+            <p><code>wrangler.toml</code> 指向 <code>worker.js</code>，静态资源目录为 <code>./public</code>，<code>/api/*</code> 先走 Worker。</p>
+          </article>
+          <article class="deploy-item">
+            <h3>域名和观测</h3>
+            <p>Worker 配置了自定义域名 <code>gaokao.dsxzai.com</code>，并开启 Cloudflare observability，用于查看请求日志。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      这页是根据当前项目代码和文档生成的功能逻辑说明页。入口文件：<a href="project-logic.html">project-logic.html</a>。
+    </footer>
+  </div>
+</body>
+</html>

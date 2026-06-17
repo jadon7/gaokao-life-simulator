@@ -24,6 +24,10 @@ function systemPrompt() {
   return vNextSystemPrompt;
 }
 
+function currentModel(env) {
+  return env?.DEEPSEEK_MODEL || defaultDeepSeekModel;
+}
+
 function sendJson(status, data) {
   return Response.json(data, {
     status,
@@ -75,7 +79,10 @@ function compactHistory(history = []) {
 }
 
 function taskPromptWithInput(taskPrompt, input) {
-  return `${taskPrompt}\n\n${JSON.stringify(input, null, 2)}`;
+  const inputJson = JSON.stringify(input);
+  return taskPrompt.includes("{{INPUT_JSON}}")
+    ? taskPrompt.replace("{{INPUT_JSON}}", inputJson)
+    : `${taskPrompt}\n\n${inputJson}`;
 }
 
 function buildAnnualMessages({ profile, history, year }) {
@@ -122,10 +129,15 @@ function buildResultMessages({ profile, history }) {
   ];
 }
 
-async function callDeepSeek(messages, validator, env) {
-  if (env?.DEEPSEEK_MOCK === "1") return validator(mockResponse(messages));
+async function callDeepSeek(messages, validator, env, onDelta = null, debug = false, onDiscard = null) {
+  if (env?.DEEPSEEK_MOCK === "1") {
+    const raw = mockResponse(messages);
+    return attachModelDebug(validator(raw), debug, {
+      request: deepSeekRequestBody(env, messages, false),
+      rawOutput: JSON.stringify(raw, null, 2)
+    });
+  }
   const deepseekApiKey = env?.DEEPSEEK_API_KEY;
-  const deepseekModel = env?.DEEPSEEK_MODEL || defaultDeepSeekModel;
   const deepseekStream = env?.DEEPSEEK_STREAM === "0" ? false : defaultDeepSeekStream;
   const deepseekTimeoutMs = Math.max(8000, Math.min(55000, Number(env?.DEEPSEEK_TIMEOUT_MS || defaultDeepSeekTimeoutMs)));
   if (!isUsableDeepSeekKey(deepseekApiKey)) {
@@ -137,9 +149,11 @@ async function callDeepSeek(messages, validator, env) {
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const useStream = deepseekStream && attempt === 0;
+    let streamedAny = false;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort("DeepSeek request timeout"), deepseekTimeoutMs);
+      const body = deepSeekRequestBody(env, messages, useStream);
       const response = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
@@ -147,15 +161,7 @@ async function callDeepSeek(messages, validator, env) {
           authorization: `Bearer ${deepseekApiKey}`
         },
         signal: controller.signal,
-        body: JSON.stringify({
-          model: deepseekModel,
-          messages,
-          response_format: { type: "json_object" },
-          thinking: { type: "disabled" },
-          temperature: 0.95,
-          stream: useStream,
-          max_tokens: 3200
-        })
+        body: JSON.stringify(body)
       });
       clearTimeout(timeout);
       if (!response.ok) {
@@ -165,21 +171,48 @@ async function callDeepSeek(messages, validator, env) {
         throw error;
       }
       const content = useStream
-        ? await readDeepSeekStream(response)
+        ? await readDeepSeekStream(response, text => {
+            streamedAny = true;
+            onDelta?.(text);
+          })
         : (await response.json().catch(() => ({})))?.choices?.[0]?.message?.content;
       if (!content) throw new Error("DeepSeek returned empty content");
-      return validator(parseJsonContent(content));
+      return attachModelDebug(validator(parseJsonContent(content)), debug, { request: body, rawOutput: content });
     } catch (error) {
       lastError = error;
+      if (useStream && streamedAny) onDiscard?.();
       console.error(`DeepSeek attempt ${attempt + 1}/2 failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
     }
   }
   console.error("DeepSeek unavailable, using fallback content:", lastError?.message || lastError);
-  const fallback = validator(mockResponse(messages));
-  return { ...fallback, degraded: true };
+  const raw = mockResponse(messages);
+  const fallback = validator(raw);
+  return attachModelDebug({ ...fallback, degraded: true }, debug, {
+    request: deepSeekRequestBody(env, messages, false),
+    rawOutput: JSON.stringify(raw, null, 2)
+  });
 }
 
-async function readDeepSeekStream(response) {
+function deepSeekRequestBody(env, messages, stream) {
+  return {
+    model: env?.DEEPSEEK_MODEL || defaultDeepSeekModel,
+    messages,
+    response_format: { type: "json_object" },
+    thinking: { type: "disabled" },
+    temperature: 0.95,
+    stream,
+    max_tokens: 3200
+  };
+}
+
+function attachModelDebug(value, enabled, debug) {
+  if (enabled && value && typeof value === "object") {
+    Object.defineProperty(value, "__debug", { value: debug, enumerable: false, configurable: true });
+  }
+  return value;
+}
+
+async function readDeepSeekStream(response, onDelta = null) {
   const decoder = new TextDecoder();
   let buffer = "";
   let content = "";
@@ -193,11 +226,67 @@ async function readDeepSeekStream(response) {
       const data = trimmed.slice(5).trim();
       if (!data || data === "[DONE]") continue;
       const payload = JSON.parse(data);
-      content += payload?.choices?.[0]?.delta?.content || "";
+      const delta = payload?.choices?.[0]?.delta?.content || "";
+      if (!delta) continue;
+      content += delta;
+      onDelta?.(delta);
     }
   }
   content += decoder.decode();
   return content.trim();
+}
+
+function annualStreamResponse({ pathname, profile, history, body, env, model }) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = data => controller.enqueue(encoder.encode(`${JSON.stringify(data)}\n`));
+      send({ type: "meta", model });
+      try {
+        if (pathname === "/api/game/start/stream") {
+          const data = await callDeepSeek(
+            buildAnnualMessages({ profile, history: [], year: 1 }),
+            value => validateAnnual(value, []),
+            env,
+            text => send({ type: "delta", text }),
+            false,
+            () => send({ type: "reset" })
+          );
+          send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+          return;
+        }
+        const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
+        const data = await callDeepSeek(
+          buildAnnualMessages({ profile, history, year }),
+          value => validateAnnual(value, history),
+          env,
+          text => send({ type: "delta", text }),
+          false,
+          () => send({ type: "reset" })
+        );
+        send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+      } catch (error) {
+        send({ type: "error", ok: false, error: error.message || "Request failed" });
+      } finally {
+        controller.close();
+      }
+    }
+  });
+  return new Response(stream, {
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff"
+    }
+  });
+}
+
+function isPromptLabDebugRequest(request) {
+  return request.headers.get("x-prompt-lab-real") === "1" || request.headers.get("x-prompt-lab-debug") === "1";
+}
+
+function debugField(data) {
+  return data?.__debug ? { debug: data.__debug } : {};
 }
 
 function isUsableDeepSeekKey(value) {
@@ -829,7 +918,7 @@ function mockResponse(messages) {
           relationshipTrack: "暧昧升温：沈晚晴开始固定留座",
           callbacks: outlineCard?.callbacks?.slice(0, 3) || ["朋友群新梗"],
           scene: {
-            title: `第${year}年·${(outlineCard?.phase || "新机会").slice(0, 8)}`,
+            title: mockSceneTitle(year, outlineCard),
             body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。沈晚晴刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
           },
           a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: mockRiasec(axis[0]) },
@@ -852,12 +941,17 @@ function mockResponse(messages) {
     relationshipTrack: "冷战后撤：沈晚晴直接问你是不是在躲",
     callbacks: outlineCard?.callbacks?.slice(0, 3) || ["茶水间吐槽"],
     scene: {
-      title: `第${year}年·${(outlineCard?.phase || "人生弹窗").slice(0, 8)}`,
+      title: mockSceneTitle(year, outlineCard),
       body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，沈晚晴的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。"
     },
     a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: mockRiasec(axis[0]) },
     b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，可沈晚晴那边也明显把手收了半步", riasec: mockRiasec(axis[1]) }
   };
+}
+
+function mockSceneTitle(year, outlineCard) {
+  const seed = outlineCard?.callbacks?.[0] || outlineCard?.comedyDevice || outlineCard?.phase || "人生弹窗";
+  return `第${year}年·${String(seed).slice(0, 6)}`;
 }
 
 function mockRiasec(mainType, secondaryType = "I") {
@@ -875,9 +969,18 @@ function mockSummary(year, history, relationshipState) {
 }
 
 function parseJsonFromPrompt(content) {
+  const inputMarker = "输入数据：";
+  const outputMarker = "输出字段：";
+  const inputStart = content.indexOf(inputMarker);
+  const outputStart = content.indexOf(outputMarker, inputStart + inputMarker.length);
+  if (inputStart >= 0 && outputStart > inputStart) {
+    const inputText = content.slice(inputStart + inputMarker.length, outputStart).trim();
+    try {
+      return JSON.parse(inputText);
+    } catch {}
+  }
   const end = content.lastIndexOf("}");
   if (end < 0) return null;
-  // 任务 prompt 文本里也含 JSON 示例，从前往后逐个 "{" 试解析，直到命中末尾的输入 JSON
   let start = content.indexOf("{");
   while (start >= 0 && start < end) {
     try {
@@ -890,12 +993,17 @@ function parseJsonFromPrompt(content) {
 
 async function handleApi(request, env, pathname) {
   if (pathname === "/api/health") {
+    const hasDeepSeekKey = isUsableDeepSeekKey(env?.DEEPSEEK_API_KEY);
+    const model = currentModel(env);
     return sendJson(200, {
       ok: true,
       service: "gaokao-life-simulator",
       runtime: "cloudflare-worker",
-      hasDeepSeekKey: isUsableDeepSeekKey(env?.DEEPSEEK_API_KEY),
-      model: env?.DEEPSEEK_MODEL || defaultDeepSeekModel,
+      hasModelKey: hasDeepSeekKey,
+      hasDeepSeekKey,
+      model,
+      availableModels: [model],
+      modelOptions: [{ id: model, label: model, provider: "deepseek", configured: hasDeepSeekKey }],
       time: new Date().toISOString()
     });
   }
@@ -903,6 +1011,8 @@ async function handleApi(request, env, pathname) {
   let body = {};
   let profile = normalizeProfile();
   let history = [];
+  const model = currentModel(env);
+  const promptLabDebug = isPromptLabDebugRequest(request);
   try {
     body = await readJson(request);
     profile = normalizeProfile(body.profile);
@@ -910,14 +1020,18 @@ async function handleApi(request, env, pathname) {
   } catch {}
 
   try {
+    if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
+      return annualStreamResponse({ pathname, profile, history, body, env, model });
+    }
+
     if (pathname === "/api/game/start") {
-      const data = await callDeepSeek(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), env);
-      return sendJson(200, { ok: true, card: annualCardFromData(data) });
+      const data = await callDeepSeek(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), env, null, promptLabDebug);
+      return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callDeepSeek(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history), env);
-      return sendJson(200, { ok: true, card: annualCardFromData(data) });
+      const data = await callDeepSeek(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history), env, null, promptLabDebug);
+      return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/batch") {
       const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
@@ -925,13 +1039,15 @@ async function handleApi(request, env, pathname) {
       const data = await callDeepSeek(
         buildBatchMessages({ profile, history, startYear, count }),
         value => validateBatch(value, count, startYear, history),
-        env
+        env,
+        null,
+        promptLabDebug
       );
-      return sendJson(200, { ok: true, cards: data.cards.map(annualCardFromData) });
+      return sendJson(200, { ok: true, model, cards: data.cards.map(annualCardFromData), ...debugField(data) });
     }
     if (pathname === "/api/game/result") {
-      const result = await callDeepSeek(buildResultMessages({ profile, history }), validateResult, env);
-      return sendJson(200, { ok: true, result });
+      const result = await callDeepSeek(buildResultMessages({ profile, history }), validateResult, env, null, promptLabDebug);
+      return sendJson(200, { ok: true, model, result, ...debugField(result) });
     }
     return sendJson(404, { ok: false, error: "API route not found" });
   } catch (error) {
@@ -940,22 +1056,22 @@ async function handleApi(request, env, pathname) {
     try {
       if (pathname === "/api/game/start") {
         const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), []);
-        return sendJson(200, { ok: true, degraded: true, card: annualCardFromData(data) });
+        return sendJson(200, { ok: true, model, degraded: true, card: annualCardFromData(data) });
       }
       if (pathname === "/api/game/next") {
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
         const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history);
-        return sendJson(200, { ok: true, degraded: true, card: annualCardFromData(data) });
+        return sendJson(200, { ok: true, model, degraded: true, card: annualCardFromData(data) });
       }
       if (pathname === "/api/game/batch") {
         const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
         const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
         const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history);
-        return sendJson(200, { ok: true, degraded: true, cards: data.cards.map(annualCardFromData) });
+        return sendJson(200, { ok: true, model, degraded: true, cards: data.cards.map(annualCardFromData) });
       }
       if (pathname === "/api/game/result") {
         const result = validateResult(mockResponse(buildResultMessages({ profile, history })));
-        return sendJson(200, { ok: true, degraded: true, result: { ...result, degraded: true } });
+        return sendJson(200, { ok: true, model, degraded: true, result: { ...result, degraded: true } });
       }
     } catch (fallbackError) {
       console.error("API fallback failed:", fallbackError?.message || fallbackError);

@@ -25,6 +25,8 @@ const totalGameYears = 18;
 const finalResultAge = 36;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
+const promptLabRealProxyBase = "https://gaokao.dsxzai.com";
+const promptLabRealProxyModel = "deepseek-v4-flash";
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
 const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "shareHooks"];
@@ -125,6 +127,15 @@ function availableModelIds() {
   return configured.length ? configured : publicModelOptions().map(option => option.id);
 }
 
+function promptLabProxyModelOptions() {
+  return [{
+    id: promptLabRealProxyModel,
+    label: "DeepSeek V4 Flash",
+    provider: "deepseek",
+    configured: true
+  }];
+}
+
 function resolveModelConfig(value) {
   const requested = String(value || "").trim();
   const selected = modelConfigs.find(config => config.id === requested) || modelConfigs.find(config => config.id === defaultModel) || modelConfigs[0];
@@ -182,7 +193,10 @@ function compactHistory(history = []) {
 }
 
 function taskPromptWithInput(taskPrompt, input) {
-  return `${taskPrompt}\n\n${JSON.stringify(input, null, 2)}`;
+  const inputJson = JSON.stringify(input);
+  return taskPrompt.includes("{{INPUT_JSON}}")
+    ? taskPrompt.replace("{{INPUT_JSON}}", inputJson)
+    : `${taskPrompt}\n\n${inputJson}`;
 }
 
 function buildAnnualMessages({ profile, history, year }) {
@@ -229,8 +243,14 @@ function buildResultMessages({ profile, history }) {
   ];
 }
 
-async function callModel(messages, validator, model = defaultModel) {
-  if (mockMode) return validator(mockResponse(messages));
+async function callModel(messages, validator, model = defaultModel, onDelta = null, debug = false, onDiscard = null) {
+  if (mockMode) {
+    const raw = mockResponse(messages);
+    return attachModelDebug(validator(raw), debug, {
+      request: requestBody(resolveModelConfig(model), messages, false),
+      rawOutput: JSON.stringify(raw, null, 2)
+    });
+  }
   const config = resolveModelConfig(model);
   if (!isUsableApiKey(config?.apiKey)) {
     const error = new Error(`${config?.label || model} API Key 未配置或格式不正确。请在 .env 中填写对应 provider 的 sk- key，或用 LLM_MOCK=1 npm start 先测试 UI。`);
@@ -241,28 +261,45 @@ async function callModel(messages, validator, model = defaultModel) {
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const useStream = llmStream && attempt === 0;
+    let streamedAny = false;
     try {
+      const body = requestBody(config, messages, useStream);
       const response = await fetch(`${String(config.baseUrl).replace(/\/+$/g, "")}/chat/completions`, {
         method: "POST",
         headers: requestHeaders(config),
-        body: JSON.stringify(requestBody(config, messages, useStream))
+        body: JSON.stringify(body)
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload?.error?.message || `${config.label} request failed: ${response.status}`);
       }
       const content = useStream
-        ? await readChatStream(response)
+        ? await readChatStream(response, text => {
+            streamedAny = true;
+            onDelta?.(text);
+          })
         : (await response.json().catch(() => ({})))?.choices?.[0]?.message?.content;
       if (!content) throw new Error(`${config.label} returned empty content`);
-      return validator(parseJsonContent(content));
+      return attachModelDebug(validator(parseJsonContent(content)), debug, { request: body, rawOutput: content });
     } catch (error) {
       lastError = error;
+      if (useStream && streamedAny) onDiscard?.();
     }
   }
   console.error(`${config.label} unavailable, using fallback content:`, lastError?.message || lastError);
-  const fallback = validator(mockResponse(messages));
-  return { ...fallback, degraded: true };
+  const raw = mockResponse(messages);
+  const fallback = validator(raw);
+  return attachModelDebug({ ...fallback, degraded: true }, debug, {
+    request: requestBody(config, messages, false),
+    rawOutput: JSON.stringify(raw, null, 2)
+  });
+}
+
+function attachModelDebug(value, enabled, debug) {
+  if (enabled && value && typeof value === "object") {
+    Object.defineProperty(value, "__debug", { value: debug, enumerable: false, configurable: true });
+  }
+  return value;
 }
 
 function requestHeaders(config) {
@@ -288,7 +325,7 @@ function requestBody(config, messages, useStream) {
   return body;
 }
 
-async function readChatStream(response) {
+async function readChatStream(response, onDelta = null) {
   const decoder = new TextDecoder();
   let buffer = "";
   let content = "";
@@ -302,11 +339,82 @@ async function readChatStream(response) {
       const data = trimmed.slice(5).trim();
       if (!data || data === "[DONE]") continue;
       const payload = JSON.parse(data);
-      content += payload?.choices?.[0]?.delta?.content || "";
+      const delta = payload?.choices?.[0]?.delta?.content || "";
+      if (!delta) continue;
+      content += delta;
+      onDelta?.(delta);
     }
   }
   content += decoder.decode();
   return content.trim();
+}
+
+function sendNdjson(res, data) {
+  res.write(`${JSON.stringify(data)}\n`);
+}
+
+async function sendAnnualStream(res, { pathname, profile, history, body, model }) {
+  res.writeHead(200, {
+    "content-type": "application/x-ndjson; charset=utf-8",
+    "cache-control": "no-store",
+    "x-content-type-options": "nosniff"
+  });
+  sendNdjson(res, { type: "meta", model });
+  try {
+    if (pathname === "/api/game/start/stream") {
+      const data = await callModel(
+        buildAnnualMessages({ profile, history: [], year: 1 }),
+        value => validateAnnual(value, []),
+        model,
+        text => sendNdjson(res, { type: "delta", text }),
+        false,
+        () => sendNdjson(res, { type: "reset" })
+      );
+      sendNdjson(res, { type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+      res.end();
+      return;
+    }
+    const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
+    const data = await callModel(
+      buildAnnualMessages({ profile, history, year }),
+      value => validateAnnual(value, history),
+      model,
+      text => sendNdjson(res, { type: "delta", text }),
+      false,
+      () => sendNdjson(res, { type: "reset" })
+    );
+    sendNdjson(res, { type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+  } catch (error) {
+    sendNdjson(res, { type: "error", ok: false, error: error.message || "Request failed" });
+  } finally {
+    res.end();
+  }
+}
+
+function shouldProxyPromptLabRealRequest(req, pathname) {
+  return mockMode && req.headers["x-prompt-lab-real"] === "1" && /^\/api\/game\/(?:start|next|batch|result)$/.test(pathname);
+}
+
+async function proxyPromptLabRealRequest(res, pathname, body) {
+  const response = await fetch(`${promptLabRealProxyBase}${pathname}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-prompt-lab-real": "1", "x-prompt-lab-debug": "1" },
+    body: JSON.stringify(body)
+  });
+  const text = await response.text();
+  res.writeHead(response.status, {
+    "content-type": response.headers.get("content-type") || "application/json; charset=utf-8",
+    "cache-control": "no-store"
+  });
+  res.end(text);
+}
+
+function isPromptLabDebugRequest(req) {
+  return req.headers["x-prompt-lab-real"] === "1" || req.headers["x-prompt-lab-debug"] === "1";
+}
+
+function debugField(data) {
+  return data?.__debug ? { debug: data.__debug } : {};
 }
 
 function isUsableApiKey(value) {
@@ -955,7 +1063,7 @@ function mockResponse(messages) {
           relationshipTrack: "暧昧升温：沈晚晴开始固定留座",
           callbacks: outlineCard?.callbacks?.slice(0, 3) || ["朋友群新梗"],
           scene: {
-            title: `第${year}年·${(outlineCard?.phase || "新机会").slice(0, 8)}`,
+            title: mockSceneTitle(year, outlineCard),
             body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。沈晚晴刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
           },
           a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: mockRiasec(axis[0]) },
@@ -978,12 +1086,17 @@ function mockResponse(messages) {
     relationshipTrack: "冷战后撤：沈晚晴直接问你是不是在躲",
     callbacks: outlineCard?.callbacks?.slice(0, 3) || ["茶水间吐槽"],
     scene: {
-      title: `第${year}年·${(outlineCard?.phase || "人生弹窗").slice(0, 8)}`,
+      title: mockSceneTitle(year, outlineCard),
       body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，沈晚晴的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。"
     },
     a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: mockRiasec(axis[0]) },
     b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，可沈晚晴那边也明显把手收了半步", riasec: mockRiasec(axis[1]) }
   };
+}
+
+function mockSceneTitle(year, outlineCard) {
+  const seed = outlineCard?.callbacks?.[0] || outlineCard?.comedyDevice || outlineCard?.phase || "人生弹窗";
+  return `第${year}年·${String(seed).slice(0, 6)}`;
 }
 
 function mockRiasec(mainType, secondaryType = "I") {
@@ -1001,9 +1114,18 @@ function mockSummary(year, history, relationshipState) {
 }
 
 function parseJsonFromPrompt(content) {
+  const inputMarker = "输入数据：";
+  const outputMarker = "输出字段：";
+  const inputStart = content.indexOf(inputMarker);
+  const outputStart = content.indexOf(outputMarker, inputStart + inputMarker.length);
+  if (inputStart >= 0 && outputStart > inputStart) {
+    const inputText = content.slice(inputStart + inputMarker.length, outputStart).trim();
+    try {
+      return JSON.parse(inputText);
+    } catch {}
+  }
   const end = content.lastIndexOf("}");
   if (end < 0) return null;
-  // 任务 prompt 文本里也含 JSON 示例，从前往后逐个 "{" 试解析，直到命中末尾的输入 JSON
   let start = content.indexOf("{");
   while (start >= 0 && start < end) {
     try {
@@ -1016,17 +1138,21 @@ function parseJsonFromPrompt(content) {
 
 async function handleApi(req, res, pathname) {
   if (pathname === "/api/health") {
+    const promptLabRealProxy = mockMode;
+    const modelOptions = promptLabRealProxy ? promptLabProxyModelOptions() : publicModelOptions();
     sendJson(res, 200, {
       ok: true,
       service: "gaokao-life-simulator",
       runtime: "node-local",
       mock: mockMode,
-      hasModelKey: modelIsConfigured(resolveModelConfig(defaultModel)),
+      promptLabRealProxy,
+      promptLabRealApiBase: promptLabRealProxy ? promptLabRealProxyBase : "",
+      hasModelKey: promptLabRealProxy || modelIsConfigured(resolveModelConfig(defaultModel)),
       hasDeepSeekKey: modelConfigs.some(config => config.provider === "deepseek" && isUsableApiKey(config.apiKey)),
       hasMimoKey: modelConfigs.some(config => config.provider === "mimo" && isUsableApiKey(config.apiKey)),
-      model: defaultModel,
-      availableModels: availableModelIds(),
-      modelOptions: publicModelOptions(),
+      model: promptLabRealProxy ? promptLabRealProxyModel : defaultModel,
+      availableModels: modelOptions.map(option => option.id),
+      modelOptions,
       time: new Date().toISOString()
     });
     return;
@@ -1034,21 +1160,33 @@ async function handleApi(req, res, pathname) {
   let body = {};
   let profile = normalizeProfile();
   let history = [];
+  let requestModel = defaultModel;
+  const promptLabDebug = isPromptLabDebugRequest(req);
   try {
     body = await readJson(req);
     profile = normalizeProfile(body.profile);
     history = Array.isArray(body.history) ? body.history : [];
-    const requestModel = resolveModelConfig(body.model).id;
+    requestModel = resolveModelConfig(body.model).id;
+
+    if (shouldProxyPromptLabRealRequest(req, pathname)) {
+      await proxyPromptLabRealRequest(res, pathname, body);
+      return;
+    }
+
+    if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
+      await sendAnnualStream(res, { pathname, profile, history, body, model: requestModel });
+      return;
+    }
 
     if (pathname === "/api/game/start") {
-      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), requestModel);
-      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data) });
+      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), requestModel, null, promptLabDebug);
+      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
       return;
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history), requestModel);
-      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data) });
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history), requestModel, null, promptLabDebug);
+      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
       return;
     }
     if (pathname === "/api/game/batch") {
@@ -1057,14 +1195,16 @@ async function handleApi(req, res, pathname) {
       const data = await callModel(
         buildBatchMessages({ profile, history, startYear, count }),
         value => validateBatch(value, count, startYear, history),
-        requestModel
+        requestModel,
+        null,
+        promptLabDebug
       );
-      sendJson(res, 200, { ok: true, model: requestModel, cards: data.cards.map(annualCardFromData) });
+      sendJson(res, 200, { ok: true, model: requestModel, cards: data.cards.map(annualCardFromData), ...debugField(data) });
       return;
     }
     if (pathname === "/api/game/result") {
-      const result = await callModel(buildResultMessages({ profile, history }), validateResult, requestModel);
-      sendJson(res, 200, { ok: true, model: requestModel, result });
+      const result = await callModel(buildResultMessages({ profile, history }), validateResult, requestModel, null, promptLabDebug);
+      sendJson(res, 200, { ok: true, model: requestModel, result, ...debugField(result) });
       return;
     }
     sendJson(res, 404, { ok: false, error: "API route not found" });
@@ -1073,25 +1213,25 @@ async function handleApi(req, res, pathname) {
     try {
       if (pathname === "/api/game/start") {
         const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), []);
-        sendJson(res, 200, { ok: true, degraded: true, card: annualCardFromData(data) });
+        sendJson(res, 200, { ok: true, model: requestModel, degraded: true, card: annualCardFromData(data) });
         return;
       }
       if (pathname === "/api/game/next") {
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
         const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history);
-        sendJson(res, 200, { ok: true, degraded: true, card: annualCardFromData(data) });
+        sendJson(res, 200, { ok: true, model: requestModel, degraded: true, card: annualCardFromData(data) });
         return;
       }
       if (pathname === "/api/game/batch") {
         const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
         const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
         const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history);
-        sendJson(res, 200, { ok: true, degraded: true, cards: data.cards.map(annualCardFromData) });
+        sendJson(res, 200, { ok: true, model: requestModel, degraded: true, cards: data.cards.map(annualCardFromData) });
         return;
       }
       if (pathname === "/api/game/result") {
         const result = validateResult(mockResponse(buildResultMessages({ profile, history })));
-        sendJson(res, 200, { ok: true, degraded: true, result: { ...result, degraded: true } });
+        sendJson(res, 200, { ok: true, model: requestModel, degraded: true, result: { ...result, degraded: true } });
         return;
       }
     } catch (fallbackError) {

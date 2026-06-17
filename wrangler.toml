@@ -7,6 +7,9 @@ account_id = "0eedb61d5ddbea42f84455c9455addb0"
 [observability]
 enabled = true
 
+[vars]
+DEEPSEEK_MODEL = "deepseek-v4-flash"
+
 [assets]
 directory = "./public"
 binding = "ASSETS"

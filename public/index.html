@@ -818,39 +818,6 @@
       z-index: 10;
     }
 
-    /* 骨架卡揭开为真实内容时的过渡 */
-    .life-card.is-revealing .card-head,
-    .life-card.is-revealing .card-illustration,
-    .life-card.is-revealing .card-prompt,
-    .life-card.is-revealing .choice-preview {
-      animation: card-content-in 0.45s ease backwards;
-    }
-
-    .life-card.is-revealing .previous-note {
-      animation: note-fade-in 0.45s ease 0.26s backwards;
-    }
-
-    @keyframes note-fade-in {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    .life-card.is-revealing .card-illustration {
-      animation-delay: 0.06s;
-    }
-
-    .life-card.is-revealing .card-prompt {
-      animation-delay: 0.12s;
-    }
-
-    .life-card.is-revealing .choice-preview {
-      animation-delay: 0.18s;
-    }
-
     @keyframes card-content-in {
       from {
         opacity: 0;
@@ -1092,6 +1059,45 @@
     .loading-card .card-illustration {
       position: relative;
       overflow: hidden;
+    }
+
+    .stream-placeholder {
+      display: inline-block;
+      height: 1em;
+      border-radius: 999px;
+      background: rgba(47, 54, 45, 0.12);
+      color: transparent;
+      overflow: hidden;
+      vertical-align: middle;
+    }
+
+    .card-title .stream-placeholder {
+      width: min(8em, 68%);
+    }
+
+    .card-prompt .stream-placeholder {
+      width: 100%;
+      height: 5.2em;
+      border-radius: 14px;
+    }
+
+    .choice-pill .stream-placeholder {
+      width: min(8em, 100%);
+    }
+
+    .stream-field.is-stream-new {
+      animation: stream-field-in 0.42s ease both;
+    }
+
+    @keyframes stream-field-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .loading-card .card-illustration::after {
@@ -2765,7 +2771,11 @@
       isAnimating: false,
       drag: null,
       pilotCards: [],
-      pilotCardsPromise: null
+      pilotCardsPromise: null,
+      streamText: "",
+      streamFields: {},
+      streamNewFields: {},
+      streamRenderPending: false
     };
 
     const els = {
@@ -3782,6 +3792,13 @@
       document.body.dataset.pilot = runtimeFlags.pilot ? "true" : "false";
     }
 
+    function resetStreamState() {
+      state.streamText = "";
+      state.streamFields = {};
+      state.streamNewFields = {};
+      state.streamRenderPending = false;
+    }
+
     function resetGame(keepProfile = true, nextFlow = "entry") {
       state.index = 0;
       state.history = [];
@@ -3807,6 +3824,7 @@
       state.isAnimating = false;
       state.isLoading = false;
       state.isBuffering = false;
+      resetStreamState();
       if (!keepProfile) {
         applyRandomProfile();
       } else {
@@ -3856,25 +3874,16 @@
         };
         state.isAnimating = false;
         state.isBuffering = false;
-        state.isLoading = false;
+        state.isLoading = true;
+        resetStreamState();
         applyProfile(readProfile());
-        prepareFixedQuestionBank();
-        const signature = profileSignature(state.profile);
-        const usedWarmup = useReadyWarmupDeck(signature);
-        if (!usedWarmup) {
-          state.deck = [buildInstantFirstCard()];
-        }
         showFlow("play");
         render();
-        revealTopCard();
-        if (!usedWarmup) {
-          ensureDeckBuffer(batchSize + 1).catch(error => {
-            console.warn("Background deck generation failed:", error);
-          });
-        }
+        await loadAnnualCard(1);
         state.loadError = "";
         state.isLoading = false;
         render();
+        revealTopCard();
       } catch (error) {
         state.loadError = normalizeFetchError(error, "第一年生成失败");
         state.isLoading = false;
@@ -3928,6 +3937,7 @@
           const ray = response.headers.get("cf-ray");
           throw new Error(data.error || `请求失败：${response.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`);
         }
+        logApiModel(path, payload, data, "fetch");
         return data;
       } catch (error) {
         if (error.name === "AbortError") throw new Error("生成超时，请重试");
@@ -3937,6 +3947,62 @@
         throw new Error(normalizeFetchError(error, "请求失败"));
       } finally {
         window.clearTimeout(timeout);
+      }
+    }
+
+    async function apiPostStream(path, payload, onDelta) {
+      if (runtimeFlags.pilot || !window.ReadableStream) return apiPost(path, payload);
+      const streamPath = `${path}/stream`;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 55000);
+      try {
+        const response = await fetch(streamPath, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        if (!response.ok || !response.body) return apiPost(path, payload);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finalData = null;
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            const data = parseStreamLine(line);
+            if (!data) continue;
+            if (data.type === "delta" && data.text) onDelta?.(data.text);
+            if (data.type === "reset") onDelta?.("", { reset: true });
+            if (data.type === "done") finalData = data;
+            if (data.type === "error") throw new Error(data.error || "生成失败");
+          }
+        }
+        const trailing = parseStreamLine(buffer);
+        if (trailing?.type === "done") finalData = trailing;
+        if (!finalData?.ok) throw new Error("流式生成没有返回完整卡片");
+        logApiModel(path, payload, finalData, "stream");
+        return finalData;
+      } catch (error) {
+        if (error.name === "AbortError") throw new Error("生成超时，请重试");
+        if (isNetworkFetchError(error)) return apiPost(path, payload);
+        throw new Error(normalizeFetchError(error, "请求失败"));
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    }
+
+    function parseStreamLine(line) {
+      const text = String(line || "").trim();
+      if (!text) return null;
+      try {
+        return JSON.parse(text);
+      } catch {
+        return null;
       }
     }
 
@@ -3959,12 +4025,82 @@
             reject(new Error(data.error || `请求失败：${xhr.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`));
             return;
           }
+          logApiModel(path, payload, data, "xhr");
           resolve(data);
         };
         xhr.onerror = () => reject(new Error("XHR 网络连接失败"));
         xhr.ontimeout = () => reject(new Error("生成超时，请重试"));
         xhr.send(JSON.stringify(payload));
       });
+    }
+
+    function logApiModel(path, payload, data, transport) {
+      if (!path.startsWith("/api/game/")) return;
+      const model = data?.model || payload?.model;
+      if (!model) return;
+      const degraded = data?.degraded || data?.result?.degraded;
+      console.info(`[gaokao] ${path} model: ${model}${degraded ? " (degraded)" : ""}`, { transport });
+    }
+
+    function updateStreamPreview(delta, event = {}) {
+      if (event.reset) {
+        resetStreamState();
+        if (state.isLoading && !state.deck[state.index]) render();
+        return;
+      }
+      state.streamText += delta;
+      const nextFields = extractStreamFields(state.streamText);
+      Object.keys(nextFields).forEach(key => {
+        if (nextFields[key] && !state.streamFields[key]) state.streamNewFields[key] = performance.now() + 450;
+      });
+      state.streamFields = nextFields;
+      if (state.streamRenderPending) return;
+      state.streamRenderPending = true;
+      window.requestAnimationFrame(() => {
+        state.streamRenderPending = false;
+        if (state.isLoading && !state.deck[state.index]) render();
+      });
+    }
+
+    function extractStreamFields(text) {
+      const sceneSection = extractPartialObjectSection(text, "scene", ["a"]);
+      const leftSection = extractPartialObjectSection(text, "a", ["b"]);
+      const rightSection = extractPartialObjectSection(text, "b", ["callbacks"]);
+      return {
+        summary: extractPartialJsonString(text, "summary").slice(0, 52),
+        sceneTitle: extractPartialJsonString(sceneSection, "title").slice(0, 18),
+        sceneBody: extractPartialJsonString(sceneSection, "body").slice(0, 150),
+        leftTitle: extractPartialJsonString(leftSection, "title").slice(0, 8),
+        leftDesc: extractPartialJsonString(leftSection, "desc").slice(0, 28),
+        rightTitle: extractPartialJsonString(rightSection, "title").slice(0, 8),
+        rightDesc: extractPartialJsonString(rightSection, "desc").slice(0, 28)
+      };
+    }
+
+    function extractPartialObjectSection(text, key, nextKeys = []) {
+      const source = String(text || "");
+      const start = source.indexOf(`"${key}"`);
+      if (start < 0) return "";
+      const brace = source.indexOf("{", start);
+      if (brace < 0) return source.slice(start);
+      const nextStarts = nextKeys
+        .map(nextKey => source.indexOf(`"${nextKey}"`, brace + 1))
+        .filter(index => index > brace);
+      const end = nextStarts.length ? Math.min(...nextStarts) : source.length;
+      return source.slice(brace, end);
+    }
+
+    function extractPartialJsonString(text, key) {
+      const pattern = new RegExp(`"${key}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)`);
+      const match = String(text || "").match(pattern);
+      if (!match) return "";
+      return match[1]
+        .replace(/\\"/g, "\"")
+        .replace(/\\\\/g, "\\")
+        .replace(/\\n/g, " ")
+        .replace(/\\r/g, " ")
+        .replace(/\\t/g, " ")
+        .trim();
     }
 
     function isNetworkFetchError(error) {
@@ -4350,6 +4486,23 @@
       if (nextCard) applyPreviousInfoToCard(nextCard);
     }
 
+    async function loadAnnualCard(yearNumber) {
+      const path = yearNumber === 1 ? "/api/game/start" : "/api/game/next";
+      resetStreamState();
+      const payload = {
+        profile: state.profile,
+        history: yearNumber === 1 ? [] : state.history,
+        year: yearNumber
+      };
+      const data = await apiPostStream(path, payload, updateStreamPreview);
+      if (!data.card) throw new Error(`第 ${yearNumber} 年生成失败：接口没有返回卡片`);
+      const card = normalizeRemoteCard(data.card);
+      applyPreviousInfoToCard(card);
+      state.deck[yearNumber - 1] = card;
+      resetStreamState();
+      return card;
+    }
+
     function restoreFeedbackAfterUndo(previous) {
       const nextYear = previous.index + 2;
       delete state.feedbackByYear[nextYear];
@@ -4385,7 +4538,10 @@
 
     function scheduleWarmup() {
       window.clearTimeout(state.warmupTimer);
-      state.warmupTimer = window.setTimeout(startWarmup, 700);
+      state.warmupTimer = null;
+      state.warmupPromise = null;
+      state.warmupSignature = "";
+      state.warmupCards = [];
     }
 
     function startWarmup() {
@@ -4862,20 +5018,47 @@
       });
       const article = document.createElement("article");
       article.className = `life-card ${state.loadError ? "" : "loading-card"}`;
+      const stream = state.streamFields || {};
+      const now = performance.now();
+      const isNew = key => Number(state.streamNewFields?.[key] || 0) > now ? " is-stream-new" : "";
+      const summaryText = stream.summary || "";
+      const titleHTML = stream.sceneTitle
+        ? `<span class="stream-field${isNew("sceneTitle")}">${escapeHTML(stream.sceneTitle)}</span>`
+        : `<span class="stream-placeholder" aria-label="标题生成中"></span>`;
+      const bodyHTML = stream.sceneBody
+        ? `<span class="stream-field${isNew("sceneBody")}">${escapeHTML(stream.sceneBody)}</span>`
+        : `<span class="stream-placeholder" aria-label="正文生成中"></span>`;
+      const leftTitle = stream.leftTitle || "A";
+      const leftDesc = stream.leftDesc || "";
+      const rightTitle = stream.rightTitle || "B";
+      const rightDesc = stream.rightDesc || "";
+      const leftDescHTML = leftDesc
+        ? `<span class="stream-field${isNew("leftDesc")}">${escapeHTML(leftDesc)}</span>`
+        : `<span class="stream-placeholder" aria-label="选项生成中"></span>`;
+      const rightDescHTML = rightDesc
+        ? `<span class="stream-field${isNew("rightDesc")}">${escapeHTML(rightDesc)}</span>`
+        : `<span class="stream-placeholder" aria-label="选项生成中"></span>`;
       article.innerHTML = `
+        ${!state.loadError && state.index > 0 && summaryText ? `
+          <aside class="previous-note stream-field${isNew("summary")}" aria-label="上一年回响">
+            <i class="pin" aria-hidden="true"></i>
+            <b>上一年回响</b>
+            <span>${escapeHTML(summaryText)}</span>
+          </aside>
+        ` : ""}
         <div class="card-head">
-          <h3 class="card-title">${state.loadError ? "这一年卡住了" : "牌面正在靠近"}</h3>
+          <h3 class="card-title">${state.loadError ? "这一年卡住了" : titleHTML}</h3>
         </div>
         <div class="card-illustration" aria-hidden="true"></div>
-        <p class="card-prompt">${state.loadError ? escapeHTML(state.loadError) : "下一张牌已经在路上，生活线和关系线正在对齐。"}</p>
+        <p class="card-prompt">${state.loadError ? escapeHTML(state.loadError) : bodyHTML}</p>
         <div class="choice-preview">
           <button class="choice-pill left" type="button" ${state.loadError ? "" : "disabled"}>
-            <b class="choice-title">${state.loadError ? "重试" : "A"}</b>
-            <span class="choice-desc">${state.loadError ? "重新生成这一年" : "牌面未揭开"}</span>
+            <b class="choice-title">${state.loadError ? "重试" : `<span class="stream-field${isNew("leftTitle")}">${escapeHTML(leftTitle)}</span>`}</b>
+            <span class="choice-desc">${state.loadError ? "重新生成这一年" : leftDescHTML}</span>
           </button>
           <button class="choice-pill right" type="button" ${state.loadError ? "" : "disabled"}>
-            <b class="choice-title">${state.loadError ? "返回" : "B"}</b>
-            <span class="choice-desc">${state.loadError ? "回到资料页" : "先看牌面"}</span>
+            <b class="choice-title">${state.loadError ? "返回" : `<span class="stream-field${isNew("rightTitle")}">${escapeHTML(rightTitle)}</span>`}</b>
+            <span class="choice-desc">${state.loadError ? "回到资料页" : rightDescHTML}</span>
           </button>
         </div>
         ${state.loadError ? "" : `<div class="card-loading-orbit" aria-hidden="true"><i></i><i></i><i></i></div>`}
@@ -4983,17 +5166,18 @@
       state.isLoading = true;
       render();
       try {
-        await ensureDeckBuffer(batchSize);
+        await loadAnnualCard(state.index + 1);
       } catch (error) {
         state.loadError = normalizeFetchError(error, "生成失败");
       } finally {
         state.isLoading = false;
         render();
+        if (!state.loadError) revealTopCard();
       }
     }
 
     function choose(direction) {
-      if (state.isAnimating || state.loadError || state.index >= state.totalYears) return;
+      if (state.isAnimating || state.isLoading || state.loadError || state.index >= state.totalYears) return;
       const card = state.deck[state.index];
       if (!card) return;
       const chosen = card[direction];
@@ -5002,16 +5186,8 @@
       hapticTap(40);
       state.history = [...state.history, buildHistoryItem(card, direction)];
       applyFeedbackToNextCard(card, chosen);
-      invalidateStaleFutureCards();
       applyDelta(chosen.delta, 1);
-      const shouldBuffer = state.index + lowWatermark >= state.deck.length && state.deck.length < state.totalYears;
-      const earlyBuffer = shouldBuffer ? ensureDeckBuffer(batchSize + 1).catch(error => {
-        if (!state.deck[state.index]) {
-          state.loadError = normalizeFetchError(error, "生成失败");
-        } else {
-          console.warn("Background deck generation failed:", error);
-        }
-      }) : Promise.resolve();
+      state.isLoading = true;
       if (currentEl) {
         currentEl.classList.add(direction === "left" ? "is-exiting-left" : "is-exiting-right");
       }
@@ -5028,55 +5204,43 @@
       window.setTimeout(() => {
         state.index += 1;
         state.isAnimating = false;
-        if (state.index < state.totalYears && !state.deck[state.index]) {
-          state.deck[state.index] = buildBridgeCard(state.index + 1);
-        }
-        render();
-        revealTopCard();
-        keepPlayViewport();
         if (state.index >= state.totalYears) {
+          state.isLoading = false;
+          render();
+          keepPlayViewport();
           showResult();
         } else {
-          const needsCurrentCard = !state.deck[state.index];
-          if (needsCurrentCard) {
-            state.deck[state.index] = buildBridgeCard(state.index + 1);
-            render();
-          }
-          const nextLoad = needsCurrentCard
-            ? ensureCurrentCard().then(() => ensureDeckBuffer(batchSize + 1))
-            : earlyBuffer.then(() => ensureDeckBuffer(batchSize));
-          nextLoad
+          state.deck = state.deck.slice(0, state.index);
+          render();
+          keepPlayViewport();
+          loadAnnualCard(state.index + 1)
             .catch(error => {
-              if (!state.deck[state.index]) {
-                state.loadError = normalizeFetchError(error, "生成失败");
-              } else {
-                console.warn("Background deck generation failed:", error);
-              }
+              state.loadError = normalizeFetchError(error, "生成失败");
             })
             .finally(() => {
               state.isLoading = false;
               render();
+              if (!state.loadError) revealTopCard();
             });
         }
       }, 320);
     }
 
     function revealTopCard() {
-      els.cardStack.querySelector(".life-card:not(.behind-one):not(.behind-two)")?.classList.add("is-revealing");
     }
 
     function undo() {
-      if (state.isAnimating || state.history.length === 0) return;
+      if (state.isAnimating || state.isLoading || state.history.length === 0) return;
       const previous = state.history.pop();
       applyDelta(previous.delta, -1);
       state.index = previous.index;
       state.loadError = "";
       state.bufferPromise = null;
+      state.deck = state.deck.slice(0, state.index + 1);
       restoreFeedbackAfterUndo(previous);
       render();
       revealTopCard();
       keepPlayViewport();
-      ensureDeckBuffer(batchSize).catch(() => {});
     }
 
     function invalidateStaleFutureCards() {

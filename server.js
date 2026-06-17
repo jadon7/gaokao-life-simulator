@@ -364,7 +364,7 @@ async function sendAnnualStream(res, { pathname, profile, history, body, model }
     if (pathname === "/api/game/start/stream") {
       const data = await callModel(
         buildAnnualMessages({ profile, history: [], year: 1 }),
-        value => validateAnnual(value, []),
+        value => validateAnnual(value, [], [], 1),
         model,
         text => sendNdjson(res, { type: "delta", text }),
         false,
@@ -377,7 +377,7 @@ async function sendAnnualStream(res, { pathname, profile, history, body, model }
     const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
     const data = await callModel(
       buildAnnualMessages({ profile, history, year }),
-      value => validateAnnual(value, history),
+      value => validateAnnual(value, history, history, year),
       model,
       text => sendNdjson(res, { type: "delta", text }),
       false,
@@ -434,26 +434,29 @@ function parseJsonContent(content) {
   }
 }
 
-function validateAnnual(data, history = [], repeatHistory = history) {
+function validateAnnual(data, history = [], repeatHistory = history, expectedYear = null) {
   const normalized = {};
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
-  if (typeof data?.question !== "string" && !Number.isFinite(Number(data?.year))) throw new Error("Invalid annual JSON: missing question");
   normalized.summary = clampTextBySentence(data.summary, 52, 2);
+  const fallbackYear = Math.min(Math.max(Number(expectedYear || (Array.isArray(history) ? history.length + 1 : 1)) || 1, 1), totalGameYears);
   const yearNumberFromData = Number(data?.year || 0);
   normalized.question = typeof data?.question === "string" && data.question.trim()
     ? data.question.trim()
-    : `第 ${yearNumberFromData || 1} 年 / ${totalGameYears}`;
-  normalized.year = Number(normalized.question.match(/\d+/)?.[0] || yearNumberFromData || 1);
-  normalized.phase = optionalCleanText(data.phase);
-  normalized.mainTrack = /relationship/i.test(String(data.mainTrack || "").trim()) ? "relationship" : "life";
+    : `第 ${yearNumberFromData || fallbackYear} 年 / ${totalGameYears}`;
+  normalized.year = Number(normalized.question.match(/\d+/)?.[0] || yearNumberFromData || fallbackYear);
+  const outline = getOutlineCard(normalized.year);
+  normalized.phase = optionalCleanText(data.phase) || optionalCleanText(outline?.phase);
+  normalized.mainTrack = outline?.mainTrack || (/relationship/i.test(String(data.mainTrack || "").trim()) ? "relationship" : "life");
   normalized.lifeTrack = optionalCleanText(data.lifeTrack);
   normalized.relationshipTrack = optionalCleanText(data.relationshipTrack);
-  normalized.callbackSeeds = Array.isArray(data.callbackSeeds || data.callbacks)
+  const modelCallbacks = Array.isArray(data.callbackSeeds || data.callbacks)
     ? (data.callbackSeeds || data.callbacks).map(item => optionalCleanText(item)).filter(Boolean).slice(0, 3)
     : [];
+  normalized.callbackSeeds = modelCallbacks.length ? modelCallbacks : (Array.isArray(outline?.callbacks) ? outline.callbacks.slice(0, 3) : []);
   normalized.scene = normalizeSceneData(data.scene);
   normalized.a = normalizeChoiceData(data.a, "A");
   normalized.b = normalizeChoiceData(data.b, "B");
+  applyOutlineRiasec(normalized);
   validateRiasecAgainstOutline(normalized);
   if (!new RegExp(`^第\\s*\\d+\\s*年\\s*\\/\\s*${totalGameYears}$`).test(normalized.question)) {
     throw new Error("Invalid annual JSON: bad question field");
@@ -472,6 +475,12 @@ function validateAnnual(data, history = [], repeatHistory = history) {
   }
   ensureSceneNotRepeated(normalized, repeatHistory);
   return normalized;
+}
+
+function applyOutlineRiasec(card) {
+  const axis = Array.isArray(getOutlineCard(card.year)?.riasecAxis) ? getOutlineCard(card.year).riasecAxis : [];
+  if (axis[0]) card.a.riasec = mockRiasec(axis[0], "");
+  if (axis[1]) card.b.riasec = mockRiasec(axis[1], "");
 }
 
 function sceneTextForRepeatCheck(item) {
@@ -798,8 +807,8 @@ function validateBatch(data, expectedCount, startYear, history = []) {
   const seen = Array.isArray(history) ? [...history] : [];
   return {
     cards: data.cards.map((card, index) => {
-      const normalized = validateAnnual(card, history, seen);
       const expectedYear = startYear + index;
+      const normalized = validateAnnual(card, history, seen, expectedYear);
       if (Number(normalized.question.match(/\d+/)?.[0]) !== expectedYear) {
         throw new Error(`Invalid batch JSON: expected year ${expectedYear}`);
       }
@@ -1179,13 +1188,13 @@ async function handleApi(req, res, pathname) {
     }
 
     if (pathname === "/api/game/start") {
-      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, []), requestModel, null, promptLabDebug);
+      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, [], [], 1), requestModel, null, promptLabDebug);
       sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
       return;
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history), requestModel, null, promptLabDebug);
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), requestModel, null, promptLabDebug);
       sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
       return;
     }
@@ -1212,13 +1221,13 @@ async function handleApi(req, res, pathname) {
     console.error(`API degraded fallback for ${pathname}:`, error?.message || error);
     try {
       if (pathname === "/api/game/start") {
-        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), []);
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), [], [], 1);
         sendJson(res, 200, { ok: true, model: requestModel, degraded: true, card: annualCardFromData(data) });
         return;
       }
       if (pathname === "/api/game/next") {
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history);
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history, history, year);
         sendJson(res, 200, { ok: true, model: requestModel, degraded: true, card: annualCardFromData(data) });
         return;
       }

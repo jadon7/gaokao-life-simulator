@@ -585,6 +585,7 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
 - status42 24-36 字，写 18 年后的状态，含一个高光/代价/关系余味，不重复 title 职业。
 - majorCareerNote 解释“初始专业 + 关键选择 + RIASEC”如何导向职业。
 - careerPossibilities 给 3 个差异明显的出口；同专业下也要区分稳定组织、市场化岗位、表达/产品/研究等路线。
+- 数组数量必须完整：careerPossibilities 3 条，famousScenes 3 条，timelineBlocks 3 条，shareHooks 2 条；每个 title/body/label 都不能为空。
 - famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence。
 - timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价。
 - 不要排名、贬损、疾病化判断、性别/专业刻板标签；禁用旧示例词：嘴硬心软/存款能打/账本漂亮。

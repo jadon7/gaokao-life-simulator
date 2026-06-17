@@ -896,19 +896,6 @@
       animation: sk-pulse 1.6s ease-in-out infinite;
     }
 
-    .card-illustration.img-reveal {
-      animation: img-fade-in 0.5s ease;
-    }
-
-    @keyframes img-fade-in {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
     /* 文案永不截断：空间不够时压缩插画（flex 1）而不是裁文字 */
     .card-prompt {
       margin: 0;
@@ -3725,7 +3712,7 @@
       resolveFirstArt(urls, url => {
         if (!el.isConnected) return;
         if (url) el.style.backgroundImage = `url('${url}')`;
-        el.classList.add("is-img-ready", "img-reveal");
+        el.classList.add("is-img-ready");
       });
     }
 
@@ -4066,15 +4053,45 @@
       const sceneSection = extractPartialObjectSection(text, "scene", ["a"]);
       const leftSection = extractPartialObjectSection(text, "a", ["b"]);
       const rightSection = extractPartialObjectSection(text, "b", ["callbacks"]);
+      const leftTitle = normalizeStreamChoiceTitle(extractPartialJsonString(leftSection, "title"), "A");
+      const rightTitle = normalizeStreamChoiceTitle(extractPartialJsonString(rightSection, "title"), "B");
       return {
-        summary: extractPartialJsonString(text, "summary").slice(0, 52),
-        sceneTitle: extractPartialJsonString(sceneSection, "title").slice(0, 18),
-        sceneBody: extractPartialJsonString(sceneSection, "body").slice(0, 150),
-        leftTitle: extractPartialJsonString(leftSection, "title").slice(0, 8),
-        leftDesc: extractPartialJsonString(leftSection, "desc").slice(0, 28),
-        rightTitle: extractPartialJsonString(rightSection, "title").slice(0, 8),
-        rightDesc: extractPartialJsonString(rightSection, "desc").slice(0, 28)
+        summary: clampStreamTextBySentence(extractPartialJsonString(text, "summary"), 52, 2),
+        sceneTitle: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "title"), 10, 1),
+        sceneBody: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "body"), 130, 3),
+        leftTitle,
+        leftDesc: normalizeStreamChoiceDesc(extractPartialJsonString(leftSection, "desc"), leftTitle, "A"),
+        rightTitle,
+        rightDesc: normalizeStreamChoiceDesc(extractPartialJsonString(rightSection, "desc"), rightTitle, "B")
       };
+    }
+
+    function clampStreamTextBySentence(value, maxLength, maxSentences = 1) {
+      const text = String(value || "").replace(/\s+/g, "").trim();
+      if (!text) return "";
+      const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [text];
+      const joined = parts.slice(0, maxSentences).join("").replace(/[。！？!?；;]+$/g, "");
+      if (joined.length <= maxLength) return joined;
+      const clipped = joined.slice(0, maxLength);
+      const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
+      return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
+    }
+
+    function normalizeStreamChoiceTitle(value, fallback) {
+      const text = String(value || "")
+        .replace(new RegExp(`^${fallback}[.。]\\s*`), "")
+        .replace(/[，,。.!！?？；;].*$/g, "")
+        .replace(/\s+/g, "");
+      return (text || fallback).slice(0, 5);
+    }
+
+    function normalizeStreamChoiceDesc(value, title, fallback) {
+      const text = String(value || "")
+        .replace(new RegExp(`^${fallback}[.。]\\s*`), "")
+        .replace(title || "", "")
+        .replace(/^[，,。.!！?？；;\s]+/, "")
+        .trim();
+      return text.length >= 8 ? clampStreamTextBySentence(text, 22, 1) : "";
     }
 
     function extractPartialObjectSection(text, key, nextKeys = []) {

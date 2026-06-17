@@ -82,6 +82,7 @@
     .timing { flex: none; color: #76808f; font-size: 12px; font-variant-numeric: tabular-nums; }
     .raw-debug { margin: 8px 0; border: 1px solid #e4e9f2; border-radius: 8px; background: #fbfcff; }
     .raw-debug summary { cursor: pointer; padding: 7px 10px; font-size: 12px; font-weight: 800; color: #42526e; }
+    .raw-count { color: #7a8494; font-weight: 700; font-variant-numeric: tabular-nums; }
     .raw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 10px 10px; }
     .raw-grid b { display: block; margin-bottom: 4px; font-size: 12px; color: #3a4150; }
     .raw-grid pre { max-height: 360px; overflow: auto; margin: 0; padding: 8px; border: 1px solid #eef1f6; border-radius: 8px; background: #fff; font-size: 11px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
@@ -747,14 +748,30 @@
     function rawDebugHTML(item) {
       const input = item.rawInput || "这张卡生成时还没有记录原始输入，请重新开跑。";
       const output = item.rawOutput || item.card || "这张卡生成时还没有记录原始输出，请重新开跑。";
+      const inputMeta = rawCharMeta(input);
+      const outputMeta = rawCharMeta(output);
       return `
         <details class="raw-debug">
-          <summary>查看原始输入 / 输出</summary>
+          <summary>查看原始输入 / 输出 <span class="raw-count">输入 ${formatCount(inputMeta.count)} · 输出 ${formatCount(outputMeta.count)}</span></summary>
           <div class="raw-grid">
-            <div><b>原始输入</b><pre>${esc(formatRaw(input))}</pre></div>
-            <div><b>原始输出</b><pre>${esc(formatRaw(output))}</pre></div>
+            <div><b>原始输入 <span class="raw-count">${inputMeta.label} ${formatCount(inputMeta.count)}</span></b><pre>${esc(formatRaw(input))}</pre></div>
+            <div><b>原始输出 <span class="raw-count">${outputMeta.label} ${formatCount(outputMeta.count)}</span></b><pre>${esc(formatRaw(output))}</pre></div>
           </div>
         </details>`;
+    }
+
+    function rawCharMeta(value) {
+      if (value && typeof value === "object" && value.modelRequest) {
+        return { label: "模型请求", count: JSON.stringify(value.modelRequest).length };
+      }
+      if (value && typeof value === "object" && value.modelRawOutput !== undefined) {
+        return { label: "模型输出", count: String(value.modelRawOutput || "").length };
+      }
+      return { label: "展示文本", count: formatRaw(value).length };
+    }
+
+    function formatCount(count) {
+      return `${Number(count || 0).toLocaleString("zh-CN")} 字符`;
     }
 
     function formatRaw(value) {

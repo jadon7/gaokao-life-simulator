@@ -881,8 +881,8 @@
     }
 
     .card-illustration {
-      flex: 1 1 0;
-      min-height: 0;
+      flex: 1 1 120px;
+      min-height: 72px;
       border-radius: 27px;
       border: 1px solid rgba(255, 255, 255, 0.54);
       box-shadow: inset 0 1px 0 1px rgba(255, 255, 255, 0.46);
@@ -890,6 +890,16 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
+    }
+
+    .life-card.layout-balanced .card-illustration {
+      flex-basis: 96px;
+      min-height: 56px;
+    }
+
+    .life-card.layout-reading .card-illustration {
+      flex-basis: 64px;
+      min-height: 38px;
     }
 
     .card-illustration:not(.is-img-ready) {
@@ -900,6 +910,7 @@
     .card-prompt {
       margin: 0;
       flex: 0 0 auto;
+      min-height: max-content;
       font-size: 16px;
       font-weight: 500;
       line-height: 1.6;
@@ -907,7 +918,8 @@
     }
 
     .life-card.layout-reading .card-prompt {
-      font-size: 15px;
+      font-size: 14px;
+      line-height: 1.48;
     }
 
     .choice-preview {
@@ -915,11 +927,13 @@
       gap: 12px;
       width: 100%;
       flex: 0 0 auto;
+      min-height: max-content;
     }
 
     .choice-pill {
       flex: 1 1 0;
       min-width: 0;
+      min-height: max-content;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -945,6 +959,7 @@
       font-size: 15px;
       font-weight: 700;
       line-height: 20.74px;
+      overflow-wrap: anywhere;
     }
 
     .choice-pill span,
@@ -952,6 +967,7 @@
       font-size: 11px;
       font-weight: 400;
       line-height: 1.3;
+      overflow-wrap: anywhere;
     }
 
     .choice-pill.left:not(:disabled):active,
@@ -1036,10 +1052,7 @@
       font-weight: 500;
       line-height: 1.6;
       color: #8b8f89;
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      overflow-wrap: anywhere;
     }
 
     /* loading card */
@@ -4284,6 +4297,9 @@
       const choiceKey = historyItem.direction === "left" ? "A" : "B";
       return {
         choiceKey,
+        sceneTitle: historyItem.sceneTitle || historyItem.scene,
+        choice: historyItem.choice,
+        tag: historyItem.tag,
         choiceText: historyItem.choiceText,
         feedback: historyItem.consequence || draftChoiceFeedback(historyItem.sceneTitle || historyItem.scene, {
           title: historyItem.choice,
@@ -4293,19 +4309,29 @@
       };
     }
 
+    function previousChoiceBrief(previousInfo) {
+      return cleanFeedbackText(previousInfo?.choice || previousInfo?.choiceText || previousInfo?.tag || "")
+        .replace(/[，,。.!！?？；;：:].*$/g, "")
+        .trim()
+        .slice(0, 7);
+    }
+
     function composePreviousFeedback(card) {
       const modelFeedback = shortFeedbackText(card.modelHeader || card.summary || card.context);
-      const track = chooseOffstageTrack(card, modelFeedback);
       const previousInfo = card.previous || reconstructPreviousInfo(card);
-      if (!previousInfo) return track || modelFeedback || buildOffstageFallback(textCategories([card.eventTitle, card.scene, card.prompt].filter(Boolean).join("")));
-      const previousOutcome = compactFeedbackPart(previousInfo.feedback || buildVisibleChoiceFeedback(previousInfo.choiceText, previousInfo.choiceKey), 28);
-      const offstage = compactFeedbackPart(track, 18);
-      const combined = [previousOutcome, offstage].filter(Boolean).join("，");
-      return shortFeedbackText(combined || previousOutcome || modelFeedback);
+      if (!previousInfo) {
+        const track = chooseOffstageTrack(card, modelFeedback);
+        return track || modelFeedback || buildOffstageFallback(textCategories([card.eventTitle, card.scene, card.prompt].filter(Boolean).join("")));
+      }
+      const choice = previousChoiceBrief(previousInfo);
+      const previousOutcome = compactFeedbackPart(previousInfo.feedback || buildVisibleChoiceFeedback(previousInfo.choiceText, previousInfo.choiceKey), 44);
+      return [choice ? `你选了「${choice}」` : "上一轮选择", previousOutcome].filter(Boolean).join("，");
     }
 
     function previousFeedbackTitle(card, feedback = "") {
       const previousInfo = card.previous || reconstructPreviousInfo(card);
+      const choice = previousChoiceBrief(previousInfo);
+      if (choice) return `选了${choice}`.slice(0, 8);
       const source = [previousInfo?.sceneTitle, previousInfo?.choice, previousInfo?.tag, feedback].filter(Boolean).join("，");
       const rules = [
         [/借钱|还款|钱包|金额/, "朋友借钱"],
@@ -4532,6 +4558,9 @@
       const feedback = buildChoiceFeedback(card, chosen);
       state.feedbackByYear[nextYear] = {
         choiceKey: chosen === card.left ? "A" : "B",
+        sceneTitle: card.eventTitle || card.scene,
+        choice: chosen.title || chosen.tag,
+        tag: chosen.tag,
         choiceText: chosen.label,
         feedback
       };
@@ -5043,9 +5072,41 @@
       const length = [card.scene, card.prompt, composePreviousFeedback(card), card.left?.label, card.right?.label]
         .map(value => String(value || "").length)
         .reduce((sum, value) => sum + value, 0);
-      if (length > 220) return "layout-reading";
-      if (length > 145) return "layout-balanced";
+      if (length > 175) return "layout-reading";
+      if (length > 120) return "layout-balanced";
       return "layout-compact";
+    }
+
+    function fitCardContent(article) {
+      window.requestAnimationFrame(() => {
+        const illustration = article.querySelector(".card-illustration");
+        const title = article.querySelector(".card-title");
+        const prompt = article.querySelector(".card-prompt");
+        const choiceTitles = [...article.querySelectorAll(".choice-pill b")];
+        const choiceTexts = [...article.querySelectorAll(".choice-pill span, .choice-pill strong")];
+        let guard = 0;
+        while (article.scrollHeight > article.clientHeight + 1 && guard < 24) {
+          const imageHeight = illustration?.getBoundingClientRect().height || 0;
+          if (illustration && imageHeight > 4) {
+            illustration.style.minHeight = "0px";
+            illustration.style.flexBasis = `${Math.max(0, imageHeight - 12)}px`;
+          } else {
+            const promptSize = parseFloat(getComputedStyle(prompt).fontSize) || 16;
+            const titleSize = parseFloat(getComputedStyle(title).fontSize) || 38;
+            if (prompt && promptSize > 12) prompt.style.fontSize = `${promptSize - 0.5}px`;
+            if (title && titleSize > 30) title.style.fontSize = `${titleSize - 1}px`;
+            choiceTitles.forEach(el => {
+              const size = parseFloat(getComputedStyle(el).fontSize) || 15;
+              if (size > 12) el.style.fontSize = `${size - 0.5}px`;
+            });
+            choiceTexts.forEach(el => {
+              const size = parseFloat(getComputedStyle(el).fontSize) || 11;
+              if (size > 9) el.style.fontSize = `${size - 0.5}px`;
+            });
+          }
+          guard += 1;
+        }
+      });
     }
 
     function choiceCardHTML(direction, choice, hint) {
@@ -5128,6 +5189,7 @@
       bindCardChoices(article);
       els.cardStack.appendChild(article);
       applyCardArt(article.querySelector(".card-illustration"), sceneArtUrls(state.index));
+      fitCardContent(article);
 
       appendGhostCards(1);
       prefetchUpcomingArt();
@@ -5211,6 +5273,7 @@
         article.querySelector(".choice-pill.right").addEventListener("click", () => showFlow("setup"));
       }
       els.cardStack.appendChild(article);
+      fitCardContent(article);
       els.leftChoiceText.textContent = state.loadError ? "重试" : "A";
       els.rightChoiceText.textContent = state.loadError ? "等待" : "B";
     }

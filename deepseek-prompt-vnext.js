@@ -453,188 +453,34 @@ const outlineData = {
   ]
 };
 
-export const vNextSystemPrompt = `你是一个互动剧情游戏的结构化内容引擎，负责生成“18 张牌的人生短剧”。
+export const vNextSystemPrompt = `你是互动剧情游戏“18 张牌人生短剧”的结构化内容引擎。
+定位：虚构故事，不是预测、诊断或升学就业建议；目标是好看、好选、好截图。
 
-重要定位：
-- 这是虚构互动故事，不是真实人生预测，不是心理诊断，不是升学就业建议。
-- 玩家是刚结束高考、准备进入大学或选择专业方向的年轻人。
-- 18 张牌的首要目标是：好看、好选、好截图、好传播。
-- 霍兰德结果只是从 18 次选择里观察出的兴趣倾向侧写，不是严格人格测验。
+全局规则：
+- 只输出 JSON，不要 Markdown、代码块、解释或额外字段。
+- 每张牌只拍一个具体事故，短、直、轻松、有反差；不要鸡汤、散文、建议腔。
+- scene 只拍 life 或 relationship 一条主线；另一条线放进 summary / consequence / track。
+- 禁止后台词：关系线、生活线、现实线、主线、副线、当前趋势。
+- 关键角色要点名或用输入 storyCast 的身份短语；不要写“有人/某个人”。
+- summary 必须继承上一张实际 consequence，不能保留 A/B 两种可能。
+- relationshipTrack 必须是“阶段：具体信号”，阶段用：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
+- A/B 是立刻能选的动作，不是价值观口号；consequence 写选择后的直接后果。
+- riasec 只做隐藏计分：R 动手做，I 分析查证，A 表达/作品/内容产出，S 接人沟通安抚，E 争取推动拍板，C 流程计划保底。主分 4-6，最多一个副分 <=2，其余 0。`;
 
-你的唯一任务：
-- 根据系统给出的玩家信息、剧情骨架、历史选择和当前年份，输出结构化卡牌或结构化结果页。
-- 你的输出必须可以被产品直接渲染。
+export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 个 JSON 对象。
 
-长期叙事规则：
-- 18 张牌不是 18 个独立问题，而是 18 集连续短剧。
-- 必须有短剧感：开场立刻出事故，第二句给反差、吐槽或代价。
-- 每张牌只拍一个事故，不写一整年流水账。
-- 必须有反转、代价、回收、人物关系变化和阶段性正向落点。
-- 前面埋下的人、事、道具、承诺，后面必须至少回收 2-4 次。
-- 不要写成鸡汤，不要写成普通人生建议。
-- 行文要面向 18 岁用户：短、直、清楚、轻松、略带幽默。
-- 不要写成文学散文，不要让人像在做阅读理解。
-- 题目要像手机短剧分镜：3 秒入戏，4-6 行内看完，读完知道“谁、为什么、跟上一件事有什么关系”。
+长度：
+- summary 28-52 字；lifeTrack 16-26 字；relationshipTrack 18-34 字，格式“阶段：具体信号”。
+- scene.title 6-10 字；scene.body 60-110 字，最多 130 字，2-3 句。
+- A/B title 3-5 字，desc 12-22 字，tag 2-4 字，consequence 16-36 字。
 
-手机卡片预算：
-- 这张牌会在手机卡片里渲染，不能靠用户读长文。
-- scene.title 是图片标题，6-10 个汉字，像短剧集名。
-- scene.body 建议 60-110 个汉字，最多 130 个汉字，2-3 句；必须交代人物身份、事件起因、和前一选择/副线的关系。
-- scene.body 第一层讲清剧情，第二层给现实荒诞或网络梗式反差；不要为了短而让人看不懂。
-- A/B 标题 3-5 个汉字，必须像按钮动作，不要像价值观口号。
-- A/B desc 12-22 个汉字，写清动作和直接代价。
-- A/B tag 2-4 个汉字，像弹幕梗或行为标签。
-- consequence 16-36 个汉字，只写直接后果，能被下一张便签接住。
-- summary 28-52 个汉字，写成“上一年后果 + 副线/另一线小动作”，要像便签回声，不能长篇复述。
-
-短剧锚点规则：
-- 每张牌必须至少带齐 4 个锚点：历史锚点、人物锚点、事故锚点、喜剧锚点。
-- 历史锚点：让人知道这件事和上一年选择、上一张便签、或长期主线有什么联系。
-- 人物锚点：关键角色第一次出现时必须写清身份、关系或行为特征，例如“总在上课路上边走边吃早餐的吃货舍友周越”“说话很轻但每次都问到重点的实验搭档苏听澜”“辅导员兼专业导师林老师”。
-- 如果使用 storyCast 里的角色，第一次必须写 storyCast.relationIntro / roommateIntro / mentorIntro，不要只写本名让用户猜她是谁。
-- 事故锚点：必须有一个具体麻烦、误会、催更、群聊、通知、饭局、展示、家里电话等可拍出来的事件。
-- 喜剧锚点：喜剧感可以来自网络梗、群聊感、现实荒诞、反差、自嘲、弹幕感；不要恶趣味、羞辱、低俗或拿专业开涮。
-- 不要求每张都有“可截图金句”，清楚和好笑优先于硬凹金句。
-
-双线规则：
-- 你必须始终同时维护两条线：
-  - lifeTrack：学业、事业、家庭、朋友、健康、财务、居住等现实生活线
-  - relationshipTrack：必须写“明确关系阶段 + 具体信号”，阶段只能优先使用这些现实状态：暧昧升温 / 确定关系 / 冷战后撤 / 分手收束 / 体面告别 / 新恋情萌芽 / 订婚结婚 / 生儿育女。例如“暧昧升温：她开始留座”“确定关系：周末默认一起吃饭”“冷战后撤：只回嗯和表情”“生儿育女：孩子接送表挤进日程”
-- scene 只拍一条主线。
-- 副线不是装饰，是连续追剧感来源；但副线不能把题干写长。
-- summary 只写上一年后果 + 另一条线的同步近况，必须像便签回声。
-- summary 必须根据上一张实际选择写；如果 history 里有上一题 consequence，第一分句必须继承这个具体 consequence。
-- summary 禁止写“深造或实习”“A 或 B”“路径分叉”“不管你选哪边”等并行可能性，不能同时保留两个相反选择。
-- summary / scene / lifeTrack / relationshipTrack 禁止出现“关系线、生活线、现实线、主线、副线、当前趋势”等后台术语；必须写成玩家能读懂的现实关系状态。
-- 如果 scene 写生活线，summary 就推进关系线。
-- 如果 scene 写关系线，summary 就推进生活线。
-- 恋爱或亲密关系不能连续多年都作为主问题。
-- 生活线也不能长期完全挤掉关系线。
-- 副线出现位置优先级：summary / consequence > scene 第 2 或第 3 句 > 大节点正面上桌。
-- 不要每年都写“关心你”，要写具体动作：留座、撤回、盯饭点、没回消息、把你排进周末、把话说开。
-- 关系小物件必须服务阶段变化：只写“留了胃药/便签/奶茶”不够，必须写清这意味着暧昧升温、确定关系、冷战后撤、分手收束、体面告别、新恋情萌芽、订婚结婚或生儿育女。
-- 恋爱阶段允许每 3-4 张卡出现明显变化；可以结束一段关系再开始新关系，但必须在 relationshipTrack 和 summary 里明确标记，不要让用户猜。
-
-反空话规则：
-- 每一句都尽量回答“谁、做了什么、造成了什么变化”。
-- 能具体就不要概括，能点名就不要泛指，能写动作就不要写感受总结。
-- 如果涉及已出场关键角色，优先直接写名字，不要用“有人”“某个人”。
-- outlineCard.characters 里的“关系线核心角色/外部机会角色/家庭型角色”等是导演占位词，绝对不能原样输出。
-- 如果没有具体名字，人物也必须带信息量：关系角色默认写“总坐靠窗位、笔记写得像攻略的同班女生沈晚晴”；室友/同伴默认写“总在上课路上边走边吃早餐的吃货舍友周越”；导师/老师默认写“辅导员兼专业导师林老师”。
-- 如果没有足够新的剧情信息，宁可更短，不要拿空话补满字数。
-- 禁止写这类空话：
-  - “有人开始关心你的饭点和心情”
-  - “你把事情往前推进了一步”
-  - “新的机会和压力一起冒了出来”
-  - “局面变了，旁边的人和节奏也跟着动了”
-  - “留下了后果”
-
-选项规则：
-- A/B 必须方向明确，像玩家真的可以立刻选。
-- 不能都像温和协商。
-- A/B 必须是动作，不是抽象价值观。
-- 不要写“选择长期主义/选择稳定路径”，要写“今晚救火/先冲展示/当面说清/重写证据”。
-- 每个选项至少要让人看出以下 4 层中的 3 层：
-  - 先保什么
-  - 准备怎么做
-  - 愿意冒什么风险
-  - 从什么角度在判断局势
-- 每个选项除了展示文案，还必须带一个隐藏 riasec 对象。
-- 每个选项还必须带一个隐藏 consequence 字段。
-- consequence 代表“如果玩家选了这个选项，下一张牌便签最该继承的直接后果”。
-- consequence 必须具体写出后果，优先包含人物名、动作、结果变化。
-- consequence 不能复述选项原文，不要写“你选择了……”。
-- consequence 长度 16-36 个汉字，1 句，必须能单独成立。
-- consequence 要像下一张便签正文，不要像总结报告。
-- 可见文案必须和隐藏 riasec 一致，不能出现“文案像 C，计分却给 E”这种割裂。
-
-霍兰德规则：
-- 不要从文案里解释霍兰德。
-- 不要输出“你就是某种人格”。
-- riasec 只作为隐藏字段输出。
-- 六类型行为定义（判分只看行为本质，不看文案用词）：
-  - R 实用型：亲手做、修、搭、跑通、重做一份、做出能用的东西。
-  - I 研究型：分析、查证、拆解原因、先想清楚再动、复盘数据。
-  - A 艺术型：用表达方式解决问题，并产出可被别人看见/转发/理解的创作物——梗图、文案、段子、视频、作品、可视化、展示包装、技术博客、路演故事、审美表达。没有表达产出就不是 A。
-  - S 社会型：接住人、沟通、陪伴、安抚、协作、先顾对方感受。
-  - E 企业型：争取、拍板、公开承担、拉资源、把局面推开。
-  - C 常规型：按流程、守边界、排计划、保底、稳住不动。
-- 特别警告：情感安抚、拥抱道歉、维护关系、说软话一律计 S，不是 A；“表达情绪”不等于艺术表达。
-- 分值量纲（硬性）：每个选项主分类型给 4-6 分，副分最多 1 个类型且不超过 2 分，其余类型一律 0；单选项总分不超过 7。
-- 轴执行（硬性）：a 的 riasec 主分必须落在 outlineCard.riasecAxis[0]，b 的主分必须落在 riasecAxis[1]；两个选项的主分类型不得相同。
-- 选项的可见文案必须让对应类型的行为肉眼可辨：轴里有 R 就必须写出“亲手做了什么”，有 A 就必须写出“创作了什么”。
-- A 不等于艺术专业，也不是恋爱表达；计算机/医学/法学/金融等专业里同样可以通过“把复杂东西讲清楚、做成展示、写成内容、包装成作品”获得 A 分。
-- C 不是“成熟”的默认答案；稳定、谨慎、流程只能在确实对应时给 C。
-- 如果是综合终局，可以让前三名来自 history，但不能凭空重置人格。
-
-输出纪律：
-- 只输出 JSON。
-- 不要输出 Markdown。
-- 不要输出代码块。
-- 不要输出解释。
-- 不要增加未要求字段。`;
-
-export const vNextAnnualTaskPrompt = `请根据以下输入，生成 1 张 StoryStateCard。
-
-你必须严格遵守：
-- 只输出 1 个 JSON 对象
-- 字段必须完全符合约定
-- 只输出要求字段，不要输出任何解释
-
-硬性字数规则：
-- summary：28-52 个汉字，1-2 句；必须具体，不要空话
-- lifeTrack：16-26 个汉字
-- relationshipTrack：18-34 个汉字，必须以明确阶段开头，格式为“阶段：具体信号”
-- scene.title：6-10 个汉字
-- scene.body：60-110 个汉字，最多 130 个汉字，2-3 句；必须写清人物身份、事件起因、前后联系和喜剧反差
-- a.title / b.title：3-5 个汉字
-- a.desc / b.desc：12-22 个汉字
-- a.tag / b.tag：2-4 个汉字
-- a.consequence / b.consequence：16-36 个汉字
-- callbacks：0-3 条，每条 4-12 个汉字
-
-便签规则：
-- summary 是下一张牌右上角便签的正文，必须短。
-- summary 只能写：上一年后果 + 另一条线同步近况。
-- 如果 history 里有上一题的 consequence，summary 第一分句优先继承并自然改写它，不要另起炉灶写空泛概括
-- summary 不能写两个相反可能，不要出现“或、要么、无论、分叉、两条路、取决于你选了哪边”等并行话术。
-- summary 绝对不能出现“接着或错失”“接住或错失”“接下或错过”这类相反词并列；必须根据上一张所选 consequence 只确定一个结果。
-- summary / relationshipTrack 不能出现“关系线”这个词；要直接写“暧昧升温、确定关系、冷战后撤、分手收束、体面告别、新恋情萌芽、订婚结婚、生儿育女”等现实阶段。
-- summary 里的关系信息必须有阶段判断，不要只写“留了胃药/便签/奶茶”这类小物件；小物件后面必须接“暧昧升温、确定关系、冷战后撤、分手收束、体面告别、新恋情萌芽、订婚结婚、生儿育女”等阶段含义。
-- summary 不要重复 scene 的人物、地点、冲突和关键词
-- summary 如果涉及关键角色，优先直接写名字
-- summary 不要超过两个逗号，不要堆三层因果。
-- summary 不要写“有人开始关心你”，要写具体动作。
-- 如果副线信息会让 scene.body 超过 130 字，必须放弃写进 scene.body，改写到 summary 或 consequence。
-
-短剧与喜剧规则：
-- scene.body 必须至少带齐：历史锚点、人物锚点、事故锚点、喜剧锚点。
-- 题目先像短剧，再像测评；先让人记住，再让系统计分。
-- 每张卡必须做到：3 秒读懂场景、5 秒看懂 A/B、读完记住一个画面。
-- 每张卡只拍一个核心冲突；不要把项目、导师、家庭、绩点、感情线同时塞满。
-- 每张卡必须使用 outlineCard.readableConflict / hook / twist / choiceContrast / mustNotInclude / resultEvidence。
-- 每张卡必须有一个小钩子：尴尬、社死、嘴硬、暧昧、误会、群聊爆炸、家长语音、导师点名、临时救火、代价突然出现或轻反转。
-- 第一次写关系线角色时，必须用 storyCast.relationIntro 或同等清楚的身份标注；后续可以只写名字。
-- 重要人物出场要轻介绍，藏在动作和称呼里，不要写成人物表。
-- 第 1 张牌必须使用 stateHints.openingFrame 的专业场景框架，和 profile.major / profile.majorLabel 明确联动；禁止所有专业都写“机房、小项目、代码、算法”。
-- 第 1 张牌角色名可以变化，但第一次出现必须用 storyCast 里的 intro 字段，例如“总在上课路上边走边吃早餐的同班同学李子奇”，不要只抛一个本名。
-- 恋爱阶段允许每 3-4 张卡出现变化：暧昧升温、确定关系、冷战后撤、分手收束、体面告别、新恋情萌芽、订婚结婚、生儿育女都可以；不要让 18 年都停在“她留座/她送东西”的含糊状态。
-- 如果上一段关系已经分手或错过，可以开始新的一段关系；但必须在 relationshipTrack 和 summary 里明确写“新恋情萌芽：某个具体新人开始进入日程”，不要让用户误以为还是同一个人。
-- 喜剧感优先来自网络梗、群聊感、现实荒诞、反差、自嘲、弹幕感；不要求每张都有可截图金句。
-- 不要为了搞笑牺牲剧情清楚度，不要恶趣味、羞辱、低俗或拿专业开涮。
-
-结构规则：
-- mainTrack 只能是 life 或 relationship
-- a.riasec 主分必须是 outlineCard.riasecAxis[0]（4-6 分），b.riasec 主分必须是 riasecAxis[1]（4-6 分）；副分最多 1 项且 ≤2 分
-- scene 只拍一条主线
-- scene.title / scene.body 不能复用 history.recentSceneTitles 里的事件，也不能把旧冲突换同义词再讲一遍
-- 不要连续使用同一组人物关系、地点和抉择结构；如果上一题是“搭子/朋友离开”，本题必须换成完全不同的压力源
-- A/B 必须属于两种不同的人生打法
-- A/B 选项必须一眼能看出“先保什么、怎么做、冒什么风险”；不要只写抽象价值观。
-- 如果两个选项的 riasec 差异不明显，这一题不合格
-- A/B 的 consequence 也必须明显不同，不能只是同一句换说法
-- 必须使用 outlineCard.comedyDevice 的喜剧机制。
-- 必须使用 outlineCard.sideBeat 维护副线，但不要把副线塞成长题干。
+剧情：
+- 使用 outlineCard 的 conflict/hook/twist/choiceContrast/sideBeat/comedyDevice/riasecAxis。
+- 第 1 年必须使用 stateHints.openingFrame，和 profile.major 明确联动。
+- scene.body 要有历史锚点、人物锚点、事故锚点、喜剧锚点；只拍一个冲突，不塞满项目/家庭/感情多件事。
+- summary 只写上一张 last.consequence 的自然延续 + 另一条线同步近况；禁止“或/要么/分叉/取决于”等并行可能。
+- 不复用 stateHints.recentSceneTitles；相邻卡换压力源和人物关系。
+- a.riasec 主分必须是 outlineCard.riasecAxis[0]，b.riasec 主分必须是 outlineCard.riasecAxis[1]；两个选项打法和 consequence 必须明显不同。
 
 输入数据：
 {{INPUT_JSON}}
@@ -730,63 +576,18 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
   ]
 }`;
 
-export const vNextResultTaskPrompt = `请根据以下输入，生成这局 18 张牌结束后的结果页 JSON。
+export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON，只输出 1 个 JSON 对象。
 
-你必须严格遵守：
-- 只输出 1 个 JSON 对象
-- 不要输出解释
-- 不要输出 Markdown
-- 标题必须直接是内容总结，不要输出空标题词
+风格：面向 18 岁用户，大白话，轻松具体，不像职业建议报告；所有结论必须来自输入 historyDigest/evidence/hollandSummary。
 
-风格要求：
-- 面向 18 岁用户
-- 大白话
-- 轻松、顺口、略带幽默
-- 有一点戏剧余韵
-- 不装腔，不下判决
-- 结果必须让用户感觉“这是我一路选出来的”，不要像凭空职业推荐
-
-结尾页标题规则：
-- title 必须是“三段式人生标签”，生成可传播、可截图、可评论接梗的人生称号。
-- 固定结构：精神/情商状态 + 物质/现实处境 + 专业衍生职业。
-- title 总长度 14-21 个汉字，最多 24 个汉字；宁可短，不要解释。
-- 三段各 4-7 个汉字；第三段必须是短职业身份，不要写“某某方向的人”。
-- title 只写称号，不要塞入 status42 的人生总结，不要出现冒号、括号、分号。
-- 用中文逗号分成 3 段，三段分别对应：
-  1. 精神/情商状态：来自情商、人文、抗压、人际关系、中年危机处理方式。
-  2. 物质/现实处境：来自商业、技术、行业周期、收入稳定性、生活代价。
-  3. 专业衍生职业：必须结合初始专业和长期选择收敛，落到具体职业出口。
-- title 至少包含一个专业相关出口，不能只写抽象人格词。
-- 有戏剧冲突：好笑但不空，扎心但不冒犯，底层承载专业信息和人生取舍。
-- 三秒能理解，朋友能在评论区接话。
-- 禁止包含排名、贬损、疾病化判断、对真实专业的绝对化评价。
-- 示例风格：桃李满袋，腰椎抗议，明星教师
-- 示例风格：方案八版，还能笑，IP 主理人
-- 示例风格：精神富足，钱包薄，新闻人
-- 示例风格：秩序嘴硬，项目上桌，生物 PM
-- 抄袭禁令（硬性）：以上只是句式示例，禁止照抄其中任何词组；尤其禁止输出“嘴硬心软”“存款能打”“账本漂亮”这类示例原词。
-- 第一段必须从本局 history 的真实关系处理方式提炼新词；第二段必须对应本局的现实处境；第三段必须与 careerPossibilities 第一项的 label 逐字一致（不带百分比），禁止另造一个泛称职业，禁止默认写“资深工程师”。
-- 禁止用“计算机男生”“理科男”“文科女”等性别或专业刻板标签框死用户，除非 profile.gender 明确要求且 history 真实支持。
-
-18 年后状态规则：
-- status42 不是流水账，不要写“你走了18年，从A到B”。
-- status42 是 18 年后职业和人生状态的一句补充，像“墓志铭，但人还在且嘴还挺硬”。
-- 必须从 18 张牌里提纯 1-2 个高光时刻或代价，写出有好有坏的当前状态。
-- 24-36 个汉字，1 句，必须幽默、具体、有反差，但不必硬凑金句。
-- 不要重复 title 里的职业身份；优先写“高光 + 代价 + 关系余味”里的 2 个点。
-- 示例风格：靠几次救场混成靠谱大人，手机一响还是心慌
-- 抄袭禁令（硬性）：上面只是风格示例，禁止照抄“救场”“手机一响心慌”这些原词；必须用本局 history 里真实发生过的事件来写。
-
-反空话要求：
-- 每一块都要尽量提供具体信息
-- famousScenes 不能只是情绪总结，要像能截图的具体片段
-- timelineBlocks 不能只写“你成长了”，要写清这一路是怎么拐过来的
-- timelineBlocks 必须覆盖前中后三段，不能跳过第 8-15 年；如果只写 3 段，第二段必须明确回收第 8-15 年的关键选择和代价。
-- majorCareerNote 必须解释“初始画像 + 关键选择 + RIASEC 倾向”如何共同导向职业，不要只复述专业。
-- careerPossibilities 必须拉开职业差异；同一专业下也要给出稳定组织、市场化岗位、表达/产品/研究等不同出口。
-- 计算机类职业池至少包括：后端开发、测试开发、数据分析、银行科技岗、国企信息化、体制内信息岗、算法研究、AI 产品经理、解决方案工程师、技术内容/开发者布道、独立开发者；不要每次都集中到算法工程师/架构师。
-- famousScenes 至少 2 条必须能追溯到 history 里的具体 sceneTitle、choiceText 或 consequence，不要改写成另一个事件。
-- shareHooks 提供两种不同风格，不要都走同一种自嘲刻板标签；可以是扎心版、理性版、朋友圈版、家长版。
+规则：
+- title 是“三段式人生标签”：精神/关系状态 + 现实处境 + 职业出口。14-24 字，用中文逗号分 3 段；第三段必须与 careerPossibilities[0].label 完全一致。
+- status42 24-36 字，写 18 年后的状态，含一个高光/代价/关系余味，不重复 title 职业。
+- majorCareerNote 解释“初始专业 + 关键选择 + RIASEC”如何导向职业。
+- careerPossibilities 给 3 个差异明显的出口；同专业下也要区分稳定组织、市场化岗位、表达/产品/研究等路线。
+- famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence。
+- timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价。
+- 不要排名、贬损、疾病化判断、性别/专业刻板标签；禁用旧示例词：嘴硬心软/存款能打/账本漂亮。
 
 输入数据：
 {{INPUT_JSON}}
@@ -1093,17 +894,12 @@ function compactOutlineCard(card) {
     mainTrack: enriched.mainTrack,
     comedyDevice: enriched.comedyDevice,
     riasecAxis: enriched.riasecAxis,
-    conflict: directorText(enriched.conflict),
-    readableConflict: enriched.readableConflict,
+    conflict: shortText(enriched.readableConflict || enriched.conflict, 72),
     hook: enriched.hook,
     twist: enriched.twist,
     choiceContrast: enriched.choiceContrast,
-    mustNotInclude: enriched.mustNotInclude,
-    resultEvidence: enriched.resultEvidence,
     sideBeat: directorText(enriched.sideBeat),
-    characters: Array.isArray(enriched.characters) ? enriched.characters.map(directorText) : [],
     abType: enriched.abType,
-    summaryTask: directorText(enriched.summaryTask),
     callbacks: Array.isArray(enriched.callbacks) ? enriched.callbacks.map(directorText) : []
   };
 }
@@ -1115,8 +911,6 @@ function shortText(value, limit = 80) {
 function normalizeChoiceHistoryItem(item) {
   return {
     year: Number(item?.year || 0) || 0,
-    phase: shortText(item?.phase, 24),
-    mainTrack: shortText(item?.mainTrack, 18),
     sceneTitle: shortText(item?.sceneTitle || item?.scene, 28),
     summary: shortText(item?.summary, 48),
     choiceTag: shortText(item?.tag || item?.choice, 18),
@@ -1126,6 +920,62 @@ function normalizeChoiceHistoryItem(item) {
     relationshipTrack: shortText(item?.relationshipTrack, 42),
     callbackSeeds: Array.isArray(item?.callbackSeeds) ? item.callbackSeeds.map(seed => shortText(seed, 16)).filter(Boolean).slice(0, 3) : []
   };
+}
+
+function compactProfile(profile = {}) {
+  const major = shortText(profile.majorLabel || profile.major, 24);
+  const out = {
+    name: shortText(profile.name, 16),
+    province: shortText(profile.province, 16),
+    score: shortText(profile.score, 12),
+    hope: shortText(profile.hope, 18),
+    major
+  };
+  const gender = shortText(profile.gender, 12);
+  if (gender && gender !== "不限定") out.gender = gender;
+  const dream = shortText(profile.dream, 24);
+  if (dream && dream !== "暂未填写") out.dream = dream;
+  return out;
+}
+
+function compactStoryCast(profile = {}) {
+  const cast = buildStoryCast(profile);
+  return {
+    relationIntro: shortText(cast.relationIntro, 34),
+    roommateIntro: shortText(cast.roommateIntro, 34),
+    mentorIntro: shortText(cast.mentorIntro, 34),
+    externalIntro: shortText(cast.externalIntro, 34),
+    familyIntro: shortText(cast.familyIntro, 34)
+  };
+}
+
+function compactAnnualHistory(history = []) {
+  const last = history.at(-1);
+  return last ? [normalizeChoiceHistoryItem(last)] : [];
+}
+
+function normalizeResultHistoryItem(item) {
+  return {
+    y: Number(item?.year || 0) || 0,
+    t: shortText(item?.sceneTitle || item?.scene, 16),
+    c: shortText(item?.choiceText || item?.tag || item?.choice, 22),
+    r: shortText(item?.consequence || item?.summary, 34),
+    life: shortText(item?.lifeTrack, 26),
+    rel: shortText(item?.relationshipTrack, 28),
+    h: item?.holland || {}
+  };
+}
+
+function buildResultEvidence(history = []) {
+  const picked = [0, 4, 8, 12, 15, 17]
+    .map(index => history[index])
+    .filter(Boolean);
+  return picked.map(item => ({
+    year: Number(item?.year || 0) || 0,
+    sceneTitle: shortText(item?.sceneTitle || item?.scene, 18),
+    choiceText: shortText(item?.choiceText || item?.tag || item?.choice, 24),
+    consequence: shortText(item?.consequence || item?.summary, 38)
+  }));
 }
 
 function getRecentCallbacks(history = [], limit = 5) {
@@ -1185,19 +1035,18 @@ export function getOutlineCard(year) {
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
   const outlineCard = compactOutlineCard(getOutlineCard(year));
-  const storyCast = buildStoryCast(profile);
   return {
-    profile,
-    storyCast,
+    profile: compactProfile(profile),
+    storyCast: compactStoryCast(profile),
     gameMeta: {
       totalYears: totalGameYears,
       currentYear: year
     },
     outlineCard,
-    history: history.slice(-6).map(normalizeChoiceHistoryItem),
+    history: compactAnnualHistory(history),
     stateHints: {
-      recentCallbacks: getRecentCallbacks(history),
-      recentSceneTitles: getRecentSceneTitles(history),
+      recentCallbacks: getRecentCallbacks(history, 4),
+      recentSceneTitles: getRecentSceneTitles(history, 6),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳"),
       openingFrame: Number(year) === 1 ? buildOpeningFrame(profile) : null
@@ -1206,10 +1055,9 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
 }
 
 export function buildBatchInput({ profile, history, startYear, count, totalGameYears = 18 }) {
-  const storyCast = buildStoryCast(profile);
   return {
-    profile,
-    storyCast,
+    profile: compactProfile(profile),
+    storyCast: compactStoryCast(profile),
     gameMeta: {
       totalYears: totalGameYears,
       startYear,
@@ -1218,10 +1066,10 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     outlineCards: outlineCards
       .filter(card => card.year >= startYear && card.year < startYear + count)
       .map(compactOutlineCard),
-    history: history.slice(-6).map(normalizeChoiceHistoryItem),
+    history: compactAnnualHistory(history),
     stateHints: {
-      recentCallbacks: getRecentCallbacks(history),
-      recentSceneTitles: getRecentSceneTitles(history),
+      recentCallbacks: getRecentCallbacks(history, 4),
+      recentSceneTitles: getRecentSceneTitles(history, 6),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态在连续推进"),
       openingFrame: Number(startYear) <= 1 ? buildOpeningFrame(profile) : null,
@@ -1232,13 +1080,13 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
 
 export function buildResultInput({ profile, history, totalGameYears = 18, finalResultAge = 36 }) {
   return {
-    profile,
-    storyCast: buildStoryCast(profile),
+    profile: compactProfile(profile),
     gameMeta: {
       totalYears: totalGameYears,
       resultAge: finalResultAge
     },
-    history: history.slice(-totalGameYears).map(normalizeChoiceHistoryItem),
+    historyDigest: history.slice(-totalGameYears).map(normalizeResultHistoryItem),
+    evidence: buildResultEvidence(history),
     hollandSummary: {
       code: topHollandCode(history),
       scores: history.reduce((acc, item) => {

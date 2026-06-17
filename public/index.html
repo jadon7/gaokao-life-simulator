@@ -2747,6 +2747,8 @@
       isStarting: false,
       loadError: "",
       bufferPromise: null,
+      branchPrefetch: null,
+      branchPrefetchTimer: null,
       warmupPromise: null,
       warmupTimer: null,
       warmupSignature: "",
@@ -3791,6 +3793,7 @@
       state.history = [];
       state.deck = [];
       state.bufferPromise = null;
+      clearBranchPrefetch();
       state.warmupPromise = null;
       state.warmupTimer = null;
       state.warmupSignature = "";
@@ -3844,6 +3847,7 @@
         state.history = [];
         state.deck = [];
         state.bufferPromise = null;
+        clearBranchPrefetch();
         window.clearTimeout(state.warmupTimer);
         state.warmupTimer = null;
         state.fixedSignature = "";
@@ -3871,6 +3875,7 @@
         state.isLoading = false;
         render();
         revealTopCard();
+        scheduleBranchPrefetchForCurrentCard();
       } catch (error) {
         state.loadError = normalizeFetchError(error, "第一年生成失败");
         state.isLoading = false;
@@ -4548,6 +4553,102 @@
       return card;
     }
 
+    function branchPrefetchSignature(card) {
+      return JSON.stringify({
+        profile: profileSignature(state.profile),
+        index: state.index,
+        historyLength: state.history.length,
+        year: card?.yearNumber || state.index + 1,
+        left: `${card?.left?.label || ""}|${card?.left?.consequence || ""}`,
+        right: `${card?.right?.label || ""}|${card?.right?.consequence || ""}`
+      });
+    }
+
+    function branchPrefetchPayload(card, direction, nextYear) {
+      return {
+        profile: state.profile,
+        history: [...state.history, buildHistoryItem(card, direction, state.index)],
+        year: nextYear
+      };
+    }
+
+    function clearBranchPrefetch() {
+      window.clearTimeout(state.branchPrefetchTimer);
+      state.branchPrefetchTimer = null;
+      state.branchPrefetch = null;
+    }
+
+    function scheduleBranchPrefetchForCurrentCard() {
+      window.clearTimeout(state.branchPrefetchTimer);
+      state.branchPrefetchTimer = null;
+      if (state.isLoading || state.isAnimating || state.loadError || state.result) return;
+      if (state.index >= state.totalYears - 1) return;
+      const card = state.deck[state.index];
+      if (!card) return;
+      const signature = branchPrefetchSignature(card);
+      if (state.branchPrefetch?.signature === signature) return;
+      state.branchPrefetchTimer = window.setTimeout(() => {
+        state.branchPrefetchTimer = null;
+        startBranchPrefetchForCurrentCard(card, signature);
+      }, 0);
+    }
+
+    function startBranchPrefetchForCurrentCard(card, signature) {
+      if (state.branchPrefetch?.signature === signature) return state.branchPrefetch;
+      if (signature !== branchPrefetchSignature(card)) return null;
+      const nextYear = (card.yearNumber || state.index + 1) + 1;
+      if (nextYear > state.totalYears) return null;
+      const prefetch = {
+        signature,
+        index: state.index,
+        nextYear,
+        branches: {}
+      };
+      state.branchPrefetch = prefetch;
+      ["left", "right"].forEach(direction => {
+        const branch = {
+          direction,
+          payload: branchPrefetchPayload(card, direction, nextYear),
+          pending: true,
+          error: null
+        };
+        branch.promise = apiPost("/api/game/next", branch.payload)
+          .then(data => data?.card || null)
+          .catch(error => {
+            branch.error = error;
+            return null;
+          })
+          .finally(() => {
+            branch.pending = false;
+          });
+        prefetch.branches[direction] = branch;
+      });
+      return prefetch;
+    }
+
+    function takeBranchPrefetch(direction, card) {
+      const signature = branchPrefetchSignature(card);
+      const branch = state.branchPrefetch?.signature === signature
+        ? state.branchPrefetch.branches?.[direction]
+        : null;
+      clearBranchPrefetch();
+      return branch || null;
+    }
+
+    async function loadAnnualCardAfterChoice(yearNumber, prefetchedBranch) {
+      if (prefetchedBranch?.promise) {
+        const rawCard = await prefetchedBranch.promise;
+        if (rawCard) {
+          const card = normalizeRemoteCard(rawCard);
+          applyPreviousInfoToCard(card);
+          state.deck[yearNumber - 1] = card;
+          resetStreamState();
+          return card;
+        }
+      }
+      return loadAnnualCard(yearNumber);
+    }
+
     function restoreFeedbackAfterUndo(previous) {
       const nextYear = previous.index + 2;
       delete state.feedbackByYear[nextYear];
@@ -5202,6 +5303,7 @@
       if (state.isLoading) return;
       state.loadError = "";
       state.isLoading = true;
+      clearBranchPrefetch();
       render();
       try {
         await loadAnnualCard(state.index + 1);
@@ -5210,7 +5312,10 @@
       } finally {
         state.isLoading = false;
         render();
-        if (!state.loadError) revealTopCard();
+        if (!state.loadError) {
+          revealTopCard();
+          scheduleBranchPrefetchForCurrentCard();
+        }
       }
     }
 
@@ -5220,6 +5325,7 @@
       if (!card) return;
       const chosen = card[direction];
       const currentEl = els.cardStack.querySelector(".life-card:not(.behind-one):not(.behind-two)");
+      const prefetchedBranch = takeBranchPrefetch(direction, card);
       state.isAnimating = true;
       hapticTap(40);
       state.history = [...state.history, buildHistoryItem(card, direction)];
@@ -5251,14 +5357,17 @@
           state.deck = state.deck.slice(0, state.index);
           render();
           keepPlayViewport();
-          loadAnnualCard(state.index + 1)
+          loadAnnualCardAfterChoice(state.index + 1, prefetchedBranch)
             .catch(error => {
               state.loadError = normalizeFetchError(error, "生成失败");
             })
             .finally(() => {
               state.isLoading = false;
               render();
-              if (!state.loadError) revealTopCard();
+              if (!state.loadError) {
+                revealTopCard();
+                scheduleBranchPrefetchForCurrentCard();
+              }
             });
         }
       }, 320);
@@ -5274,11 +5383,13 @@
       state.index = previous.index;
       state.loadError = "";
       state.bufferPromise = null;
+      clearBranchPrefetch();
       state.deck = state.deck.slice(0, state.index + 1);
       restoreFeedbackAfterUndo(previous);
       render();
       revealTopCard();
       keepPlayViewport();
+      scheduleBranchPrefetchForCurrentCard();
     }
 
     function invalidateStaleFutureCards() {

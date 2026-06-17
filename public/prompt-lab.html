@@ -229,7 +229,8 @@
     const DEFAULT_MODELS = ["deepseek-v4-flash", "deepseek-v4-pro", "mimo-v2.5-pro"];
     const PROMPT_LAB_DEFAULT_MODEL = "deepseek-v4-flash";
     const ORDER = ["R", "I", "A", "S", "E", "C"];
-    const BATCH_PLAN = Array.from({ length: 18 }, (_, index) => [index + 1, 1]); // Prompt Lab 重质量：逐张生成，summary 严格继承上一张所选 consequence。
+    const BATCH_PLAN = Array.from({ length: 18 }, (_, index) => [index + 1, 1]); // 与主程序一致：第1年 start，之后当前卡双分支预生成下一年。
+    const TOTAL_YEARS = BATCH_PLAN.length;
     const STATUS_ICON = { pending: "…", running: "⏳", waiting: "✋", result: "📄", done: "✓", error: "✗" };
     const STORAGE_KEY = "promptLabDraft:v1";
 
@@ -346,21 +347,24 @@
         keywords: "观察中", major, majorLabel: major, dream: "暂未填写"
       };
     }
+    function historyItemPayload(item, idx, pick = item.pick) {
+      const card = item.card;
+      const chosen = card?.[pick];
+      if (!card || !chosen) return null;
+      return {
+        year: card.yearNumber || idx + 1,
+        scene: card.prompt, sceneTitle: card.sceneTitle || card.scene,
+        summary: card.context || "", phase: card.phase || "",
+        mainTrack: card.mainTrack || "", lifeTrack: card.lifeTrack || "",
+        relationshipTrack: card.relationshipTrack || "",
+        callbackSeeds: card.callbacks || [],
+        choice: chosen.tag, choiceText: chosen.label, tag: chosen.tag,
+        consequence: chosen.consequence || "",
+        holland: choiceHolland(chosen)
+      };
+    }
     function historyPayload(run) {
-      return run.cards.filter(i => i.pick).map((item, idx) => {
-        const card = item.card, chosen = card[item.pick];
-        return {
-          year: card.yearNumber || idx + 1,
-          scene: card.prompt, sceneTitle: card.sceneTitle || card.scene,
-          summary: card.context || "", phase: card.phase || "",
-          mainTrack: card.mainTrack || "", lifeTrack: card.lifeTrack || "",
-          relationshipTrack: card.relationshipTrack || "",
-          callbackSeeds: card.callbacks || [],
-          choice: chosen.tag, choiceText: chosen.label, tag: chosen.tag,
-          consequence: chosen.consequence || "",
-          holland: choiceHolland(chosen)
-        };
-      });
+      return run.cards.map((item, idx) => item.pick ? historyItemPayload(item, idx) : null).filter(Boolean);
     }
     async function api(path, payload, run) {
       const started = performance.now();
@@ -401,6 +405,38 @@
         return { modelRawOutput: data.debug.rawOutput, normalizedCard: card, cardIndex };
       }
       return data;
+    }
+
+    function cardRecord(path, payload, data, card, cardIndex = 0) {
+      return {
+        card,
+        pick: null,
+        flagNote: "",
+        rawInput: rawInputForCard(path, payload, data),
+        rawOutput: rawOutputForCard(data, card, cardIndex)
+      };
+    }
+
+    function prefetchNextBranches(run, currentItem, currentIndex, nextYear) {
+      const baseHistory = historyPayload(run);
+      const branches = {};
+      ["left", "right"].forEach(direction => {
+        const picked = historyItemPayload(currentItem, currentIndex, direction);
+        const path = "/api/game/next";
+        const payload = {
+          model: run.model,
+          profile: profile(),
+          history: picked ? [...baseHistory, picked] : baseHistory,
+          year: nextYear
+        };
+        branches[direction] = api(path, payload, run)
+          .then(data => {
+            if (!data.card) throw new Error(`第 ${nextYear} 年生成失败：接口没有返回卡片`);
+            return { path, payload, data, card: data.card };
+          })
+          .catch(error => ({ error }));
+      });
+      return branches;
     }
 
     function logApiModel(path, payload, data, label) {
@@ -511,26 +547,31 @@
       run.startedAt = performance.now();
       run.completedAt = 0;
       try {
-        for (const [startYear, count] of BATCH_PLAN) {
-          updateRunStatus(run, `局${run.id} · ${run.model}：生成第 ${startYear}-${startYear + count - 1} 年…`);
-          const history = historyPayload(run);
-          const path = count === 1 ? (startYear === 1 ? "/api/game/start" : "/api/game/next") : "/api/game/batch";
-          const payload = count === 1
-            ? { model: run.model, profile: profile(), history, year: startYear }
-            : { model: run.model, profile: profile(), history, startYear, count };
-          const data = await api(path, payload, run);
-          const cards = data.cards || [data.card];
-          cards.filter(Boolean).forEach((card, cardIndex) => run.cards.push({
-            card,
-            pick: null,
-            flagNote: "",
-            rawInput: rawInputForCard(path, payload, data),
-            rawOutput: rawOutputForCard(data, card, cardIndex)
-          }));
+        updateRunStatus(run, `局${run.id} · ${run.model}：生成第 1 年…`);
+        const startPath = "/api/game/start";
+        const startPayload = { model: run.model, profile: profile(), history: [], year: 1 };
+        const startData = await api(startPath, startPayload, run);
+        if (!startData.card) throw new Error("第 1 年生成失败：接口没有返回卡片");
+        run.cards.push(cardRecord(startPath, startPayload, startData, startData.card));
+        saveDraft();
+        if (state.activeRun === run.id - 1) renderCards();
+
+        while (run.cards.length < TOTAL_YEARS) {
+          const currentIndex = run.cards.length - 1;
+          const currentItem = run.cards[currentIndex];
+          const nextYear = currentIndex + 2;
+          updateRunStatus(run, `局${run.id} · ${run.model}：预生成第 ${nextYear} 年 A/B 分支…`);
+          const branches = prefetchNextBranches(run, currentItem, currentIndex, nextYear);
           saveDraft();
           if (state.activeRun === run.id - 1) renderCards();
           await pickPhase(run, strategy);
+          const selected = await branches[currentItem.pick];
+          if (!selected || selected.error) throw selected?.error || new Error(`第 ${currentIndex + 1} 年还没有选择`);
+          run.cards.push(cardRecord(selected.path, selected.payload, selected.data, selected.card));
+          saveDraft();
+          if (state.activeRun === run.id - 1) renderCards();
         }
+        await pickPhase(run, strategy);
         run.status = "result";
         updateRunStatus(run, `局${run.id} · ${run.model}：生成结果页…`);
         const data = await api("/api/game/result", { model: run.model, profile: profile(), history: historyPayload(run) }, run);

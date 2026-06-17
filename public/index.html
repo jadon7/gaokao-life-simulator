@@ -3976,7 +3976,10 @@
         }
         const trailing = parseStreamLine(buffer);
         if (trailing?.type === "done") finalData = trailing;
-        if (!finalData?.ok) throw new Error("流式生成没有返回完整卡片");
+        if (!finalData?.ok) {
+          onDelta?.("", { reset: true });
+          return apiPost(path, payload);
+        }
         logApiModel(path, payload, finalData, "stream");
         return finalData;
       } catch (error) {

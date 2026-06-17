@@ -223,23 +223,25 @@ async function readDeepSeekStream(response, onDelta = null) {
   const decoder = new TextDecoder();
   let buffer = "";
   let content = "";
+  const readLine = line => {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("data:")) return;
+    const data = trimmed.slice(5).trim();
+    if (!data || data === "[DONE]") return;
+    const payload = JSON.parse(data);
+    const delta = payload?.choices?.[0]?.delta?.content || "";
+    if (!delta) return;
+    content += delta;
+    onDelta?.(delta);
+  };
   for await (const chunk of response.body) {
     buffer += decoder.decode(chunk, { stream: true });
     const lines = buffer.split(/\r?\n/);
     buffer = lines.pop() || "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const data = trimmed.slice(5).trim();
-      if (!data || data === "[DONE]") continue;
-      const payload = JSON.parse(data);
-      const delta = payload?.choices?.[0]?.delta?.content || "";
-      if (!delta) continue;
-      content += delta;
-      onDelta?.(delta);
-    }
+    lines.forEach(readLine);
   }
-  content += decoder.decode();
+  buffer += decoder.decode();
+  buffer.split(/\r?\n/).forEach(readLine);
   return content.trim();
 }
 

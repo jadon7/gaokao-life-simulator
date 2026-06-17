@@ -469,18 +469,10 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
     throw new Error("Invalid annual JSON: bad question field");
   }
   const yearNumber = normalized.year;
-  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(deDuplicateSummary(normalized, history), 52, 2);
-  normalized.summary = repairSummaryRelationshipStage(normalized.summary, normalized.relationshipTrack);
-  if (yearNumber > 1 && !normalized.summary) {
-    const sceneText = [normalized.scene?.title, normalized.scene?.body].filter(Boolean).join("");
-    normalized.summary = clampTextBySentence(mergeFeedbackParts(buildHistoryConsequence(history), buildOffstageFallback(textCategories(sceneText))), 52, 2);
-    normalized.summary = repairSummaryRelationshipStage(normalized.summary, normalized.relationshipTrack);
-  }
-  validateContinuityText(normalized, history);
+  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 52, 2);
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
-  ensureSceneNotRepeated(normalized, repeatHistory);
   return normalized;
 }
 

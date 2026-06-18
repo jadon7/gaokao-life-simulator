@@ -27,6 +27,10 @@ const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
 const promptLabRealProxyBase = "https://gaokao.dsxzai.com";
 const promptLabRealProxyModel = "deepseek-v4-flash";
+const promptLabRealProxyModels = [
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "deepseek" },
+  { id: "MiniMax-M2.7-highspeed", label: "MiniMax M2.7 Highspeed", provider: "minimax" }
+];
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
 const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "shareHooks"];
@@ -64,8 +68,10 @@ function envValue(key, fallback = "") {
 function buildModelConfigs() {
   const mimoApiKey = envValue("MIMO_API_KEY");
   const deepseekApiKey = envValue("DEEPSEEK_API_KEY");
+  const minimaxApiKey = envValue("MINIMAX_API_KEY");
   const mimoBaseUrl = envValue("MIMO_BASE_URL", "https://api.xiaomimimo.com/v1");
   const deepseekBaseUrl = envValue("DEEPSEEK_BASE_URL", "https://api.deepseek.com");
+  const minimaxBaseUrl = envValue("MINIMAX_BASE_URL", "https://api.minimax.io/v1");
   return [
     {
       id: "mimo-v2.5-pro",
@@ -99,6 +105,17 @@ function buildModelConfigs() {
       maxTokensField: "max_tokens",
       supportsThinking: true,
       supportsResponseFormat: true
+    },
+    {
+      id: "MiniMax-M2.7-highspeed",
+      label: "MiniMax M2.7 Highspeed",
+      provider: "minimax",
+      baseUrl: minimaxBaseUrl,
+      apiKey: minimaxApiKey,
+      authHeader: "authorization",
+      maxTokensField: "max_completion_tokens",
+      supportsThinking: false,
+      supportsResponseFormat: false
     }
   ];
 }
@@ -108,7 +125,7 @@ function modelIsConfigured(config) {
 }
 
 function resolveDefaultModel() {
-  const requested = envValue("LLM_MODEL") || envValue("MIMO_MODEL") || envValue("DEEPSEEK_MODEL");
+  const requested = envValue("LLM_MODEL") || envValue("MIMO_MODEL") || envValue("DEEPSEEK_MODEL") || envValue("MINIMAX_MODEL");
   if (modelConfigs.some(config => config.id === requested)) return requested;
   return modelConfigs.find(modelIsConfigured)?.id || modelConfigs[0]?.id || "mimo-v2.5-pro";
 }
@@ -128,12 +145,7 @@ function availableModelIds() {
 }
 
 function promptLabProxyModelOptions() {
-  return [{
-    id: promptLabRealProxyModel,
-    label: "DeepSeek V4 Flash",
-    provider: "deepseek",
-    configured: true
-  }];
+  return promptLabRealProxyModels.map(model => ({ ...model, configured: true }));
 }
 
 function resolveModelConfig(value) {
@@ -1160,6 +1172,7 @@ async function handleApi(req, res, pathname) {
       hasModelKey: promptLabRealProxy || modelIsConfigured(resolveModelConfig(defaultModel)),
       hasDeepSeekKey: modelConfigs.some(config => config.provider === "deepseek" && isUsableApiKey(config.apiKey)),
       hasMimoKey: modelConfigs.some(config => config.provider === "mimo" && isUsableApiKey(config.apiKey)),
+      hasMiniMaxKey: modelConfigs.some(config => config.provider === "minimax" && isUsableApiKey(config.apiKey)),
       model: promptLabRealProxy ? promptLabRealProxyModel : defaultModel,
       availableModels: modelOptions.map(option => option.id),
       modelOptions,

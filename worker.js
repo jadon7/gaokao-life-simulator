@@ -10,8 +10,11 @@ import {
 } from "./deepseek-prompt-vnext.js";
 
 const defaultDeepSeekModel = "deepseek-v4-pro";
-const defaultDeepSeekStream = true;
-const defaultDeepSeekTimeoutMs = 26000;
+const defaultMiniMaxModel = "MiniMax-M2.7-highspeed";
+const defaultDeepSeekBaseUrl = "https://api.deepseek.com";
+const defaultMiniMaxBaseUrl = "https://api.minimax.io/v1";
+const defaultLlmStream = true;
+const defaultLlmTimeoutMs = 26000;
 const totalGameYears = 18;
 const finalResultAge = 36;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
@@ -25,7 +28,69 @@ function systemPrompt() {
 }
 
 function currentModel(env) {
-  return env?.DEEPSEEK_MODEL || defaultDeepSeekModel;
+  const requested = env?.LLM_MODEL || env?.DEEPSEEK_MODEL || env?.MINIMAX_MODEL;
+  const configs = buildModelConfigs(env);
+  if (configs.some(config => config.id === requested)) return requested;
+  return configs.find(config => modelIsConfigured(config, env))?.id || defaultDeepSeekModel;
+}
+
+function buildModelConfigs(env) {
+  const deepseekBaseUrl = env?.DEEPSEEK_BASE_URL || defaultDeepSeekBaseUrl;
+  const minimaxBaseUrl = env?.MINIMAX_BASE_URL || defaultMiniMaxBaseUrl;
+  return [
+    {
+      id: "deepseek-v4-pro",
+      label: "DeepSeek V4 Pro",
+      provider: "deepseek",
+      baseUrl: deepseekBaseUrl,
+      apiKey: env?.DEEPSEEK_API_KEY,
+      authHeader: "authorization",
+      maxTokensField: "max_tokens",
+      supportsThinking: true,
+      supportsResponseFormat: true
+    },
+    {
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
+      provider: "deepseek",
+      baseUrl: deepseekBaseUrl,
+      apiKey: env?.DEEPSEEK_API_KEY,
+      authHeader: "authorization",
+      maxTokensField: "max_tokens",
+      supportsThinking: true,
+      supportsResponseFormat: true
+    },
+    {
+      id: defaultMiniMaxModel,
+      label: "MiniMax M2.7 Highspeed",
+      provider: "minimax",
+      baseUrl: minimaxBaseUrl,
+      apiKey: env?.MINIMAX_API_KEY,
+      authHeader: "authorization",
+      maxTokensField: "max_completion_tokens",
+      supportsThinking: false,
+      supportsResponseFormat: false
+    }
+  ];
+}
+
+function modelIsConfigured(config, env) {
+  return env?.LLM_MOCK === "1" || env?.DEEPSEEK_MOCK === "1" || isUsableApiKey(config?.apiKey);
+}
+
+function publicModelOptions(env) {
+  return buildModelConfigs(env).map(config => ({
+    id: config.id,
+    label: config.label,
+    provider: config.provider,
+    configured: modelIsConfigured(config, env)
+  }));
+}
+
+function resolveModelConfig(env, value) {
+  const requested = String(value || currentModel(env)).trim();
+  const configs = buildModelConfigs(env);
+  return configs.find(config => config.id === requested) || configs.find(config => config.id === currentModel(env)) || configs[0];
 }
 
 function sendJson(status, data) {
@@ -129,80 +194,89 @@ function buildResultMessages({ profile, history }) {
   ];
 }
 
-async function callDeepSeek(messages, validator, env, onDelta = null, debug = false, onDiscard = null) {
-  if (env?.DEEPSEEK_MOCK === "1") {
+async function callModel(messages, validator, env, model = currentModel(env), onDelta = null, debug = false, onDiscard = null) {
+  const config = resolveModelConfig(env, model);
+  if (env?.LLM_MOCK === "1" || env?.DEEPSEEK_MOCK === "1") {
     const raw = mockResponse(messages);
     return attachModelDebug(validator(raw), debug, {
-      request: deepSeekRequestBody(env, messages, false),
+      request: requestBody(config, messages, false),
       rawOutput: JSON.stringify(raw, null, 2)
     });
   }
-  const deepseekApiKey = env?.DEEPSEEK_API_KEY;
-  const deepseekStream = env?.DEEPSEEK_STREAM === "0" ? false : defaultDeepSeekStream;
-  const deepseekTimeoutMs = Math.max(8000, Math.min(55000, Number(env?.DEEPSEEK_TIMEOUT_MS || defaultDeepSeekTimeoutMs)));
-  if (!isUsableDeepSeekKey(deepseekApiKey)) {
-    const error = new Error("DeepSeek API Key 未配置或格式不正确。请在 Cloudflare Worker Secret 中设置 DEEPSEEK_API_KEY。");
+  const llmStream = (env?.LLM_STREAM || env?.DEEPSEEK_STREAM || "1") === "0" ? false : defaultLlmStream;
+  const llmTimeoutMs = Math.max(8000, Math.min(55000, Number(env?.LLM_TIMEOUT_MS || env?.DEEPSEEK_TIMEOUT_MS || defaultLlmTimeoutMs)));
+  if (!isUsableApiKey(config?.apiKey)) {
+    const secretName = config?.provider === "minimax" ? "MINIMAX_API_KEY" : "DEEPSEEK_API_KEY";
+    const error = new Error(`${config?.label || model} API Key 未配置或格式不正确。请在 Cloudflare Worker Secret 中设置 ${secretName}。`);
     error.status = 500;
     throw error;
   }
 
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const useStream = deepseekStream && attempt === 0;
+    const useStream = llmStream && attempt === 0;
     let streamedAny = false;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort("DeepSeek request timeout"), deepseekTimeoutMs);
-      const body = deepSeekRequestBody(env, messages, useStream);
-      const response = await fetch("https://api.deepseek.com/chat/completions", {
+      const timeout = setTimeout(() => controller.abort(`${config.label} request timeout`), llmTimeoutMs);
+      const body = requestBody(config, messages, useStream);
+      const response = await fetch(`${String(config.baseUrl).replace(/\/+$/g, "")}/chat/completions`, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${deepseekApiKey}`
-        },
+        headers: requestHeaders(config),
         signal: controller.signal,
         body: JSON.stringify(body)
       });
       clearTimeout(timeout);
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        const error = new Error(payload?.error?.message || `DeepSeek request failed: ${response.status}`);
+        const error = new Error(payload?.error?.message || `${config.label} request failed: ${response.status}`);
         error.status = response.status;
         throw error;
       }
       const content = useStream
-        ? await readDeepSeekStream(response, text => {
+        ? await readChatStream(response, text => {
             streamedAny = true;
             onDelta?.(text);
           })
         : (await response.json().catch(() => ({})))?.choices?.[0]?.message?.content;
-      if (!content) throw new Error("DeepSeek returned empty content");
+      if (!content) throw new Error(`${config.label} returned empty content`);
       return attachModelDebug(validator(parseJsonContent(content)), debug, { request: body, rawOutput: content });
     } catch (error) {
       lastError = error;
       if (useStream && streamedAny) onDiscard?.();
-      console.error(`DeepSeek attempt ${attempt + 1}/2 failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
+      console.error(`${config.label} attempt ${attempt + 1}/2 failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
     }
   }
-  console.error("DeepSeek unavailable, using fallback content:", lastError?.message || lastError);
+  console.error(`${config.label} unavailable, using fallback content:`, lastError?.message || lastError);
   const raw = mockResponse(messages);
   const fallback = validator(raw);
   return attachModelDebug({ ...fallback, degraded: true }, debug, {
-    request: deepSeekRequestBody(env, messages, false),
+    request: requestBody(config, messages, false),
     rawOutput: JSON.stringify(raw, null, 2)
   });
 }
 
-function deepSeekRequestBody(env, messages, stream) {
-  return {
-    model: env?.DEEPSEEK_MODEL || defaultDeepSeekModel,
+function requestHeaders(config) {
+  const headers = { "content-type": "application/json" };
+  if (config.authHeader === "api-key") {
+    headers["api-key"] = config.apiKey;
+  } else {
+    headers.authorization = `Bearer ${config.apiKey}`;
+  }
+  return headers;
+}
+
+function requestBody(config, messages, stream) {
+  const body = {
+    model: config.id,
     messages,
-    response_format: { type: "json_object" },
-    thinking: { type: "disabled" },
     temperature: 0.95,
-    stream,
-    max_tokens: maxTokensForMessages(messages)
+    stream
   };
+  body[config.maxTokensField || "max_tokens"] = maxTokensForMessages(messages);
+  if (config.supportsResponseFormat) body.response_format = { type: "json_object" };
+  if (config.supportsThinking) body.thinking = { type: "disabled" };
+  return body;
 }
 
 function maxTokensForMessages(messages) {
@@ -219,7 +293,7 @@ function attachModelDebug(value, enabled, debug) {
   return value;
 }
 
-async function readDeepSeekStream(response, onDelta = null) {
+async function readChatStream(response, onDelta = null) {
   const decoder = new TextDecoder();
   let buffer = "";
   let content = "";
@@ -253,10 +327,11 @@ function annualStreamResponse({ pathname, profile, history, body, env, model }) 
       send({ type: "meta", model });
       try {
         if (pathname === "/api/game/start/stream") {
-          const data = await callDeepSeek(
+          const data = await callModel(
             buildAnnualMessages({ profile, history: [], year: 1 }),
             value => validateAnnual(value, [], [], 1),
             env,
+            model,
             text => send({ type: "delta", text }),
             false,
             () => send({ type: "reset" })
@@ -265,10 +340,11 @@ function annualStreamResponse({ pathname, profile, history, body, env, model }) 
           return;
         }
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-        const data = await callDeepSeek(
+        const data = await callModel(
           buildAnnualMessages({ profile, history, year }),
           value => validateAnnual(value, history, history, year),
           env,
+          model,
           text => send({ type: "delta", text }),
           false,
           () => send({ type: "reset" })
@@ -298,7 +374,7 @@ function debugField(data) {
   return data?.__debug ? { debug: data.__debug } : {};
 }
 
-function isUsableDeepSeekKey(value) {
+function isUsableApiKey(value) {
   const key = String(value || "").trim();
   return /^sk-[A-Za-z0-9_-]{20,}$/.test(key);
 }
@@ -311,7 +387,7 @@ function parseJsonContent(content) {
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
     if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
-    throw new Error("DeepSeek returned invalid JSON");
+    throw new Error("Model returned invalid JSON");
   }
 }
 
@@ -1005,17 +1081,20 @@ function parseJsonFromPrompt(content) {
 
 async function handleApi(request, env, pathname) {
   if (pathname === "/api/health") {
-    const hasDeepSeekKey = isUsableDeepSeekKey(env?.DEEPSEEK_API_KEY);
+    const modelOptions = publicModelOptions(env);
+    const hasDeepSeekKey = buildModelConfigs(env).some(config => config.provider === "deepseek" && isUsableApiKey(config.apiKey));
+    const hasMiniMaxKey = buildModelConfigs(env).some(config => config.provider === "minimax" && isUsableApiKey(config.apiKey));
     const model = currentModel(env);
     return sendJson(200, {
       ok: true,
       service: "gaokao-life-simulator",
       runtime: "cloudflare-worker",
-      hasModelKey: hasDeepSeekKey,
+      hasModelKey: modelIsConfigured(resolveModelConfig(env, model), env),
       hasDeepSeekKey,
+      hasMiniMaxKey,
       model,
-      availableModels: [model],
-      modelOptions: [{ id: model, label: model, provider: "deepseek", configured: hasDeepSeekKey }],
+      availableModels: modelOptions.map(option => option.id),
+      modelOptions,
       time: new Date().toISOString()
     });
   }
@@ -1023,12 +1102,13 @@ async function handleApi(request, env, pathname) {
   let body = {};
   let profile = normalizeProfile();
   let history = [];
-  const model = currentModel(env);
+  let model = currentModel(env);
   const promptLabDebug = isPromptLabDebugRequest(request);
   try {
     body = await readJson(request);
     profile = normalizeProfile(body.profile);
     history = Array.isArray(body.history) ? body.history : [];
+    model = resolveModelConfig(env, body.model).id;
   } catch {}
 
   try {
@@ -1037,28 +1117,29 @@ async function handleApi(request, env, pathname) {
     }
 
     if (pathname === "/api/game/start") {
-      const data = await callDeepSeek(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, [], [], 1), env, null, promptLabDebug);
+      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, [], [], 1), env, model, null, promptLabDebug);
       return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callDeepSeek(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), env, null, promptLabDebug);
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), env, model, null, promptLabDebug);
       return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/batch") {
       const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
       const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
-      const data = await callDeepSeek(
+      const data = await callModel(
         buildBatchMessages({ profile, history, startYear, count }),
         value => validateBatch(value, count, startYear, history),
         env,
+        model,
         null,
         promptLabDebug
       );
       return sendJson(200, { ok: true, model, cards: data.cards.map(annualCardFromData), ...debugField(data) });
     }
     if (pathname === "/api/game/result") {
-      const result = await callDeepSeek(buildResultMessages({ profile, history }), validateResult, env, null, promptLabDebug);
+      const result = await callModel(buildResultMessages({ profile, history }), validateResult, env, model, null, promptLabDebug);
       return sendJson(200, { ok: true, model, result, ...debugField(result) });
     }
     return sendJson(404, { ok: false, error: "API route not found" });

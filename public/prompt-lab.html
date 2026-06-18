@@ -226,8 +226,8 @@
     const TYPE_COLORS = { R: "#315c9a", I: "#6c5ce7", A: "#ff5b23", S: "#0f8b8d", E: "#ed4710", C: "#8bbf16" };
     const TYPE_LABELS = { R: "实用", I: "研究", A: "艺术", S: "社会", E: "企业", C: "常规" };
     const MAJORS = ["计算机 / 算法", "电子信息", "临床医学", "法学", "师范教育", "金融财会", "机械自动化", "新能源材料", "心理学", "传媒设计", "土木建筑", "生物医药", "经济管理", "中文 / 外语", "数学 / 统计"];
-    const DEFAULT_MODELS = ["deepseek-v4-flash", "deepseek-v4-pro", "mimo-v2.5-pro", "MiniMax-M2.7-highspeed"];
-    const PROMPT_LAB_DEFAULT_MODEL = "deepseek-v4-flash";
+    const DEFAULT_MODELS = ["MiniMax-M2.7-highspeed", "deepseek-v4-flash", "deepseek-v4-pro", "mimo-v2.5-pro"];
+    const PROMPT_LAB_DEFAULT_MODEL = "MiniMax-M2.7-highspeed";
     const ORDER = ["R", "I", "A", "S", "E", "C"];
     const BATCH_PLAN = Array.from({ length: 18 }, (_, index) => [index + 1, 1]); // 与主程序一致：第1年 start，之后当前卡双分支预生成下一年。
     const TOTAL_YEARS = BATCH_PLAN.length;

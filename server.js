@@ -26,7 +26,7 @@ const finalResultAge = 36;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
 const promptLabRealProxyBase = "https://gaokao.dsxzai.com";
-const promptLabRealProxyModel = "deepseek-v4-flash";
+const promptLabRealProxyModel = "MiniMax-M2.7-highspeed";
 const promptLabRealProxyModels = [
   { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", provider: "deepseek" },
   { id: "MiniMax-M2.7-highspeed", label: "MiniMax M2.7 Highspeed", provider: "minimax" }

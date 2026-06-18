@@ -3731,11 +3731,15 @@
       });
     }
 
+    function prefetchCardArtForYearNumber(yearNumber) {
+      const index = Number(yearNumber || 1) - 1;
+      if (index < 0 || index >= state.totalYears) return;
+      sceneArtUrls(index).forEach(url => probeArt(url));
+    }
+
     function prefetchUpcomingArt() {
       [1, 2].forEach(offset => {
-        if (state.index + offset < state.totalYears) {
-          sceneArtUrls(state.index + offset).forEach(url => probeArt(url));
-        }
+        prefetchCardArtForYearNumber(state.index + offset + 1);
       });
     }
 
@@ -4630,6 +4634,7 @@
       if (signature !== branchPrefetchSignature(card)) return null;
       const nextYear = (card.yearNumber || state.index + 1) + 1;
       if (nextYear > state.totalYears) return null;
+      prefetchCardArtForYearNumber(nextYear);
       const prefetch = {
         signature,
         index: state.index,

@@ -79,7 +79,7 @@
     .qa-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
     .card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
     .card-head h3 { flex: 1; }
-    .timing { flex: none; color: #76808f; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .timing { flex: none; color: #1764c0; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; padding: 4px 7px; border-radius: 999px; background: #eef5ff; }
     .raw-debug { margin: 8px 0; border: 1px solid #e4e9f2; border-radius: 8px; background: #fbfcff; }
     .raw-debug summary { cursor: pointer; padding: 7px 10px; font-size: 12px; font-weight: 800; color: #42526e; }
     .raw-count { color: #7a8494; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -371,6 +371,7 @@
       const label = path.endsWith("/start") ? "第1年" : path.endsWith("/next") ? `第${payload.year}年` : path.endsWith("/result") ? "结果页" : `第${payload.startYear}-${payload.startYear + payload.count - 1}年`;
       let ok = false;
       let data = null;
+      let timing = null;
       try {
         const res = await fetch(path, {
           method: "POST",
@@ -381,10 +382,14 @@
         ok = res.ok && data.ok;
         if (!ok) throw new Error(data.error || `HTTP ${res.status}`);
       } finally {
+        timing = { path, label, ms: Math.round(performance.now() - started), ok, degraded: !!(data?.degraded || data?.result?.degraded) };
         if (run) {
           run.timings = Array.isArray(run.timings) ? run.timings : [];
-          run.timings.push({ path, label, ms: Math.round(performance.now() - started), ok, degraded: !!(data?.degraded || data?.result?.degraded) });
+          run.timings.push(timing);
         }
+      }
+      if (data && typeof data === "object") {
+        Object.defineProperty(data, "__timing", { value: timing, enumerable: false, configurable: true });
       }
       logApiModel(path, payload, data, label);
       if (data.degraded || data.result?.degraded) {
@@ -412,6 +417,9 @@
         card,
         pick: null,
         flagNote: "",
+        loadMs: Number(data?.__timing?.ms || 0),
+        loadLabel: data?.__timing?.label || "",
+        loadDegraded: !!data?.__timing?.degraded,
         rawInput: rawInputForCard(path, payload, data),
         rawOutput: rawOutputForCard(data, card, cardIndex)
       };
@@ -815,6 +823,25 @@
       return `${Number(count || 0).toLocaleString("zh-CN")} 字符`;
     }
 
+    function formatDuration(ms) {
+      const value = Number(ms || 0);
+      if (!value) return "";
+      return value >= 1000 ? `${(value / 1000).toFixed(1)}s` : `${Math.round(value)}ms`;
+    }
+
+    function cardLoadTiming(item, card, run) {
+      if (Number(item.loadMs || 0) > 0) {
+        return { ms: Number(item.loadMs), degraded: !!item.loadDegraded };
+      }
+      return (run.timings || []).find(t => t.label === `第${card.yearNumber}年` || (Number(card.yearNumber) === 1 && t.label === "第1年"));
+    }
+
+    function cardLoadTimingText(item, card, run) {
+      const timing = cardLoadTiming(item, card, run);
+      const duration = formatDuration(timing?.ms);
+      return duration ? `加载 ${duration}${timing.degraded ? " · mock" : ""}` : "";
+    }
+
     function formatRaw(value) {
       if (value == null || value === "") return "（空）";
       if (typeof value === "string") return value;
@@ -834,12 +861,12 @@
         const prevCons = prev?.pick ? prev.card[prev.pick]?.consequence : "";
         const issues = cardIssues(item, index, run);
         if (onlyIssues && !issues.length && !item.flagNote) return "";
-        const timing = (run.timings || []).find(t => t.label === `第${card.yearNumber}年` || (Number(card.yearNumber) === 1 && t.label === "第1年"));
+        const timingText = cardLoadTimingText(item, card, run);
         return `
         <div class="card">
           <div class="card-head">
             <h3>第 ${card.yearNumber} 年 · ${esc(card.sceneTitle || "")} <span class="meta">${esc(card.phase || "")} / ${esc(card.mainTrack || "")}</span></h3>
-            <span class="timing">${timing ? `${(timing.ms / 1000).toFixed(1)}s${timing.degraded ? " · mock" : ""}` : ""}</span>
+            ${timingText ? `<span class="timing">${timingText}</span>` : ""}
           </div>
           ${rawDebugHTML(item)}
           <div class="qa-row">${cardChecks(item)}${issueBadges(issues)}</div>
@@ -1103,6 +1130,9 @@
           lifeTrack: i.card.lifeTrack,
           pick: i.pick,
           flagNote: i.flagNote,
+          loadMs: i.loadMs || null,
+          loadLabel: i.loadLabel || "",
+          loadDegraded: !!i.loadDegraded,
           rawInput: i.rawInput || null,
           rawOutput: i.rawOutput || null,
           issues: cardIssues(i, index, run).map(issue => issue.text),

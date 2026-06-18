@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="theme-color" id="themeColor" content="#ffffff" />
+  <link rel="icon" href="data:," />
   <title>高考人生模拟器 · 十八张牌的人生</title>
   <style>
     @property --play-top {
@@ -1926,6 +1927,14 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.32);
     }
 
+    .result-actions #copyDebugFlow {
+      background: #ffffff;
+      color: #4b5870;
+      box-shadow:
+        0 18px 18px rgba(0, 0, 0, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    }
+
     .result-actions #restartResult {
       background: linear-gradient(180deg, var(--blue-hi) 0%, var(--blue-lo) 100%);
       color: #ffffff;
@@ -2094,6 +2103,7 @@
       <div class="result-block" id="resultGuides"></div>
       <div class="result-actions">
         <button id="saveResult" type="button">分享结果</button>
+        <button id="copyDebugFlow" type="button">复制调试包</button>
         <button id="restartResult" class="primary" type="button">开始验牌</button>
       </div>
     </div>
@@ -2195,21 +2205,158 @@
     }
 
     const majorIconMeta = {
-      cs: { h: 265, sym: "<path d='M9 8 L5 12 L9 16'/><path d='M15 8 L19 12 L15 16'/><path d='M13.2 6 L10.8 18'/>" },
-      ee: { h: 226, sym: "<rect x='8' y='8' width='8' height='8' rx='1.8'/><path d='M12 8 V4.6 M12 16 V19.4 M8 12 H4.6 M16 12 H19.4'/>" },
-      med: { h: 16, sym: "<path d='M12 6 V18 M6 12 H18'/>" },
-      law: { h: 291, sym: "<path d='M12 5 V18 M8.5 18 H15.5'/><path d='M4.5 8.5 H19.5'/><path d='M4.5 8.5 L2.4 12.8 H6.6 Z'/><path d='M19.5 8.5 L17.4 12.8 H21.6 Z'/><circle cx='12' cy='5.2' r='1.1'/>" },
-      edu: { h: 44, sym: "<path d='M3 9.2 L12 5 L21 9.2 L12 13.4 Z'/><path d='M7 11.2 V15.6 C7 17 17 17 17 15.6 V11.2'/><path d='M21 9.2 V14'/>" },
-      fin: { h: 150, sym: "<path d='M5 19 H19'/><path d='M8 19 V13 M12 19 V9 M16 19 V6'/>" },
-      mech: { h: 240, sym: "<circle cx='12' cy='12' r='3.3'/><path d='M12 4.2 V6 M12 18 V19.8 M4.2 12 H6 M18 12 H19.8 M6.5 6.5 L7.8 7.8 M16.2 16.2 L17.5 17.5 M17.5 6.5 L16.2 7.8 M7.8 16.2 L6.5 17.5'/>" },
-      energy: { h: 132, sym: "<path d='M13 3 L6 13 H11 L10 21 L18 10 H12 Z'/>" },
-      psy: { h: 335, sym: "<path d='M12 20 C12 20 4 14.5 4 9.2 A3.2 3.2 0 0 1 12 7 A3.2 3.2 0 0 1 20 9.2 C20 14.5 12 20 12 20 Z'/>" },
-      media: { h: 311, sym: "<circle cx='12' cy='12' r='7.6'/><path d='M10 8.4 L16 12 L10 15.6 Z'/>" },
-      civil: { h: 30, sym: "<path d='M8 20 V7.4 L12 4.4 L16 7.4 V20'/><path d='M10.8 20 V15.4 H13.2 V20'/>" },
-      bio: { h: 182, sym: "<path d='M9.6 4 H14.4 M10.6 4 V9.4 L6.2 18 A1.5 1.5 0 0 0 7.6 20 H16.4 A1.5 1.5 0 0 0 17.8 18 L13.4 9.4 V4'/><path d='M8.4 15 H15.6'/>" },
-      biz: { h: 205, sym: "<path d='M4 16 L9.5 10.5 L13 14 L20 7'/><path d='M20 7 H15 M20 7 V12'/>" },
-      lang: { h: 95, sym: "<path d='M5 6 H19 A1.2 1.2 0 0 1 20.2 7.2 V13.8 A1.2 1.2 0 0 1 19 15 H11 L7 19 V15 H5 A1.2 1.2 0 0 1 3.8 13.8 V7.2 A1.2 1.2 0 0 1 5 6 Z'/>" },
-      math: { h: 350, sym: "<path d='M16.5 6 H7.5 L12 12 L7.5 18 H16.5'/>" }
+          "computer_science": {
+                "h": 265,
+                "sym": "<path d='M9 8 L5 12 L9 16'/><path d='M15 8 L19 12 L15 16'/><path d='M13.2 6 L10.8 18'/>"
+          },
+          "data_science": {
+                "h": 245,
+                "sym": "<path d='M5 17 C5 15 19 15 19 17 C19 19 5 19 5 17 Z'/><path d='M5 12 C5 10 19 10 19 12 C19 14 5 14 5 12 Z'/><path d='M5 7 C5 5 19 5 19 7 C19 9 5 9 5 7 Z'/>"
+          },
+          "information_security": {
+                "h": 275,
+                "sym": "<path d='M12 4 L19 7 V12 C19 16 16 18.5 12 20 C8 18.5 5 16 5 12 V7 Z'/><path d='M9.5 12 L11.2 13.7 L15 9.8'/>"
+          },
+          "electronic_info": {
+                "h": 226,
+                "sym": "<rect x='8' y='8' width='8' height='8' rx='1.8'/><path d='M12 8 V4.6 M12 16 V19.4 M8 12 H4.6 M16 12 H19.4'/>"
+          },
+          "microelectronics": {
+                "h": 235,
+                "sym": "<rect x='7' y='7' width='10' height='10' rx='1.5'/><path d='M4 9 H7 M4 12 H7 M4 15 H7 M17 9 H20 M17 12 H20 M17 15 H20 M9 4 V7 M12 4 V7 M15 4 V7 M9 17 V20 M12 17 V20 M15 17 V20'/>"
+          },
+          "electrical_engineering": {
+                "h": 132,
+                "sym": "<path d='M13 3 L6 13 H11 L10 21 L18 10 H12 Z'/>"
+          },
+          "automation": {
+                "h": 220,
+                "sym": "<circle cx='12' cy='12' r='3'/><path d='M12 4 V7 M12 17 V20 M4 12 H7 M17 12 H20 M6.4 6.4 L8.5 8.5 M15.5 15.5 L17.6 17.6 M17.6 6.4 L15.5 8.5 M8.5 15.5 L6.4 17.6'/>"
+          },
+          "mechanical_design": {
+                "h": 240,
+                "sym": "<circle cx='12' cy='12' r='3.3'/><path d='M12 4.2 V6 M12 18 V19.8 M4.2 12 H6 M18 12 H19.8 M6.5 6.5 L7.8 7.8 M16.2 16.2 L17.5 17.5 M17.5 6.5 L16.2 7.8 M7.8 16.2 L6.5 17.5'/>"
+          },
+          "vehicle_engineering": {
+                "h": 214,
+                "sym": "<path d='M5 14 L7 9 H17 L19 14 V17 H17.5 M6.5 17 H5 V14 H19'/><circle cx='8' cy='17' r='1.6'/><circle cx='16' cy='17' r='1.6'/>"
+          },
+          "new_energy": {
+                "h": 120,
+                "sym": "<path d='M13 3 L6 13 H11 L10 21 L18 10 H12 Z'/><path d='M5 5 C8 4 10 5 12 7'/>"
+          },
+          "aerospace": {
+                "h": 250,
+                "sym": "<path d='M12 3 C15 6 15.5 11 12 21 C8.5 11 9 6 12 3 Z'/><path d='M9.4 13 L5 17 M14.6 13 L19 17'/><circle cx='12' cy='8.5' r='1.2'/>"
+          },
+          "biomedical_engineering": {
+                "h": 182,
+                "sym": "<path d='M12 6 V18 M6 12 H18'/><path d='M5 18 C7 14 9 14 12 18 C15 14 17 14 19 18'/>"
+          },
+          "civil_engineering": {
+                "h": 32,
+                "sym": "<path d='M4 19 H20'/><path d='M6 19 V9 L12 5 L18 9 V19'/><path d='M9 19 V14 H15 V19'/>"
+          },
+          "architecture": {
+                "h": 30,
+                "sym": "<path d='M5 19 L12 5 L19 19'/><path d='M8 14 H16'/><path d='M10 19 V15 H14 V19'/>"
+          },
+          "materials": {
+                "h": 60,
+                "sym": "<path d='M7 8 L12 5 L17 8 V16 L12 19 L7 16 Z'/><path d='M7 8 L12 11 L17 8 M12 11 V19'/>"
+          },
+          "chemical_engineering": {
+                "h": 45,
+                "sym": "<path d='M9 4 H15 M10 4 V9 L6 18 A1.5 1.5 0 0 0 7.4 20 H16.6 A1.5 1.5 0 0 0 18 18 L14 9 V4'/><path d='M8 15 H16'/>"
+          },
+          "clinical_medicine": {
+                "h": 16,
+                "sym": "<path d='M12 6 V18 M6 12 H18'/><path d='M7 5 H17 V19 H7 Z'/>"
+          },
+          "stomatology": {
+                "h": 12,
+                "sym": "<path d='M8 5 C10 3.5 14 3.5 16 5 C18 7 16.5 12 15 18 C14.4 20 13 20 12.5 17 C12.2 15.5 11.8 15.5 11.5 17 C11 20 9.6 20 9 18 C7.5 12 6 7 8 5 Z'/>"
+          },
+          "traditional_chinese_medicine": {
+                "h": 95,
+                "sym": "<path d='M12 4 C16 8 16 14 12 20 C8 14 8 8 12 4 Z'/><path d='M12 4 V20 M8 12 H16'/>"
+          },
+          "pharmacy": {
+                "h": 350,
+                "sym": "<path d='M8 8 L16 16 M15 7 L17 9 C18 10 18 12 17 13 L13 17 C12 18 10 18 9 17 L7 15 C6 14 6 12 7 11 L11 7 C12 6 14 6 15 7 Z'/>"
+          },
+          "nursing": {
+                "h": 335,
+                "sym": "<path d='M12 20 C12 20 5 15.5 5 10 A3.4 3.4 0 0 1 12 8 A3.4 3.4 0 0 1 19 10 C19 15.5 12 20 12 20 Z'/><path d='M12 10 V15 M9.5 12.5 H14.5'/>"
+          },
+          "law": {
+                "h": 291,
+                "sym": "<path d='M12 5 V18 M8.5 18 H15.5'/><path d='M4.5 8.5 H19.5'/><path d='M4.5 8.5 L2.4 12.8 H6.6 Z'/><path d='M19.5 8.5 L17.4 12.8 H21.6 Z'/><circle cx='12' cy='5.2' r='1.1'/>"
+          },
+          "ideological_political_education": {
+                "h": 6,
+                "sym": "<path d='M12 4 L14.2 9 L19.5 9.5 L15.5 13 L16.8 18 L12 15.3 L7.2 18 L8.5 13 L4.5 9.5 L9.8 9 Z'/>"
+          },
+          "primary_education": {
+                "h": 44,
+                "sym": "<path d='M3 9.2 L12 5 L21 9.2 L12 13.4 Z'/><path d='M7 11.2 V15.6 C7 17 17 17 17 15.6 V11.2'/><path d='M21 9.2 V14'/>"
+          },
+          "chinese_literature": {
+                "h": 95,
+                "sym": "<path d='M6 5 H18 V19 H6 Z'/><path d='M9 9 H15 M9 12 H15 M9 15 H13'/>"
+          },
+          "journalism": {
+                "h": 311,
+                "sym": "<rect x='5' y='6' width='14' height='12' rx='2'/><path d='M8 10 H16 M8 13 H14 M8 16 H12'/>"
+          },
+          "mathematics": {
+                "h": 350,
+                "sym": "<path d='M16.5 6 H7.5 L12 12 L7.5 18 H16.5'/>"
+          },
+          "applied_psychology": {
+                "h": 335,
+                "sym": "<path d='M12 20 C12 20 4 14.5 4 9.2 A3.2 3.2 0 0 1 12 7 A3.2 3.2 0 0 1 20 9.2 C20 14.5 12 20 12 20 Z'/>"
+          },
+          "finance": {
+                "h": 150,
+                "sym": "<path d='M5 19 H19'/><path d='M8 19 V13 M12 19 V9 M16 19 V6'/>"
+          },
+          "accounting": {
+                "h": 160,
+                "sym": "<rect x='6' y='4' width='12' height='16' rx='2'/><path d='M9 8 H15 M9 12 H10 M12 12 H15 M9 16 H10 M12 16 H15'/>"
+          },
+          "philosophy": {
+                "h": 275,
+                "sym": "<path d='M7 8 C8 5 16 5 17 8 C18 11 14 12 13 14'/><path d='M12 18 H12.1'/>"
+          },
+          "logic": {
+                "h": 280,
+                "sym": "<path d='M6 6 H18 V18 H6 Z'/><path d='M9 9 H15 M9 12 H12 M12 15 H15'/>"
+          },
+          "history": {
+                "h": 40,
+                "sym": "<path d='M7 5 H17 V19 H7 Z'/><path d='M10 8 H15 M10 11 H15 M10 14 H13'/>"
+          },
+          "archaeology": {
+                "h": 28,
+                "sym": "<path d='M8 18 C8 12 11 9 16 6'/><path d='M14 5 L18 7 L16 11'/><path d='M5 20 H19'/>"
+          },
+          "agronomy": {
+                "h": 118,
+                "sym": "<path d='M12 20 V10'/><path d='M12 12 C7 12 6 8 6 5 C10 5 12 8 12 12 Z'/><path d='M12 15 C17 15 18 11 18 8 C14 8 12 11 12 15 Z'/>"
+          },
+          "veterinary_medicine": {
+                "h": 20,
+                "sym": "<circle cx='8' cy='9' r='1.6'/><circle cx='12' cy='7' r='1.6'/><circle cx='16' cy='9' r='1.6'/><path d='M7 16 C8.5 12 15.5 12 17 16 C18 19 6 19 7 16 Z'/>"
+          },
+          "visual_communication_design": {
+                "h": 311,
+                "sym": "<rect x='5' y='5' width='14' height='14' rx='3'/><circle cx='10' cy='10' r='1.4'/><path d='M7 17 L11 13 L13.5 15.5 L15 14 L18 17'/>"
+          },
+          "musicology": {
+                "h": 300,
+                "sym": "<path d='M14 5 V15.5 A2.5 2.5 0 1 1 12 13 V7 L18 5 V13.5 A2.5 2.5 0 1 1 16 11 V5 Z'/>"
+          }
     };
 
     const universalCards = [
@@ -2418,262 +2565,1491 @@
     // 专业数据：每个专业含元信息、4 张专业线卡牌（order 用于与通用卡交织）、以及 6 种人格对应的具体职业。
     // 人格 key：ambition 进取机会型 / stability 稳健骨干 / empathy 共情服务型 / explore 探索跨界型 / pressure 抗压现实型 / balanced 复合普通型。
     const majors = {
-      cs: {
-        label: "计算机 / 算法", tagline: "代码、模型与系统思维", summary: "想靠技术能力进入 AI 与互联网一线。",
-        cards: [
-          { order: 15, year: "大一 / 课程季", scene: "刷题还是做项目", prompt: "课余时间，你可以刷算法竞赛题，也可以拼一个能跑起来的小项目。", context: "一个练硬底子，一个练把东西真正做出来。", leftHint: "刷题", rightHint: "做项目", left: { label: "系统刷题，把数据结构和算法吃透。", tag: "硬核训练", delta: { discipline: 8, ambition: 5, explore: -2 } }, right: { label: "做一个小项目，先跑起来再说。", tag: "动手交付", delta: { explore: 8, empathy: 3, ambition: 3 } } },
-          { order: 55, year: "大三 / 实验室", scene: "调参还是读论文", prompt: "实验室一边是把模型调到 SOTA 的工程活，一边是啃前沿论文找原创方向。", context: "一个看落地指标，一个看新想法。", leftHint: "调参", rightHint: "读论文", left: { label: "专注工程调优，把指标刷上去。", tag: "工程攻坚", delta: { discipline: 8, stability: 4, pressure: 3 } }, right: { label: "啃前沿论文，做有原创性的方向。", tag: "科研探索", delta: { explore: 9, ambition: 5, pressure: -2 } } },
-          { order: 95, year: "第 2 年", scene: "大厂还是早期团队", prompt: "你拿到大厂算法岗 offer，也有个早期 AI 团队请你做核心。", context: "一个稳定高薪，一个高风险高回报。", leftHint: "大厂", rightHint: "早期团队", left: { label: "进大厂，先站在成熟平台上。", tag: "稳定平台", delta: { stability: 9, discipline: 5, ambition: -2 } }, right: { label: "去早期团队，赌一次更大的回报。", tag: "高风险高回报", delta: { ambition: 10, explore: 6, stability: -4 } } },
-          { order: 135, year: "第 6 年", scene: "写代码还是带团队", prompt: "公司希望你转管理，但你还想留在一线写核心模块。", context: "技术纵深和组织影响力开始分叉。", leftHint: "写代码", rightHint: "带团队", left: { label: "继续做一线技术专家。", tag: "技术纵深", delta: { discipline: 7, explore: 4, empathy: -2 } }, right: { label: "转去带团队，放大组织影响。", tag: "组织影响", delta: { empathy: 7, ambition: 6, pressure: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "技术创业合伙人", first: "早期 AI 团队的核心研发", line: "你把算法能力变成产品和公司，十八年里至少主导过一次从 0 到 1。" },
-          stability: { title: "大厂资深算法工程师", first: "头部公司算法岗", line: "你在推荐、搜索、风控这类核心系统里持续深耕，是团队最可靠的技术骨干。" },
-          empathy: { title: "AI 产品经理", first: "AI 产品 / 增长团队", line: "你既懂模型也懂用户，把算法能力翻译成真正被人使用的产品。" },
-          explore: { title: "大模型研究员", first: "研究院或大模型团队", line: "你留在研究一线，追前沿、训新模型，关心的是能力边界而不是短期指标。" },
-          pressure: { title: "高并发系统架构师", first: "基础架构 / 后端团队", line: "你扛过一次次大促和故障，成长为能在压力下守住系统稳定性的架构负责人。" },
-          balanced: { title: "自由算法顾问 / 全栈工程师", first: "项目制技术岗", line: "你不绑定单一平台，以独立顾问或全栈身份替多家团队解决具体技术问题。" }
-        }
-      },
-      ee: {
-        label: "电子信息", tagline: "芯片、通信与智能硬件", summary: "想进入半导体与硬科技产业。",
-        cards: [
-          { order: 15, year: "大一 / 实验课", scene: "理论还是动手", prompt: "电路实验里，你可以先把原理推导清楚，也可以直接上手焊板调试。", context: "硬件世界里，纸面和台面常常不是一回事。", leftHint: "推原理", rightHint: "上手焊", left: { label: "先把理论推导吃透。", tag: "理论扎实", delta: { discipline: 7, stability: 5, explore: -2 } }, right: { label: "直接焊板调试，边做边懂。", tag: "硬件手感", delta: { explore: 7, ambition: 4, pressure: 2 } } },
-          { order: 55, year: "大三 / 方向", scene: "软件还是硬件", prompt: "你发现写嵌入式软件来钱快、机会多，但你最初是冲着芯片来的。", context: "电子信息的人常在软硬之间被反复拉扯。", leftHint: "转软件", rightHint: "守硬件", left: { label: "转向嵌入式软件，机会更多。", tag: "顺势而为", delta: { ambition: 7, explore: 5, stability: -2 } }, right: { label: "守住芯片方向，做难而正确的事。", tag: "硬科技定力", delta: { discipline: 8, stability: 5, pressure: 2 } } },
-          { order: 95, year: "第 2 年", scene: "国企还是民营", prompt: "一家研究所给了稳定编制，一家民营芯片公司给了更高薪和更陡的成长。", context: "稳定路径和高强度成长第一次正面冲突。", leftHint: "研究所", rightHint: "民营", left: { label: "进研究所，要确定和体面。", tag: "稳定起点", delta: { stability: 10, discipline: 4, ambition: -2 } }, right: { label: "去民营芯片公司，搏更快成长。", tag: "陡峭成长", delta: { ambition: 9, pressure: -3, explore: 4 } } },
-          { order: 135, year: "第 6 年", scene: "做深还是做广", prompt: "你可以在一个工艺节点上做到极致，也可以转去做系统级方案整合。", context: "专家和通才的岔路。", leftHint: "做深", rightHint: "做广", left: { label: "在一个细分领域做到顶尖。", tag: "专精纵深", delta: { discipline: 8, stability: 4, explore: -2 } }, right: { label: "转做系统方案，统筹全局。", tag: "系统视野", delta: { empathy: 6, ambition: 6, explore: 4 } } }
-        ],
-        careers: {
-          ambition: { title: "芯片 / 硬科技创业者", first: "芯片初创核心岗", line: "你押注国产硬科技，把技术积累变成产品和公司。" },
-          stability: { title: "半导体大厂资深工程师", first: "半导体 / 通信大厂", line: "你在一个关键环节深耕多年，成为产线和团队都离不开的技术专家。" },
-          empathy: { title: "智能硬件产品经理", first: "智能硬件团队", line: "你站在工程和用户之间，把复杂硬件变成好用的产品。" },
-          explore: { title: "集成电路研发科学家", first: "研究院 / 先进工艺团队", line: "你扎在前沿工艺和器件研究里，做的是别人还没做出来的东西。" },
-          pressure: { title: "嵌入式系统攻坚工程师", first: "嵌入式 / 系统团队", line: "你常年和交付节点、现场问题搏斗，练出在高压下交付的硬功夫。" },
-          balanced: { title: "电子方案独立顾问", first: "方案 / 应用工程岗", line: "你以方案专家身份，灵活地在多家硬件团队之间解决落地问题。" }
-        }
-      },
-      med: {
-        label: "临床医学", tagline: "白大褂、规培与生命议题", summary: "想成为一名医生。",
-        cards: [
-          { order: 15, year: "大一 / 解剖课", scene: "记忆还是理解", prompt: "海量医学名词扑面而来，你可以死记硬背应付考试，也可以慢下来建立体系。", context: "医学的地基，决定你日后能走多远。", leftHint: "先背过", rightHint: "建体系", left: { label: "先背过考试，效率优先。", tag: "应试通过", delta: { discipline: 7, pressure: 5, explore: -2 } }, right: { label: "慢下来，把知识连成体系。", tag: "扎实地基", delta: { discipline: 6, explore: 5, empathy: 3 } } },
-          { order: 55, year: "大五 / 规培", scene: "科研还是临床", prompt: "导师建议你多发论文好留大医院，但你更想多上手管病人。", context: "现代医生常要在论文和病床之间分配自己。", leftHint: "拼科研", rightHint: "扎临床", left: { label: "拼科研论文，争更好的平台。", tag: "学术筹码", delta: { ambition: 8, discipline: 5, pressure: 2 } }, right: { label: "扎进临床，多管病人多上手。", tag: "临床手感", delta: { empathy: 9, pressure: 3, stability: 2 } } },
-          { order: 95, year: "第 3 年", scene: "大医院还是基层", prompt: "三甲医院竞争激烈、成长慢，基层医院能让你更快独当一面。", context: "平台高度和成长速度的取舍。", leftHint: "留三甲", rightHint: "去基层", left: { label: "留在三甲，熬资历搏平台。", tag: "平台高度", delta: { ambition: 8, pressure: 4, stability: 2 } }, right: { label: "去基层，更快独当一面。", tag: "独当一面", delta: { empathy: 7, stability: 6, ambition: -2 } } },
-          { order: 135, year: "第 8 年", scene: "技术还是管理", prompt: "你可以继续钻研术式做技术派，也可以走行政路线管科室。", context: "成为名医和成为科室管理者并不总是同一条路。", leftHint: "钻技术", rightHint: "走管理", left: { label: "钻研术式，做技术派医生。", tag: "技术立身", delta: { discipline: 8, explore: 4, pressure: 3 } }, right: { label: "走管理路线，统筹科室。", tag: "组织统筹", delta: { empathy: 6, ambition: 6, stability: 3 } } }
-        ],
-        careers: {
-          ambition: { title: "学科带头人 / 主任医师", first: "三甲医院规培", line: "你一路从住院医熬到学科骨干，既做疑难手术也带团队和课题。" },
-          stability: { title: "三甲医院主治医师", first: "三甲医院临床岗", line: "你在一个科室稳扎稳打，成为患者信任、同行认可的可靠医生。" },
-          empathy: { title: "全科 / 家庭医生", first: "社区或基层医疗", line: "你更看重长期陪伴式的医患关系，把医学落到一个个具体的人身上。" },
-          explore: { title: "转化医学研究 PI", first: "医院科研 / 高校", line: "你在临床和实验室之间架桥，把研究变成能用的诊疗方案。" },
-          pressure: { title: "急诊 / 外科一线医生", first: "急诊或外科", line: "你常年在最紧张的科室里救人，练就在生死压力下的稳定判断。" },
-          balanced: { title: "医疗健康复合从业者", first: "医药 / 健康管理岗", line: "你把医学背景延伸到医药、健康管理或医疗产品，路径更灵活。" }
-        }
-      },
-      law: {
-        label: "法学", tagline: "法条、证据与公平", summary: "想成为律师、法官或法务。",
-        cards: [
-          { order: 15, year: "大一 / 背书季", scene: "背法条还是看案例", prompt: "面对厚厚的法条，你可以硬背应付考试，也可以一头扎进真实案例里理解。", context: "法学不只是记忆，更是把规则用到具体的人身上。", leftHint: "背法条", rightHint: "啃案例", left: { label: "先把法条背扎实。", tag: "基础牢固", delta: { discipline: 8, stability: 4, explore: -2 } }, right: { label: "从真实案例里理解法律。", tag: "案例思维", delta: { explore: 7, empathy: 5, ambition: 2 } } },
-          { order: 55, year: "大三 / 法考", scene: "诉讼还是非诉", prompt: "你可以走出庭打官司的诉讼路线，也可以做投融资、合规这类非诉业务。", context: "一个台前对抗，一个幕后筹划。", leftHint: "诉讼", rightHint: "非诉", left: { label: "走诉讼，站上法庭对抗。", tag: "庭辩对抗", delta: { ambition: 8, pressure: 3, empathy: 3 } }, right: { label: "做非诉，处理合规与交易。", tag: "幕后筹划", delta: { discipline: 8, stability: 5, explore: 2 } } },
-          { order: 95, year: "第 2 年", scene: "红圈所还是体制内", prompt: "顶级律所给了高薪但极高强度，体制内给了稳定和体面。", context: "法律人最典型的一道分水岭。", leftHint: "进律所", rightHint: "考体制", left: { label: "进顶级律所，搏高薪和成长。", tag: "高强度成长", delta: { ambition: 10, pressure: -4, discipline: 4 } }, right: { label: "考体制内，要稳定和体面。", tag: "稳定体面", delta: { stability: 10, discipline: 4, ambition: -3 } } },
-          { order: 135, year: "第 7 年", scene: "做案子还是做合伙人", prompt: "你可以继续做专业过硬的办案律师，也可以转去拉业务、带团队当合伙人。", context: "专业能力和经营能力开始分叉。", leftHint: "做专业", rightHint: "做经营", left: { label: "深耕专业，做办案高手。", tag: "专业立身", delta: { discipline: 8, explore: 3, empathy: 2 } }, right: { label: "拉业务带团队，走经营路线。", tag: "经营合伙", delta: { ambition: 8, empathy: 5, pressure: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "律所合伙人", first: "顶级律所律师", line: "你从办案律师做到合伙人，既有专业口碑也有自己的客户和团队。" },
-          stability: { title: "法官 / 体制内法律人", first: "法院、检察院或公职", line: "你选择了体制内的确定与体面，在规则之内做稳健可靠的裁断者。" },
-          empathy: { title: "公益 / 民商事律师", first: "律所或法律援助", line: "你更在意法律落到普通人身上的温度，常替更弱势的一方说话。" },
-          explore: { title: "新兴领域法律专家", first: "科技 / 数据合规岗", line: "你扎进数据、AI、跨境这些规则还在生长的领域，做拓荒型法律人。" },
-          pressure: { title: "诉讼 / 危机处理律师", first: "诉讼或争议解决", line: "你专接硬仗和危机案件，在高压对抗里练出过硬的临场能力。" },
-          balanced: { title: "企业法务负责人", first: "公司法务部", line: "你成为企业法务中坚，把法律风险管理嵌进业务的每个环节。" }
-        }
-      },
-      edu: {
-        label: "师范教育", tagline: "讲台、学生与成长", summary: "想成为一名教师。",
-        cards: [
-          { order: 15, year: "大一 / 试讲", scene: "讲知识还是带人", prompt: "第一次试讲，你可以把知识点讲得滴水不漏，也可以多花心思关注学生有没有真的听懂。", context: "教书和育人，从第一堂课就开始分叉。", leftHint: "讲透知识", rightHint: "关注学生", left: { label: "把知识点讲得严谨完整。", tag: "学科严谨", delta: { discipline: 8, stability: 4, explore: -2 } }, right: { label: "更关注学生有没有真的懂。", tag: "因材施教", delta: { empathy: 9, explore: 3, ambition: 2 } } },
-          { order: 55, year: "大三 / 实习", scene: "应试还是素养", prompt: "实习学校重升学率，但你想多带些拓展和素养课。", context: "理想的教育和现实的考核常常拉扯。", leftHint: "抓应试", rightHint: "做素养", left: { label: "先把提分这件事做好。", tag: "结果导向", delta: { discipline: 8, pressure: 4, ambition: 3 } }, right: { label: "坚持做素养拓展。", tag: "教育理想", delta: { empathy: 8, explore: 5, stability: -2 } } },
-          { order: 95, year: "第 2 年", scene: "名校还是县城", prompt: "城市名校竞争激烈、要求高，老家县城缺好老师、更需要你。", context: "去更高的平台，还是去更被需要的地方。", leftHint: "进名校", rightHint: "回县城", left: { label: "进城市名校，要更高平台。", tag: "高平台", delta: { ambition: 8, discipline: 5, stability: 2 } }, right: { label: "回县城，去更被需要的地方。", tag: "扎根基层", delta: { empathy: 9, stability: 5, ambition: -2 } } },
-          { order: 135, year: "第 8 年", scene: "教学还是管理", prompt: "你可以继续做受学生爱戴的一线教师，也可以走行政当主任、校长。", context: "讲台和办公室，是两种不同的影响方式。", leftHint: "守讲台", rightHint: "走行政", left: { label: "留在讲台，做学生记一辈子的老师。", tag: "讲台为本", delta: { empathy: 8, discipline: 4, explore: 2 } }, right: { label: "走行政，影响一所学校。", tag: "教育管理", delta: { ambition: 7, stability: 5, pressure: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "名校学科带头人", first: "重点中学任教", line: "你成为带教研、出成绩、被同行认可的骨干名师。" },
-          stability: { title: "公办校在编教师", first: "公办中小学", line: "你拥有一份稳定而体面的教职，是学生和家长都信赖的老师。" },
-          empathy: { title: "乡村 / 特殊教育教师", first: "基层或特教学校", line: "你把最多的耐心给了最需要的孩子，改变的是一个个具体的人生。" },
-          explore: { title: "教育内容创作者", first: "在线教育 / 内容团队", line: "你把课堂经验做成课程和内容，让更多人能听到你的课。" },
-          pressure: { title: "毕业班把关教师", first: "高三 / 毕业年级", line: "你常年扛着升学压力带毕业班，是顶得住关键一年的定海神针。" },
-          balanced: { title: "教育行业复合从业者", first: "教研 / 教育产品岗", line: "你把教育背景延伸到教研、培训或教育产品，路径更宽。" }
-        }
-      },
-      fin: {
-        label: "金融财会", tagline: "资本、报表与风险", summary: "想进入金融与财会行业。",
-        cards: [
-          { order: 15, year: "大一 / 证书季", scene: "考证还是实习", prompt: "同学都在卷 CPA、CFA 证书，但也有人很早就去券商实习攒人脉。", context: "金融行业里，证书和履历都是硬通货。", leftHint: "考证", rightHint: "实习", left: { label: "先把硬核证书考下来。", tag: "硬通货", delta: { discipline: 9, stability: 4, explore: -2 } }, right: { label: "早点实习，攒履历和人脉。", tag: "履历优先", delta: { ambition: 7, empathy: 4, explore: 3 } } },
-          { order: 55, year: "大三 / 方向", scene: "买方还是卖方", prompt: "你可以去做研究、投资的买方，也可以去做投行、销售的卖方。", context: "金融的两种性格，从实习方向就开始定型。", leftHint: "买方", rightHint: "卖方", left: { label: "走买方，做研究和投资判断。", tag: "深度研究", delta: { discipline: 7, explore: 5, stability: 2 } }, right: { label: "走卖方，做项目和客户。", tag: "资源驱动", delta: { ambition: 8, empathy: 5, pressure: 2 } } },
-          { order: 95, year: "第 2 年", scene: "高薪高压还是稳健", prompt: "投行 offer 薪水诱人但常年加班，银行 / 国企财务岗稳定得多。", context: "钱、强度和确定性的经典三角。", leftHint: "投行", rightHint: "稳健岗", left: { label: "进投行，用强度换高薪。", tag: "高薪高压", delta: { ambition: 10, pressure: -4, discipline: 4 } }, right: { label: "选稳健财务岗，要确定感。", tag: "稳健长跑", delta: { stability: 10, discipline: 4, ambition: -2 } } },
-          { order: 135, year: "第 7 年", scene: "专业还是管理", prompt: "你可以继续做顶尖的专业分析师，也可以转去管钱、管团队。", context: "做最懂的人，还是做拍板的人。", leftHint: "做专业", rightHint: "管资源", left: { label: "深耕专业，做顶尖分析师。", tag: "专业纵深", delta: { discipline: 8, explore: 4, empathy: -2 } }, right: { label: "转去管资金和团队。", tag: "资源统筹", delta: { ambition: 8, empathy: 4, stability: 3 } } }
-        ],
-        careers: {
-          ambition: { title: "投行 / 投资合伙人", first: "投行或投资机构", line: "你在资本一线搏杀多年，成长为能主导大项目、管大钱的人。" },
-          stability: { title: "企业财务总监", first: "企业财务 / 审计岗", line: "你一路把财务做精做稳，成为企业账目和风险的把关人。" },
-          empathy: { title: "财富 / 家庭理财顾问", first: "财富管理团队", line: "你更擅长理解人的需求，帮一个个家庭打理好他们的钱。" },
-          explore: { title: "金融科技 / 量化研究者", first: "量化 / 金融科技团队", line: "你把金融和技术接在一起，做模型、做策略，探索行业新玩法。" },
-          pressure: { title: "风控 / 危机管理专家", first: "风控或合规岗", line: "你常年盯着最坏的可能，练就在波动和危机里守住底线的能力。" },
-          balanced: { title: "财务自由职业 / 咨询顾问", first: "财税咨询岗", line: "你以独立顾问身份替多家企业打理财税与融资，路径灵活。" }
-        }
-      },
-      mech: {
-        label: "机械自动化", tagline: "图纸、产线与智能制造", summary: "想进入制造与机器人行业。",
-        cards: [
-          { order: 15, year: "大一 / 制图课", scene: "理论还是工艺", prompt: "机械的课程里，你可以钻研力学和设计原理，也可以泡车间熟悉加工工艺。", context: "机械工程师的价值，既在图纸上也在台面上。", leftHint: "钻理论", rightHint: "泡车间", left: { label: "钻研力学与设计原理。", tag: "理论功底", delta: { discipline: 8, stability: 4, explore: -2 } }, right: { label: "泡车间，摸透真实工艺。", tag: "工艺手感", delta: { explore: 6, empathy: 4, pressure: 3 } } },
-          { order: 55, year: "大三 / 转向", scene: "传统机械还是机器人", prompt: "传统机械岗位稳但增长慢，机器人 / 自动化方向更热也更卷。", context: "老本行的稳和新方向的快，要选一个。", leftHint: "守传统", rightHint: "转智能", left: { label: "守传统机械，求稳定积累。", tag: "稳态积累", delta: { stability: 8, discipline: 5, explore: -3 } }, right: { label: "转机器人 / 自动化新方向。", tag: "智能升级", delta: { explore: 9, ambition: 6, pressure: -2 } } },
-          { order: 95, year: "第 2 年", scene: "国企还是新势力", prompt: "大型制造国企给了稳定编制，新能源 / 机器人新势力给了更高薪和更快节奏。", context: "稳定大厂与高速新公司的选择。", leftHint: "进国企", rightHint: "去新势力", left: { label: "进制造国企，要稳定体面。", tag: "稳定起点", delta: { stability: 10, discipline: 4, ambition: -2 } }, right: { label: "去新势力，搏更快成长。", tag: "高速成长", delta: { ambition: 9, explore: 5, stability: -3 } } },
-          { order: 135, year: "第 7 年", scene: "做工程师还是做项目", prompt: "你可以继续做技术过硬的工程师，也可以转去做统筹全局的项目经理。", context: "技术专家和项目负责人的分叉。", leftHint: "做技术", rightHint: "做项目", left: { label: "深耕技术，做硬核工程师。", tag: "技术立身", delta: { discipline: 8, explore: 3, empathy: -2 } }, right: { label: "转项目经理，统筹交付。", tag: "项目统筹", delta: { ambition: 7, empathy: 5, pressure: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "智能制造创业者", first: "机器人 / 智造初创", line: "你押注智能制造，把工程能力变成产品线和公司。" },
-          stability: { title: "制造企业资深工程师", first: "大型制造企业", line: "你在一条产线或一个系统上深耕多年，是车间和团队的技术定盘星。" },
-          empathy: { title: "工业方案 / 售前工程师", first: "方案 / 售前岗", line: "你擅长把客户的真实痛点翻译成工程方案，站在技术和人之间。" },
-          explore: { title: "机器人 / 自动化研发", first: "机器人研发团队", line: "你扎在前沿自动化方向，做的是让机器更聪明的事。" },
-          pressure: { title: "现场 / 生产负责人", first: "工厂生产管理", line: "你常年顶着交付和良率压力守在一线，练出过硬的现场掌控力。" },
-          balanced: { title: "智能制造复合从业者", first: "技术 / 运营岗", line: "你把机械背景延伸到工业软件、供应链或产品，路径更灵活。" }
-        }
-      },
-      energy: {
-        label: "新能源材料", tagline: "电池、光伏与未来产业", summary: "想投身新能源这一未来赛道。",
-        cards: [
-          { order: 15, year: "大一 / 选方向", scene: "基础研究还是应用", prompt: "材料学科里，你可以钻基础的材料机理，也可以做更接近产业的应用开发。", context: "新能源既需要科学家，也需要工程师。", leftHint: "做基础", rightHint: "做应用", left: { label: "钻基础材料机理。", tag: "科研地基", delta: { discipline: 7, explore: 5, stability: 2 } }, right: { label: "做贴近产业的应用开发。", tag: "产业导向", delta: { ambition: 7, explore: 4, empathy: 3 } } },
-          { order: 55, year: "大三 / 读研", scene: "读博还是就业", prompt: "新能源前沿研究门槛高，导师劝你读博，但产业正在疯狂抢人。", context: "深造的纵深和产业的窗口期都很诱人。", leftHint: "读博", rightHint: "就业", left: { label: "读博深造，做更前沿的研究。", tag: "长期纵深", delta: { discipline: 8, explore: 6, ambition: 3 } }, right: { label: "趁产业窗口期先就业。", tag: "抓住风口", delta: { ambition: 9, stability: 4, explore: 2 } } },
-          { order: 95, year: "第 2 年", scene: "龙头还是初创", prompt: "新能源龙头给了稳定平台，一家电池 / 光伏初创给了股权和更大舞台。", context: "成熟平台与早期机会的选择。", leftHint: "进龙头", rightHint: "去初创", left: { label: "进龙头企业，站稳平台。", tag: "稳定平台", delta: { stability: 9, discipline: 4, ambition: -2 } }, right: { label: "去初创，搏股权和舞台。", tag: "高风险高回报", delta: { ambition: 10, explore: 6, stability: -4 } } },
-          { order: 135, year: "第 7 年", scene: "技术还是产业", prompt: "你可以继续做研发专家，也可以转去做产业落地、市场和供应链。", context: "技术纵深和产业视野的分叉。", leftHint: "守研发", rightHint: "做产业", left: { label: "深耕研发，做技术专家。", tag: "技术纵深", delta: { discipline: 8, explore: 4, empathy: -2 } }, right: { label: "转产业落地，统筹更大盘子。", tag: "产业视野", delta: { ambition: 8, empathy: 5, explore: 3 } } }
-        ],
-        careers: {
-          ambition: { title: "新能源创业者 / 高管", first: "新能源初创核心岗", line: "你赶上了行业爆发，把技术和判断变成产品、团队甚至一家公司。" },
-          stability: { title: "新能源龙头资深工程师", first: "新能源头部企业", line: "你在一个关键技术环节深耕，成为龙头企业里可靠的技术骨干。" },
-          empathy: { title: "新能源产品 / 应用经理", first: "应用 / 产品团队", line: "你把材料技术翻译成市场需要的产品，连接实验室和真实场景。" },
-          explore: { title: "材料科学家", first: "研究院 / 高校", line: "你留在研究最前沿，做的是定义下一代电池或光伏的事。" },
-          pressure: { title: "量产工艺攻坚专家", first: "产线 / 工艺岗", line: "你常年和良率、爬产搏斗，练出在量产压力下解决问题的硬功夫。" },
-          balanced: { title: "能源行业复合从业者", first: "技术 / 投研岗", line: "你把新能源背景延伸到投研、咨询或供应链，路径更宽。" }
-        }
-      },
-      psy: {
-        label: "心理学", tagline: "人心、行为与疗愈", summary: "想做心理咨询或行为研究。",
-        cards: [
-          { order: 15, year: "大一 / 入门", scene: "做研究还是做助人", prompt: "心理学既有严谨的实验研究，也有面向人的咨询助人，你被两边同时吸引。", context: "科学的心理学和助人的心理学，是两种气质。", leftHint: "做研究", rightHint: "做助人", left: { label: "走科研路线，做实验和数据。", tag: "实证科学", delta: { discipline: 8, explore: 5, empathy: 2 } }, right: { label: "走应用路线，学咨询助人。", tag: "助人取向", delta: { empathy: 9, explore: 3, stability: 2 } } },
-          { order: 55, year: "大三 / 读研", scene: "学硕还是专硕", prompt: "学硕通向研究和读博，专硕更对口咨询执业，但两条路都不轻松。", context: "心理学想真正立足，深造几乎是必修。", leftHint: "学硕", rightHint: "专硕", left: { label: "读学硕，走研究和教学。", tag: "学术路线", delta: { discipline: 7, explore: 6, ambition: 3 } }, right: { label: "读专硕，走咨询执业。", tag: "执业路线", delta: { empathy: 8, stability: 4, pressure: 2 } } },
-          { order: 95, year: "第 2 年", scene: "机构还是体制", prompt: "心理咨询机构更自由但收入不稳，学校 / 医院的心理岗更稳定。", context: "助人这件事，也要先养活自己。", leftHint: "进机构", rightHint: "进体制", left: { label: "去咨询机构，要自由和成长。", tag: "自由探索", delta: { explore: 7, ambition: 5, stability: -3 } }, right: { label: "进学校 / 医院,要稳定。", tag: "稳定起点", delta: { stability: 9, empathy: 4, ambition: -2 } } },
-          { order: 135, year: "第 7 年", scene: "做个案还是做影响", prompt: "你可以继续深耕一对一的咨询个案，也可以转去做科普、培训、扩大影响。", context: "帮一个人，还是影响很多人。", leftHint: "做个案", rightHint: "做影响", left: { label: "深耕个案，做扎实的咨询师。", tag: "深度陪伴", delta: { empathy: 8, discipline: 4, pressure: 2 } }, right: { label: "做科普和培训，影响更多人。", tag: "公共影响", delta: { explore: 6, ambition: 6, empathy: 3 } } }
-        ],
-        careers: {
-          ambition: { title: "心理服务创业者", first: "心理机构核心岗", line: "你把专业能力变成产品和机构，让心理服务被更多人用得上。" },
-          stability: { title: "学校 / 医院心理咨询师", first: "高校或医院心理岗", line: "你在体制内拥有稳定的执业位置，是很多人长期信赖的咨询师。" },
-          empathy: { title: "资深心理咨询师", first: "咨询机构", line: "你把大量时间给了一个个来访者，成为陪人走过低谷的人。" },
-          explore: { title: "认知 / 行为科学研究者", first: "高校或研究机构", line: "你留在研究一线，用实验和数据去理解人到底是怎么想的。" },
-          pressure: { title: "危机干预 / 临床心理师", first: "临床或危机干预", line: "你常年面对最沉重的个案，练就在情绪重压下稳住自己的能力。" },
-          balanced: { title: "用户研究 / 人力协同等复合岗", first: "用研 / 人力协同岗", line: "你把心理学用到产品和组织里，做用户研究、人才发展这类工作。" }
-        }
-      },
-      media: {
-        label: "传媒设计", tagline: "内容、审美与表达", summary: "想做内容创作或设计。",
-        cards: [
-          { order: 15, year: "大一 / 作品", scene: "练技法还是找风格", prompt: "你可以把软件和技法练到熟练，也可以早早去摸索自己的表达风格。", context: "做内容的人，迟早要回答‘你是谁’这个问题。", leftHint: "练技法", rightHint: "找风格", left: { label: "先把硬技法练扎实。", tag: "基本功", delta: { discipline: 8, stability: 3, explore: 2 } }, right: { label: "早点摸索个人风格。", tag: "表达探索", delta: { explore: 9, empathy: 4, ambition: 2 } } },
-          { order: 55, year: "大三 / 方向", scene: "商业还是作者", prompt: "接商业项目能赚钱、攒履历，但你更想做点表达自我的作者型作品。", context: "养活自己和忠于表达，常常拉扯。", leftHint: "做商业", rightHint: "做作者", left: { label: "接商业项目，先把能力变现。", tag: "商业落地", delta: { ambition: 7, discipline: 5, stability: 2 } }, right: { label: "做作者型作品，忠于表达。", tag: "作者表达", delta: { explore: 8, empathy: 5, stability: -2 } } },
-          { order: 95, year: "第 2 年", scene: "进大厂还是做自由职业", prompt: "大厂 / 大机构给了稳定和资源，自由职业给了自由但收入不稳。", context: "内容人最典型的去向选择。", leftHint: "进机构", rightHint: "做自由", left: { label: "进大机构，要平台和稳定。", tag: "稳定平台", delta: { stability: 9, discipline: 4, ambition: -2 } }, right: { label: "做自由职业，要自由和上限。", tag: "自由上限", delta: { explore: 8, ambition: 6, stability: -4 } } },
-          { order: 135, year: "第 6 年", scene: "做手艺还是做品牌", prompt: "你可以继续做一线创作者打磨手艺，也可以把自己慢慢做成有辨识度的个人品牌。", context: "做最好的作品，还是做最大的影响。", leftHint: "做手艺", rightHint: "做品牌", left: { label: "深耕手艺，做一线创作者。", tag: "匠人路线", delta: { discipline: 7, explore: 5, empathy: 2 } }, right: { label: "把自己做成个人品牌。", tag: "个人品牌", delta: { ambition: 8, empathy: 5, explore: 3 } } }
-        ],
-        careers: {
-          ambition: { title: "内容创业者 / 主理人", first: "内容工作室", line: "你把审美和表达变成一门生意，做出自己的内容品牌或工作室。" },
-          stability: { title: "大厂资深设计 / 内容专家", first: "大厂设计 / 内容岗", line: "你在成熟平台里持续产出高质量作品，是团队倚重的专业骨干。" },
-          empathy: { title: "品牌 / 用户体验设计师", first: "品牌或体验团队", line: "你擅长理解人，把情绪和需求变成打动人的内容与设计。" },
-          explore: { title: "独立创作者 / 艺术家", first: "自由创作", line: "你坚持作者型表达，作品里有越来越清楚的‘你自己’。" },
-          pressure: { title: "高产出内容操盘手", first: "MCN / 项目团队", line: "你常年在快节奏高产出里交付爆款，练出顶住流量压力的能力。" },
-          balanced: { title: "创意行业复合从业者", first: "创意 / 运营岗", line: "你在策划、运营、设计之间灵活切换，是创意链路上的多面手。" }
-        }
-      },
-      civil: {
-        label: "土木建筑", tagline: "结构、空间与城市", summary: "想做建筑设计或工程建设。",
-        cards: [
-          { order: 15, year: "大一 / 画图", scene: "工程还是设计", prompt: "土建里既有偏理性的结构工程，也有偏感性的建筑设计，你被两边拉扯。", context: "盖房子这件事，既要算得准也要想得美。", leftHint: "走工程", rightHint: "走设计", left: { label: "走结构工程，求严谨可靠。", tag: "工程理性", delta: { discipline: 8, stability: 5, explore: -2 } }, right: { label: "走建筑设计，求空间表达。", tag: "设计表达", delta: { explore: 8, empathy: 4, ambition: 2 } } },
-          { order: 55, year: "大三 / 现实", scene: "考研还是考证就业", prompt: "行业进入调整期，你可以读研提升,也可以早点考证进入就业。", context: "传统土建正在经历周期，路要看清楚再走。", leftHint: "考研", rightHint: "就业", left: { label: "读研深造，等行业回暖。", tag: "蓄力深造", delta: { discipline: 7, explore: 4, stability: 3 } }, right: { label: "考证就业，先站住脚跟。", tag: "尽早立足", delta: { stability: 7, ambition: 5, pressure: 2 } } },
-          { order: 95, year: "第 2 年", scene: "设计院还是甲方", prompt: "设计院专业但加班多，去甲方 / 房企更轻松也更接近决策。", context: "做专业的人，还是做拍板的人。", leftHint: "设计院", rightHint: "去甲方", left: { label: "留设计院，深耕专业。", tag: "专业纵深", delta: { discipline: 8, stability: 3, pressure: 3 } }, right: { label: "去甲方，靠近决策端。", tag: "决策视角", delta: { ambition: 7, empathy: 4, explore: 3 } } },
-          { order: 135, year: "第 8 年", scene: "守本行还是转赛道", prompt: "行业增长放缓,你可以继续深耕土建,也可以把能力迁到新基建 / 数字化。", context: "周期之中,守和转都是勇气。", leftHint: "守本行", rightHint: "转赛道", left: { label: "守住土建本行,做到顶尖。", tag: "周期定力", delta: { discipline: 8, stability: 5, explore: -2 } }, right: { label: "转向新基建 / 数字化。", tag: "能力迁移", delta: { explore: 9, ambition: 6, stability: -3 } } }
-        ],
-        careers: {
-          ambition: { title: "工程项目负责人 / 创业者", first: "项目管理岗", line: "你从技术做到统筹,成长为能主导大型项目甚至自己接盘子的人。" },
-          stability: { title: "设计院资深工程师", first: "设计院 / 国企", line: "你在结构或设计上深耕多年,是项目里最可靠的专业把关人。" },
-          empathy: { title: "建筑师 / 空间设计师", first: "建筑设计团队", line: "你在意空间如何被人使用,把对生活的理解盖进真实的房子里。" },
-          explore: { title: "城市 / 新基建研究者", first: "规划或研究机构", line: "你跳出传统土建,去研究城市更新、智慧基建这些更前沿的方向。" },
-          pressure: { title: "现场施工负责人", first: "工程现场管理", line: "你常年顶着工期和安全压力守在工地,练就硬核的现场掌控力。" },
-          balanced: { title: "土建转型复合从业者", first: "造价 / 数字化岗", line: "你把土建背景迁到造价、BIM 或数字化,在行业周期里灵活转身。" }
-        }
-      },
-      bio: {
-        label: "生物医药", tagline: "实验、新药与生命科学", summary: "想投身生物科技与制药。",
-        cards: [
-          { order: 15, year: "大一 / 实验室", scene: "兴趣还是出路", prompt: "生命科学很迷人,但‘生化环材’的就业现实也常被人提起。", context: "热爱和饭碗,在这个专业里要早点想清楚。", leftHint: "追兴趣", rightHint: "看出路", left: { label: "跟着兴趣,先把科研做深。", tag: "热爱驱动", delta: { explore: 8, discipline: 5, ambition: 2 } }, right: { label: "盯着出路,早做职业规划。", tag: "务实规划", delta: { stability: 7, ambition: 5, pressure: 2 } } },
-          { order: 55, year: "大三 / 读研", scene: "读博还是转行", prompt: "想在生物医药立足几乎要读到博士,但身边不少人选择转码 / 转行。", context: "长周期的深造,是这个领域绕不开的门槛。", leftHint: "读博", rightHint: "转行", left: { label: "读博深造,赌长期的专业壁垒。", tag: "长期壁垒", delta: { discipline: 8, explore: 6, pressure: 2 } }, right: { label: "转向更快变现的方向。", tag: "及时转向", delta: { ambition: 8, stability: 4, explore: 2 } } },
-          { order: 95, year: "第 3 年", scene: "学术还是产业", prompt: "你可以留在高校 / 研究所做学术,也可以去药企 / 生物公司做产业研发。", context: "象牙塔的纯粹和产业界的落地。", leftHint: "做学术", rightHint: "进产业", left: { label: "留学术界,做基础研究。", tag: "学术纵深", delta: { discipline: 7, explore: 6, stability: 2 } }, right: { label: "进产业,做新药和应用研发。", tag: "产业落地", delta: { ambition: 8, empathy: 4, stability: 2 } } },
-          { order: 135, year: "第 8 年", scene: "做研发还是做转化", prompt: "你可以继续埋头研发,也可以转去做临床转化、商务或投资。", context: "做发现的人,还是做让发现落地的人。", leftHint: "做研发", rightHint: "做转化", left: { label: "深耕研发,做科学家。", tag: "研发立身", delta: { discipline: 8, explore: 4, empathy: -2 } }, right: { label: "转做转化和商务。", tag: "成果转化", delta: { ambition: 8, empathy: 5, explore: 3 } } }
-        ],
-        careers: {
-          ambition: { title: "生物医药创业者 / 高管", first: "生物科技初创", line: "你把研究能力变成产品管线和公司,押注一款能改变病人命运的药。" },
-          stability: { title: "药企资深研发", first: "药企 / 生物公司", line: "你在新药研发的某个环节深耕,是项目里稳定可靠的科研骨干。" },
-          empathy: { title: "医学联络 / 临床研究", first: "临床研究 / 医学事务", line: "你站在科学和病人之间,让严谨的研究最终惠及真实的患者。" },
-          explore: { title: "生命科学研究 PI", first: "高校 / 研究院", line: "你留在研究最前沿,做的是拓展人类对生命认知边界的事。" },
-          pressure: { title: "新药申报 / 工艺专家", first: "注册 / 工艺岗", line: "你常年和漫长的研发周期与监管压力搏斗,练出极强的耐心和韧性。" },
-          balanced: { title: "医药行业复合从业者", first: "医药投资 / 咨询岗", line: "你把生物背景延伸到医药投资、咨询或商务,路径更宽。" }
-        }
-      },
-      biz: {
-        label: "经济管理", tagline: "商业、组织与增长", summary: "想做商业、运营或管理。",
-        cards: [
-          { order: 15, year: "大一 / 社团", scene: "学知识还是攒资源", prompt: "商科的课堂之外,你可以多读经典打底子,也可以早早进社团、做活动攒人脉。", context: "管理这件事,书本和人情世故都重要。", leftHint: "读经典", rightHint: "攒资源", left: { label: "先把商业基础读扎实。", tag: "理论打底", delta: { discipline: 7, explore: 4, stability: 3 } }, right: { label: "早点做活动、攒人脉。", tag: "资源积累", delta: { ambition: 7, empathy: 5, explore: 2 } } },
-          { order: 55, year: "大三 / 方向", scene: "专业线还是通才线", prompt: "你可以深耕一个专业方向(如财务、营销),也可以走偏通才的管理路线。", context: "做最懂某件事的人,还是做能统筹的人。", leftHint: "走专业", rightHint: "走通才", left: { label: "深耕一个专业方向。", tag: "专业立身", delta: { discipline: 8, stability: 4, explore: -2 } }, right: { label: "走通才路线,练综合能力。", tag: "综合统筹", delta: { ambition: 7, empathy: 5, explore: 3 } } },
-          { order: 95, year: "第 2 年", scene: "大公司还是小团队", prompt: "大公司管培生体系成熟但成长慢,小团队 / 创业公司能让你更快独当一面。", context: "成熟体系和快速成长的取舍。", leftHint: "大公司", rightHint: "小团队", left: { label: "进大公司,走成熟体系。", tag: "体系成长", delta: { stability: 9, discipline: 4, ambition: -2 } }, right: { label: "去小团队,更快独当一面。", tag: "快速独立", delta: { ambition: 9, explore: 6, stability: -3 } } },
-          { order: 135, year: "第 7 年", scene: "做专家还是做管理", prompt: "你可以成为某领域的专家顾问,也可以走上更高的管理岗位带更大的盘子。", context: "专业深度和管理广度的分叉。", leftHint: "做专家", rightHint: "做管理", left: { label: "做领域专家,靠专业说话。", tag: "专家路线", delta: { discipline: 8, explore: 4, empathy: -2 } }, right: { label: "走管理,带更大的团队。", tag: "管理路线", delta: { ambition: 8, empathy: 5, pressure: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "创业者 / 企业高管", first: "创业公司或管培生", line: "你在商业世界里一路向上,成长为能操盘业务、带团队的高管或创始人。" },
-          stability: { title: "大公司中坚管理者", first: "大企业管理岗", line: "你在成熟组织里稳步晋升,是业务能跑通、团队能托住的可靠管理者。" },
-          empathy: { title: "人力 / 组织发展专家", first: "人力 / 组织岗", line: "你擅长理解人和组织,把人才发展和团队氛围做成自己的专长。" },
-          explore: { title: "战略 / 新业务操盘手", first: "战略 / 创新团队", line: "你总在做从 0 到 1 的新业务,在不确定里找增长的新曲线。" },
-          pressure: { title: "运营 / 增长负责人", first: "运营 / 增长岗", line: "你常年扛着业绩和增长压力冲在一线,练出顶住目标压力的硬实力。" },
-          balanced: { title: "商业咨询 / 自由顾问", first: "咨询岗", line: "你以咨询顾问身份替不同企业解决商业问题,路径灵活且视野开阔。" }
-        }
-      },
-      lang: {
-        label: "中文 / 外语", tagline: "语言、文字与跨文化", summary: "想做文字、语言或文化相关工作。",
-        cards: [
-          { order: 15, year: "大一 / 阅读", scene: "做学问还是练应用", prompt: "语言文学专业里,你可以钻研学术做研究,也可以多练写作、翻译这类应用能力。", context: "文科的价值,既在书斋也在现实表达里。", leftHint: "做学问", rightHint: "练应用", left: { label: "钻研学术,打理论底子。", tag: "学术底色", delta: { discipline: 7, explore: 5, stability: 2 } }, right: { label: "多练写作 / 翻译等应用。", tag: "应用能力", delta: { ambition: 6, empathy: 5, explore: 3 } } },
-          { order: 55, year: "大三 / 出路", scene: "考编还是闯市场", prompt: "语言类专业的稳妥出路是考编 / 考公,但你也想去内容、传媒、外贸这些市场化方向闯。", context: "稳定的体制和广阔的市场,两条路气质很不同。", leftHint: "考编", rightHint: "闯市场", left: { label: "走考编 / 考公,要稳定。", tag: "稳定路线", delta: { stability: 9, discipline: 5, ambition: -2 } }, right: { label: "去市场化方向闯一闯。", tag: "市场探索", delta: { explore: 8, ambition: 6, stability: -3 } } },
-          { order: 95, year: "第 2 年", scene: "专精还是跨界", prompt: "你可以把语言能力做到极致(如高端翻译),也可以把语言当工具去做别的事。", context: "语言是终点,还是跳板。", leftHint: "做专精", rightHint: "做跨界", left: { label: "把语言能力做到顶尖。", tag: "语言专精", delta: { discipline: 8, stability: 4, explore: -2 } }, right: { label: "把语言当工具去跨界。", tag: "跨界迁移", delta: { explore: 9, ambition: 5, empathy: 3 } } },
-          { order: 135, year: "第 7 年", scene: "做内容还是做平台", prompt: "你可以继续做一线的写作 / 翻译 / 教学,也可以转去做内容主编、文化项目统筹。", context: "做表达本身,还是组织别人的表达。", leftHint: "做内容", rightHint: "做统筹", left: { label: "深耕一线表达和创作。", tag: "表达为本", delta: { explore: 6, discipline: 5, empathy: 3 } }, right: { label: "转做主编 / 项目统筹。", tag: "内容统筹", delta: { ambition: 8, empathy: 5, stability: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "文化 / 内容创业者", first: "内容或文化机构", line: "你把语言和文化能力做成项目和品牌,成为有影响力的内容操盘者。" },
-          stability: { title: "在编教师 / 公职人员", first: "学校或体制内", line: "你选择了稳定体面的体制内岗位,用文字功底做扎实可靠的工作。" },
-          empathy: { title: "编辑 / 文化传播者", first: "出版 / 传播机构", line: "你擅长用文字打动人,做的是让好内容被更多人看见的工作。" },
-          explore: { title: "跨文化 / 国际事务从业者", first: "外贸 / 国际组织", line: "你把语言当成通往更大世界的钥匙,在跨文化的场域里游走。" },
-          pressure: { title: "高强度内容 / 翻译从业者", first: "媒体 / 翻译一线", line: "你常年在 deadline 和高强度产出里打磨文字,练出快而稳的硬功夫。" },
-          balanced: { title: "语言相关复合从业者", first: "运营 / 品牌 / 教学岗", line: "你把语言能力延伸到运营、品牌、教育等领域,做表达链路上的多面手。" }
-        }
-      },
-      math: {
-        label: "数学 / 统计", tagline: "抽象、建模与数据", summary: "想用数学能力进入科研或数据行业。",
-        cards: [
-          { order: 15, year: "大一 / 证明题", scene: "纯数还是应用", prompt: "你可以沉迷于纯粹数学的优美证明,也可以更关注它在现实里的应用。", context: "数学既是一门艺术,也是一种强大的工具。", leftHint: "走纯数", rightHint: "走应用", left: { label: "钻研纯数,享受抽象之美。", tag: "纯粹理性", delta: { discipline: 8, explore: 6, stability: 2 } }, right: { label: "学应用数学和建模。", tag: "应用导向", delta: { ambition: 6, explore: 5, empathy: 3 } } },
-          { order: 55, year: "大三 / 方向", scene: "深造还是转数据", prompt: "你可以继续读数学读到博士,也可以转去做数据科学 / 量化这类高薪应用。", context: "做最纯的学问,还是做最值钱的应用。", leftHint: "读博", rightHint: "转数据", left: { label: "读博,走科研道路。", tag: "学术纵深", delta: { discipline: 8, explore: 6, ambition: 3 } }, right: { label: "转数据 / 量化,做高薪应用。", tag: "应用变现", delta: { ambition: 9, stability: 4, explore: 2 } } },
-          { order: 95, year: "第 2 年", scene: "高校还是业界", prompt: "高校教职稳定但门槛极高,业界的数据 / 算法岗薪资高、节奏快。", context: "象牙塔和工业界,数学人的两条主路。", leftHint: "进高校", rightHint: "去业界", left: { label: "争取高校 / 研究岗,要纯粹。", tag: "学术理想", delta: { discipline: 7, explore: 5, stability: 3 } }, right: { label: "去业界做数据 / 算法。", tag: "高薪应用", delta: { ambition: 9, stability: 4, explore: 2 } } },
-          { order: 135, year: "第 6 年", scene: "做研究还是做落地", prompt: "你可以继续做底层模型和方法研究,也可以转去把模型落地成业务价值。", context: "做最聪明的方法,还是做最有用的结果。", leftHint: "做研究", rightHint: "做落地", left: { label: "深耕模型与方法研究。", tag: "方法纵深", delta: { discipline: 8, explore: 5, empathy: -2 } }, right: { label: "转做业务落地和决策。", tag: "价值落地", delta: { ambition: 8, empathy: 5, explore: 2 } } }
-        ],
-        careers: {
-          ambition: { title: "量化 / 数据创业者", first: "量化或数据团队", line: "你把数学能力变成策略和产品,在最讲硬实力的赛道里搏一席之地。" },
-          stability: { title: "资深数据科学家", first: "大厂数据 / 算法岗", line: "你在数据建模上深耕多年,是团队里最值得信赖的‘用数字说话’的人。" },
-          empathy: { title: "数据驱动的业务专家", first: "数据 / 决策岗", line: "你既懂模型也懂业务,把冰冷的数据翻译成能帮到人的决策。" },
-          explore: { title: "数学 / 统计研究者", first: "高校或研究院", line: "你留在研究最前沿,做的是别人还没证明、还没建出来的东西。" },
-          pressure: { title: "量化交易 / 风控建模师", first: "量化 / 风控岗", line: "你常年在真金白银的波动里建模,练就在高压下保持冷静的能力。" },
-          balanced: { title: "数据分析 / 复合从业者", first: "数据分析岗", line: "你把数理能力用到各行各业,以分析师身份成为团队的‘理性大脑’。" }
-        }
-      }
+          "computer_science": {
+                "label": "计算机科学与技术",
+                "tagline": "代码、数据与系统思维",
+                "summary": "从「计算机科学与技术」出发，第一张牌就会落到技术沙龙撞登录页报错这样的具体事故里。",
+                "category": "工学 / 计算机类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "计算机项目负责人",
+                            "first": "计算机科学与技术相关高成长团队",
+                            "line": "你从计算机科学与技术出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "计算机专业骨干",
+                            "first": "计算机科学与技术对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "计算机连接型从业者",
+                            "first": "计算机科学与技术相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "计算机研究探索者",
+                            "first": "计算机科学与技术相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "计算机一线攻坚者",
+                            "first": "计算机科学与技术高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "计算机复合型从业者",
+                            "first": "计算机科学与技术相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "data_science": {
+                "label": "数据科学与大数据技术",
+                "tagline": "代码、数据与系统思维",
+                "summary": "从「数据科学与大数据技术」出发，第一张牌就会落到数据工作坊撞错表返工这样的具体事故里。",
+                "category": "工学 / 计算机类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "数据科与大数据技术项目负责人",
+                            "first": "数据科学与大数据技术相关高成长团队",
+                            "line": "你从数据科学与大数据技术出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "数据科与大数据技术专业骨干",
+                            "first": "数据科学与大数据技术对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "数据科与大数据技术连接型从业者",
+                            "first": "数据科学与大数据技术相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "数据科与大数据技术研究探索者",
+                            "first": "数据科学与大数据技术相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "数据科与大数据技术一线攻坚者",
+                            "first": "数据科学与大数据技术高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "数据科与大数据技术复合型从业者",
+                            "first": "数据科学与大数据技术相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "information_security": {
+                "label": "信息安全",
+                "tagline": "代码、数据与系统思维",
+                "summary": "从「信息安全」出发，第一张牌就会落到安全通报撞报告提交这样的具体事故里。",
+                "category": "工学 / 计算机类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "信息安全项目负责人",
+                            "first": "信息安全相关高成长团队",
+                            "line": "你从信息安全出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "信息安全专业骨干",
+                            "first": "信息安全对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "信息安全连接型从业者",
+                            "first": "信息安全相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "信息安全研究探索者",
+                            "first": "信息安全相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "信息安全一线攻坚者",
+                            "first": "信息安全高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "信息安全复合型从业者",
+                            "first": "信息安全相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "electronic_info": {
+                "label": "电子信息工程",
+                "tagline": "芯片、信号与智能硬件",
+                "summary": "从「电子信息工程」出发，第一张牌就会落到企业交流撞波形签字这样的具体事故里。",
+                "category": "工学 / 电子信息类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "电子信息项目负责人",
+                            "first": "电子信息工程相关高成长团队",
+                            "line": "你从电子信息工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "电子信息专业骨干",
+                            "first": "电子信息工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "电子信息连接型从业者",
+                            "first": "电子信息工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "电子信息研究探索者",
+                            "first": "电子信息工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "电子信息一线攻坚者",
+                            "first": "电子信息工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "电子信息复合型从业者",
+                            "first": "电子信息工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "microelectronics": {
+                "label": "微电子科学与工程",
+                "tagline": "芯片、信号与智能硬件",
+                "summary": "从「微电子科学与工程」出发，第一张牌就会落到实验室介绍撞芯片记录这样的具体事故里。",
+                "category": "工学 / 电子信息类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "微电子科与项目负责人",
+                            "first": "微电子科学与工程相关高成长团队",
+                            "line": "你从微电子科学与工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "微电子科与专业骨干",
+                            "first": "微电子科学与工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "微电子科与连接型从业者",
+                            "first": "微电子科学与工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "微电子科与研究探索者",
+                            "first": "微电子科学与工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "微电子科与一线攻坚者",
+                            "first": "微电子科学与工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "微电子科与复合型从业者",
+                            "first": "微电子科学与工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "electrical_engineering": {
+                "label": "电气工程及其自动化",
+                "tagline": "电网、控制与能源系统",
+                "summary": "从「电气工程及其自动化」出发，第一张牌就会落到停电演练撞用电海报这样的具体事故里。",
+                "category": "工学 / 电气类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "电气项目负责人",
+                            "first": "电气工程及其自动化相关高成长团队",
+                            "line": "你从电气工程及其自动化出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "电气专业骨干",
+                            "first": "电气工程及其自动化对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "电气连接型从业者",
+                            "first": "电气工程及其自动化相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "电气研究探索者",
+                            "first": "电气工程及其自动化相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "电气一线攻坚者",
+                            "first": "电气工程及其自动化高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "电气复合型从业者",
+                            "first": "电气工程及其自动化相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "automation": {
+                "label": "自动化",
+                "tagline": "控制、系统与机器协作",
+                "summary": "从「自动化」出发，第一张牌就会落到开放主讲撞联调死线这样的具体事故里。",
+                "category": "工学 / 自动化类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "自动化项目负责人",
+                            "first": "自动化相关高成长团队",
+                            "line": "你从自动化出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "自动化专业骨干",
+                            "first": "自动化对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "自动化连接型从业者",
+                            "first": "自动化相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "自动化研究探索者",
+                            "first": "自动化相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "自动化一线攻坚者",
+                            "first": "自动化高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "自动化复合型从业者",
+                            "first": "自动化相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "mechanical_design": {
+                "label": "机械设计制造及其自动化",
+                "tagline": "图纸、产线与工程实作",
+                "summary": "从「机械设计制造及其自动化」出发，第一张牌就会落到工坊挑战撞零件制作这样的具体事故里。",
+                "category": "工学 / 机械类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "机械项目负责人",
+                            "first": "机械设计制造及其自动化相关高成长团队",
+                            "line": "你从机械设计制造及其自动化出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "机械专业骨干",
+                            "first": "机械设计制造及其自动化对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "机械连接型从业者",
+                            "first": "机械设计制造及其自动化相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "机械研究探索者",
+                            "first": "机械设计制造及其自动化相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "机械一线攻坚者",
+                            "first": "机械设计制造及其自动化高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "机械复合型从业者",
+                            "first": "机械设计制造及其自动化相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "vehicle_engineering": {
+                "label": "车辆工程",
+                "tagline": "图纸、产线与工程实作",
+                "summary": "从「车辆工程」出发，第一张牌就会落到车企交流撞测试报告这样的具体事故里。",
+                "category": "工学 / 机械类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "车辆项目负责人",
+                            "first": "车辆工程相关高成长团队",
+                            "line": "你从车辆工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "车辆专业骨干",
+                            "first": "车辆工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "车辆连接型从业者",
+                            "first": "车辆工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "车辆研究探索者",
+                            "first": "车辆工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "车辆一线攻坚者",
+                            "first": "车辆工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "车辆复合型从业者",
+                            "first": "车辆工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "new_energy": {
+                "label": "新能源科学与工程",
+                "tagline": "新能源、效率与未来产业",
+                "summary": "从「新能源科学与工程」出发，第一张牌就会落到能源站讲解撞光伏结论这样的具体事故里。",
+                "category": "工学 / 能源动力类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "新能源科与项目负责人",
+                            "first": "新能源科学与工程相关高成长团队",
+                            "line": "你从新能源科学与工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "新能源科与专业骨干",
+                            "first": "新能源科学与工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "新能源科与连接型从业者",
+                            "first": "新能源科学与工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "新能源科与研究探索者",
+                            "first": "新能源科学与工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "新能源科与一线攻坚者",
+                            "first": "新能源科学与工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "新能源科与复合型从业者",
+                            "first": "新能源科学与工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "aerospace": {
+                "label": "飞行器设计与工程",
+                "tagline": "飞行器、精密与硬核工程",
+                "summary": "从「飞行器设计与工程」出发，第一张牌就会落到公开试飞撞重心校准这样的具体事故里。",
+                "category": "工学 / 航空航天类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "飞行器设计与项目负责人",
+                            "first": "飞行器设计与工程相关高成长团队",
+                            "line": "你从飞行器设计与工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "飞行器设计与专业骨干",
+                            "first": "飞行器设计与工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "飞行器设计与连接型从业者",
+                            "first": "飞行器设计与工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "飞行器设计与研究探索者",
+                            "first": "飞行器设计与工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "飞行器设计与一线攻坚者",
+                            "first": "飞行器设计与工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "飞行器设计与复合型从业者",
+                            "first": "飞行器设计与工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "biomedical_engineering": {
+                "label": "生物医学工程",
+                "tagline": "医学、设备与工程交叉",
+                "summary": "从「生物医学工程」出发，第一张牌就会落到设备面试撞传感校准这样的具体事故里。",
+                "category": "工学 / 生物医学工程类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "生物医项目负责人",
+                            "first": "生物医学工程相关高成长团队",
+                            "line": "你从生物医学工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "生物医专业骨干",
+                            "first": "生物医学工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "生物医连接型从业者",
+                            "first": "生物医学工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "生物医研究探索者",
+                            "first": "生物医学工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "生物医一线攻坚者",
+                            "first": "生物医学工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "生物医复合型从业者",
+                            "first": "生物医学工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "civil_engineering": {
+                "label": "土木工程",
+                "tagline": "结构、现场与城市基建",
+                "summary": "从「土木工程」出发，第一张牌就会落到工地观摩撞承重报告这样的具体事故里。",
+                "category": "工学 / 土木类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "土木项目负责人",
+                            "first": "土木工程相关高成长团队",
+                            "line": "你从土木工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "土木专业骨干",
+                            "first": "土木工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "土木连接型从业者",
+                            "first": "土木工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "土木研究探索者",
+                            "first": "土木工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "土木一线攻坚者",
+                            "first": "土木工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "土木复合型从业者",
+                            "first": "土木工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "architecture": {
+                "label": "建筑学",
+                "tagline": "空间、图纸与审美判断",
+                "summary": "从「建筑学」出发，第一张牌就会落到公开评图撞小组预演这样的具体事故里。",
+                "category": "工学 / 建筑类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "建筑项目负责人",
+                            "first": "建筑学相关高成长团队",
+                            "line": "你从建筑学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "建筑专业骨干",
+                            "first": "建筑学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "建筑连接型从业者",
+                            "first": "建筑学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "建筑研究探索者",
+                            "first": "建筑学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "建筑一线攻坚者",
+                            "first": "建筑学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "建筑复合型从业者",
+                            "first": "建筑学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "materials": {
+                "label": "材料科学与工程",
+                "tagline": "材料、实验与产业应用",
+                "summary": "从「材料科学与工程」出发，第一张牌就会落到实验室面试撞样品失效这样的具体事故里。",
+                "category": "工学 / 材料类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "材料科与项目负责人",
+                            "first": "材料科学与工程相关高成长团队",
+                            "line": "你从材料科学与工程出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "材料科与专业骨干",
+                            "first": "材料科学与工程对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "材料科与连接型从业者",
+                            "first": "材料科学与工程相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "材料科与研究探索者",
+                            "first": "材料科学与工程相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "材料科与一线攻坚者",
+                            "first": "材料科学与工程高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "材料科与复合型从业者",
+                            "first": "材料科学与工程相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "chemical_engineering": {
+                "label": "化学工程与工艺",
+                "tagline": "流程、实验与规模化生产",
+                "summary": "从「化学工程与工艺」出发，第一张牌就会落到产线提问撞滴定返工这样的具体事故里。",
+                "category": "工学 / 化工与制药类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "化与工艺项目负责人",
+                            "first": "化学工程与工艺相关高成长团队",
+                            "line": "你从化学工程与工艺出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "化与工艺专业骨干",
+                            "first": "化学工程与工艺对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "化与工艺连接型从业者",
+                            "first": "化学工程与工艺相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "化与工艺研究探索者",
+                            "first": "化学工程与工艺相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "化与工艺一线攻坚者",
+                            "first": "化学工程与工艺高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "化与工艺复合型从业者",
+                            "first": "化学工程与工艺相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "clinical_medicine": {
+                "label": "临床医学",
+                "tagline": "白大褂、病人和长期训练",
+                "summary": "从「临床医学」出发，第一张牌就会落到医院跟诊撞病例汇报这样的具体事故里。",
+                "category": "医学 / 临床医学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "临床医项目负责人",
+                            "first": "临床医学相关高成长团队",
+                            "line": "你从临床医学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "临床医专业骨干",
+                            "first": "临床医学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "临床医连接型从业者",
+                            "first": "临床医学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "临床医研究探索者",
+                            "first": "临床医学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "临床医一线攻坚者",
+                            "first": "临床医学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "临床医复合型从业者",
+                            "first": "临床医学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "stomatology": {
+                "label": "口腔医学",
+                "tagline": "诊室、手感与细节判断",
+                "summary": "从「口腔医学」出发，第一张牌就会落到诊室观摩撞牙模返工这样的具体事故里。",
+                "category": "医学 / 口腔医学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "口腔医项目负责人",
+                            "first": "口腔医学相关高成长团队",
+                            "line": "你从口腔医学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "口腔医专业骨干",
+                            "first": "口腔医学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "口腔医连接型从业者",
+                            "first": "口腔医学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "口腔医研究探索者",
+                            "first": "口腔医学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "口腔医一线攻坚者",
+                            "first": "口腔医学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "口腔医复合型从业者",
+                            "first": "口腔医学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "traditional_chinese_medicine": {
+                "label": "中医学",
+                "tagline": "方剂、辨证与传统经验",
+                "summary": "从「中医学」出发，第一张牌就会落到小课提问撞方剂整理这样的具体事故里。",
+                "category": "医学 / 中医学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "中医项目负责人",
+                            "first": "中医学相关高成长团队",
+                            "line": "你从中医学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "中医专业骨干",
+                            "first": "中医学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "中医连接型从业者",
+                            "first": "中医学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "中医研究探索者",
+                            "first": "中医学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "中医一线攻坚者",
+                            "first": "中医学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "中医复合型从业者",
+                            "first": "中医学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "pharmacy": {
+                "label": "药学",
+                "tagline": "剂量、药物与安全边界",
+                "summary": "从「药学」出发，第一张牌就会落到研发提问撞剂量复核这样的具体事故里。",
+                "category": "医学 / 药学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "药项目负责人",
+                            "first": "药学相关高成长团队",
+                            "line": "你从药学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "药专业骨干",
+                            "first": "药学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "药连接型从业者",
+                            "first": "药学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "药研究探索者",
+                            "first": "药学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "药一线攻坚者",
+                            "first": "药学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "药复合型从业者",
+                            "first": "药学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "nursing": {
+                "label": "护理学",
+                "tagline": "照护、流程与临床陪伴",
+                "summary": "从「护理学」出发，第一张牌就会落到急救示范撞无菌预演这样的具体事故里。",
+                "category": "医学 / 护理学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "护理项目负责人",
+                            "first": "护理学相关高成长团队",
+                            "line": "你从护理学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "护理专业骨干",
+                            "first": "护理学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "护理连接型从业者",
+                            "first": "护理学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "护理研究探索者",
+                            "first": "护理学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "护理一线攻坚者",
+                            "first": "护理学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "护理复合型从业者",
+                            "first": "护理学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "law": {
+                "label": "法学",
+                "tagline": "法条、证据与公平",
+                "summary": "从「法学」出发，第一张牌就会落到主辩选拔撞证据定稿这样的具体事故里。",
+                "category": "法学 / 法学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "法项目负责人",
+                            "first": "法学相关高成长团队",
+                            "line": "你从法学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "法专业骨干",
+                            "first": "法学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "法连接型从业者",
+                            "first": "法学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "法研究探索者",
+                            "first": "法学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "法一线攻坚者",
+                            "first": "法学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "法复合型从业者",
+                            "first": "法学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "ideological_political_education": {
+                "label": "思想政治教育",
+                "tagline": "表达、课堂与公共议题",
+                "summary": "从「思想政治教育」出发，第一张牌就会落到宣讲试讲撞调研提纲这样的具体事故里。",
+                "category": "法学 / 马克思主义理论类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "思想政治教育项目负责人",
+                            "first": "思想政治教育相关高成长团队",
+                            "line": "你从思想政治教育出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "思想政治教育专业骨干",
+                            "first": "思想政治教育对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "思想政治教育连接型从业者",
+                            "first": "思想政治教育相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "思想政治教育研究探索者",
+                            "first": "思想政治教育相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "思想政治教育一线攻坚者",
+                            "first": "思想政治教育高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "思想政治教育复合型从业者",
+                            "first": "思想政治教育相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "primary_education": {
+                "label": "小学教育",
+                "tagline": "讲台、学生与成长",
+                "summary": "从「小学教育」出发，第一张牌就会落到跟课见习撞微课录制这样的具体事故里。",
+                "category": "教育学 / 教育学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "小教育项目负责人",
+                            "first": "小学教育相关高成长团队",
+                            "line": "你从小学教育出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "小教育专业骨干",
+                            "first": "小学教育对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "小教育连接型从业者",
+                            "first": "小学教育相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "小教育研究探索者",
+                            "first": "小学教育相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "小教育一线攻坚者",
+                            "first": "小学教育高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "小教育复合型从业者",
+                            "first": "小学教育相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "chinese_literature": {
+                "label": "汉语言文学",
+                "tagline": "文字、表达与文本判断",
+                "summary": "从「汉语言文学」出发，第一张牌就会落到主编对谈撞剧本收尾这样的具体事故里。",
+                "category": "文学 / 中国语言文学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "汉语言文项目负责人",
+                            "first": "汉语言文学相关高成长团队",
+                            "line": "你从汉语言文学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "汉语言文专业骨干",
+                            "first": "汉语言文学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "汉语言文连接型从业者",
+                            "first": "汉语言文学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "汉语言文研究探索者",
+                            "first": "汉语言文学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "汉语言文一线攻坚者",
+                            "first": "汉语言文学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "汉语言文复合型从业者",
+                            "first": "汉语言文学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "journalism": {
+                "label": "新闻学",
+                "tagline": "采访、现场与公共表达",
+                "summary": "从「新闻学」出发，第一张牌就会落到直播试镜撞短片剪辑这样的具体事故里。",
+                "category": "文学 / 新闻传播学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "新闻项目负责人",
+                            "first": "新闻学相关高成长团队",
+                            "line": "你从新闻学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "新闻专业骨干",
+                            "first": "新闻学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "新闻连接型从业者",
+                            "first": "新闻学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "新闻研究探索者",
+                            "first": "新闻学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "新闻一线攻坚者",
+                            "first": "新闻学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "新闻复合型从业者",
+                            "first": "新闻学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "mathematics": {
+                "label": "数学与应用数学",
+                "tagline": "公式、证明与抽象能力",
+                "summary": "从「数学与应用数学」出发，第一张牌就会落到模型答辩撞公式返工这样的具体事故里。",
+                "category": "理学 / 数学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "数与应用数项目负责人",
+                            "first": "数学与应用数学相关高成长团队",
+                            "line": "你从数学与应用数学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "数与应用数专业骨干",
+                            "first": "数学与应用数学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "数与应用数连接型从业者",
+                            "first": "数学与应用数学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "数与应用数研究探索者",
+                            "first": "数学与应用数学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "数与应用数一线攻坚者",
+                            "first": "数学与应用数学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "数与应用数复合型从业者",
+                            "first": "数学与应用数学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "applied_psychology": {
+                "label": "应用心理学",
+                "tagline": "行为、人心与助人方法",
+                "summary": "从「应用心理学」出发，第一张牌就会落到接待面试撞被试招募这样的具体事故里。",
+                "category": "理学 / 心理学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "应用心理项目负责人",
+                            "first": "应用心理学相关高成长团队",
+                            "line": "你从应用心理学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "应用心理专业骨干",
+                            "first": "应用心理学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "应用心理连接型从业者",
+                            "first": "应用心理学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "应用心理研究探索者",
+                            "first": "应用心理学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "应用心理一线攻坚者",
+                            "first": "应用心理学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "应用心理复合型从业者",
+                            "first": "应用心理学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "finance": {
+                "label": "金融学",
+                "tagline": "资本、风险与判断",
+                "summary": "从「金融学」出发，第一张牌就会落到风险路演撞复盘报告这样的具体事故里。",
+                "category": "经济学 / 金融学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "金融项目负责人",
+                            "first": "金融学相关高成长团队",
+                            "line": "你从金融学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "金融专业骨干",
+                            "first": "金融学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "金融连接型从业者",
+                            "first": "金融学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "金融研究探索者",
+                            "first": "金融学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "金融一线攻坚者",
+                            "first": "金融学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "金融复合型从业者",
+                            "first": "金融学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "accounting": {
+                "label": "会计学",
+                "tagline": "报表、流程与组织秩序",
+                "summary": "从「会计学」出发，第一张牌就会落到模板演示撞成本对账这样的具体事故里。",
+                "category": "管理学 / 工商管理类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "会计项目负责人",
+                            "first": "会计学相关高成长团队",
+                            "line": "你从会计学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "会计专业骨干",
+                            "first": "会计学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "会计连接型从业者",
+                            "first": "会计学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "会计研究探索者",
+                            "first": "会计学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "会计一线攻坚者",
+                            "first": "会计学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "会计复合型从业者",
+                            "first": "会计学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "philosophy": {
+                "label": "哲学",
+                "tagline": "问题、逻辑与思辨",
+                "summary": "从「哲学」出发，第一张牌就会落到公开主讲撞论文互评这样的具体事故里。",
+                "category": "哲学 / 哲学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "哲项目负责人",
+                            "first": "哲学相关高成长团队",
+                            "line": "你从哲学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "哲专业骨干",
+                            "first": "哲学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "哲连接型从业者",
+                            "first": "哲学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "哲研究探索者",
+                            "first": "哲学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "哲一线攻坚者",
+                            "first": "哲学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "哲复合型从业者",
+                            "first": "哲学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "logic": {
+                "label": "逻辑学",
+                "tagline": "问题、逻辑与思辨",
+                "summary": "从「逻辑学」出发，第一张牌就会落到社团讲解撞证明返工这样的具体事故里。",
+                "category": "哲学 / 哲学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "逻辑项目负责人",
+                            "first": "逻辑学相关高成长团队",
+                            "line": "你从逻辑学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "逻辑专业骨干",
+                            "first": "逻辑学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "逻辑连接型从业者",
+                            "first": "逻辑学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "逻辑研究探索者",
+                            "first": "逻辑学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "逻辑一线攻坚者",
+                            "first": "逻辑学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "逻辑复合型从业者",
+                            "first": "逻辑学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "history": {
+                "label": "历史学",
+                "tagline": "史料、现场与时间感",
+                "summary": "从「历史学」出发，第一张牌就会落到博物馆讲解撞史料整理这样的具体事故里。",
+                "category": "历史学 / 历史学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "历史项目负责人",
+                            "first": "历史学相关高成长团队",
+                            "line": "你从历史学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "历史专业骨干",
+                            "first": "历史学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "历史连接型从业者",
+                            "first": "历史学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "历史研究探索者",
+                            "first": "历史学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "历史一线攻坚者",
+                            "first": "历史学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "历史复合型从业者",
+                            "first": "历史学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "archaeology": {
+                "label": "考古学",
+                "tagline": "史料、现场与时间感",
+                "summary": "从「考古学」出发，第一张牌就会落到田野名额撞探方记录这样的具体事故里。",
+                "category": "历史学 / 历史学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "考古项目负责人",
+                            "first": "考古学相关高成长团队",
+                            "line": "你从考古学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "考古专业骨干",
+                            "first": "考古学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "考古连接型从业者",
+                            "first": "考古学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "考古研究探索者",
+                            "first": "考古学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "考古一线攻坚者",
+                            "first": "考古学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "考古复合型从业者",
+                            "first": "考古学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "agronomy": {
+                "label": "农学",
+                "tagline": "土地、作物与长期照看",
+                "summary": "从「农学」出发，第一张牌就会落到农场试验撞温室值班这样的具体事故里。",
+                "category": "农学 / 植物生产类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "农项目负责人",
+                            "first": "农学相关高成长团队",
+                            "line": "你从农学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "农专业骨干",
+                            "first": "农学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "农连接型从业者",
+                            "first": "农学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "农研究探索者",
+                            "first": "农学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "农一线攻坚者",
+                            "first": "农学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "农复合型从业者",
+                            "first": "农学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "veterinary_medicine": {
+                "label": "动物医学",
+                "tagline": "动物、病例与临床判断",
+                "summary": "从「动物医学」出发，第一张牌就会落到医院试岗撞病例讨论这样的具体事故里。",
+                "category": "农学 / 动物医学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "动物医项目负责人",
+                            "first": "动物医学相关高成长团队",
+                            "line": "你从动物医学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "动物医专业骨干",
+                            "first": "动物医学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "动物医连接型从业者",
+                            "first": "动物医学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "动物医研究探索者",
+                            "first": "动物医学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "动物医一线攻坚者",
+                            "first": "动物医学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "动物医复合型从业者",
+                            "first": "动物医学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "visual_communication_design": {
+                "label": "视觉传达设计",
+                "tagline": "视觉、作品与审美表达",
+                "summary": "从「视觉传达设计」出发，第一张牌就会落到海报评图撞展板交付这样的具体事故里。",
+                "category": "艺术学 / 设计学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "视觉传达设计项目负责人",
+                            "first": "视觉传达设计相关高成长团队",
+                            "line": "你从视觉传达设计出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "视觉传达设计专业骨干",
+                            "first": "视觉传达设计对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "视觉传达设计连接型从业者",
+                            "first": "视觉传达设计相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "视觉传达设计研究探索者",
+                            "first": "视觉传达设计相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "视觉传达设计一线攻坚者",
+                            "first": "视觉传达设计高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "视觉传达设计复合型从业者",
+                            "first": "视觉传达设计相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          },
+          "musicology": {
+                "label": "音乐学",
+                "tagline": "舞台、练习与声音表达",
+                "summary": "从「音乐学」出发，第一张牌就会落到独唱试音撞合奏排练这样的具体事故里。",
+                "category": "艺术学 / 音乐与舞蹈学类",
+                "cards": [],
+                "careers": {
+                      "ambition": {
+                            "title": "音乐项目负责人",
+                            "first": "音乐学相关高成长团队",
+                            "line": "你从音乐学出发，把专业能力变成项目、资源和团队影响力。"
+                      },
+                      "stability": {
+                            "title": "音乐专业骨干",
+                            "first": "音乐学对口稳定岗位",
+                            "line": "你在确定平台里持续深耕，成为这个专业方向里可靠的中坚力量。"
+                      },
+                      "empathy": {
+                            "title": "音乐连接型从业者",
+                            "first": "音乐学相关服务或产品岗位",
+                            "line": "你把专业知识翻译成人能理解、能使用、能被照顾到的方案。"
+                      },
+                      "explore": {
+                            "title": "音乐研究探索者",
+                            "first": "音乐学相关研究或跨界岗位",
+                            "line": "你保留好奇心，把专业边界往新问题和新场景里推。"
+                      },
+                      "pressure": {
+                            "title": "音乐一线攻坚者",
+                            "first": "音乐学高压交付岗位",
+                            "line": "你在节点、现场和复杂问题里练出稳定判断，越到关键时刻越能顶上。"
+                      },
+                      "balanced": {
+                            "title": "音乐复合型从业者",
+                            "first": "音乐学相关综合岗位",
+                            "line": "你没有被单一路线锁死，而是把专业底子接到更宽的工作场景里。"
+                      }
+                }
+          }
     };
+
+    const pilotCardsUrl = "docs/pilot-arc-6-cards.sample.json";
 
     const urlParams = new URLSearchParams(window.location.search);
     const runtimeFlags = {
@@ -2682,15 +4058,13 @@
       pilotResult: urlParams.get("pilotResult") === "1"
     };
 
-    const pilotCardsUrl = "docs/pilot-arc-6-cards.sample.json";
-
     const randomProfiles = [
-      { name: "林予安", gender: "女生", province: "江苏", score: "570", dream: "AI 产品经理", hope: "稳定且体面", keywords: "技术、表达、城市机会", major: "cs" },
-      { name: "周屿", gender: "男生", province: "河南", score: "612", dream: "临床医生", hope: "考研深造", keywords: "责任感、硬核训练、确定路径", major: "med" },
-      { name: "许青禾", gender: "女生", province: "浙江", score: "545", dream: "数字内容创业者", hope: "自由探索", keywords: "创作、审美、社交表达", major: "media" },
-      { name: "陈望", gender: "不限定", province: "广东", score: "588", dream: "新能源工程师", hope: "尽快赚钱", keywords: "产业机会、动手能力、家庭责任", major: "energy" },
-      { name: "苏听澜", gender: "女生", province: "山东", score: "601", dream: "律师", hope: "稳定且体面", keywords: "逻辑、表达、公平感", major: "law" },
-      { name: "顾衍", gender: "男生", province: "湖北", score: "634", dream: "算法研究员", hope: "自由探索", keywords: "数学、抽象、长期主义", major: "math" }
+      { name: "林予安", gender: "女生", province: "江苏", score: "570", hope: "稳定且体面", keywords: "技术、表达、城市机会", major: "computer_science" },
+      { name: "周屿", gender: "男生", province: "河南", score: "612", hope: "考研深造", keywords: "责任感、硬核训练、确定路径", major: "clinical_medicine" },
+      { name: "陈澈", gender: "男生", province: "广东", score: "548", hope: "收入上限", keywords: "市场、资源、野心", major: "finance" },
+      { name: "许晴", gender: "女生", province: "浙江", score: "590", hope: "离家近一点", keywords: "审美、传播、自由度", major: "visual_communication_design" },
+      { name: "赵南星", gender: "女生", province: "山东", score: "566", hope: "考公考编", keywords: "稳定、表达、耐心", major: "primary_education" },
+      { name: "顾行舟", gender: "男生", province: "四川", score: "602", hope: "稳定且体面", keywords: "工程、动手、项目", major: "electrical_engineering" }
     ];
 
     const majorKeys = Object.keys(majors);
@@ -2743,7 +4117,7 @@
       history: [],
       profile: {},
       avatar: "男1",
-      major: "cs",
+      major: "computer_science",
       entryMajorText: "计算机科学与技术",
       deck: [],
       totalYears: runtimeFlags.pilot ? 6 : 18,
@@ -2777,7 +4151,8 @@
       streamText: "",
       streamFields: {},
       streamNewFields: {},
-      streamRenderPending: false
+      streamRenderPending: false,
+      debugTrace: []
     };
 
     const els = {
@@ -2836,7 +4211,10 @@
         keywords: document.querySelector("#keywords")?.value.trim() || "观察中",
         avatar: avatar.id || state.avatar || avatarOptions[0].id,
         major: entryMajorText || state.major,
-        majorLabel: entryMajorText || majorLabel()
+        majorLabel: entryMajorText || majorLabel(),
+        relationName: state.profile?.relationName || "",
+        relationGender: state.profile?.relationGender || "",
+        relationIntro: state.profile?.relationIntro || ""
       };
     }
 
@@ -2862,24 +4240,28 @@
     }
 
     function inferMajorKey(text) {
-      const value = String(text || "").toLowerCase();
+      const normalized = String(text || "").replace(/[\s/／·・|｜-]+/g, "");
+      const exact = [["computer_science","计算机科学与技术"],["data_science","数据科学与大数据技术"],["information_security","信息安全"],["electronic_info","电子信息工程"],["microelectronics","微电子科学与工程"],["electrical_engineering","电气工程及其自动化"],["automation","自动化"],["mechanical_design","机械设计制造及其自动化"],["vehicle_engineering","车辆工程"],["new_energy","新能源科学与工程"],["aerospace","飞行器设计与工程"],["biomedical_engineering","生物医学工程"],["civil_engineering","土木工程"],["architecture","建筑学"],["materials","材料科学与工程"],["chemical_engineering","化学工程与工艺"],["clinical_medicine","临床医学"],["stomatology","口腔医学"],["traditional_chinese_medicine","中医学"],["pharmacy","药学"],["nursing","护理学"],["law","法学"],["ideological_political_education","思想政治教育"],["primary_education","小学教育"],["chinese_literature","汉语言文学"],["journalism","新闻学"],["mathematics","数学与应用数学"],["applied_psychology","应用心理学"],["finance","金融学"],["accounting","会计学"],["philosophy","哲学"],["logic","逻辑学"],["history","历史学"],["archaeology","考古学"],["agronomy","农学"],["veterinary_medicine","动物医学"],["visual_communication_design","视觉传达设计"],["musicology","音乐学"]];
+      const exactHit = exact.find(([, label]) => normalized.includes(label.replace(/[\s/／·・|｜-]+/g, "")));
+      if (exactHit) return exactHit[0];
       const rules = [
-        ["cs", /计算机|软件|人工智能|ai|算法|数据科学|网络|信息安全|大数据/],
-        ["med", /医学|临床|口腔|护理|药学|中医|影像|麻醉/],
-        ["law", /法学|法律|律师|司法|知识产权/],
-        ["edu", /师范|教育|汉语言|小学教育|学前教育|英语教育/],
-        ["finance", /金融|经济|会计|财务|审计|投资|保险|证券/],
-        ["media", /传媒|新闻|广告|传播|影视|编导|数字媒体|网络与新媒体/],
-        ["design", /设计|视觉|美术|艺术|动画|服装|环境设计|产品设计/],
-        ["ee", /电子|通信|电气|自动化|微电子|集成电路|芯片/],
-        ["mech", /机械|车辆|制造|机器人工程|工业工程/],
-        ["energy", /能源|新能源|材料|化工|环境|土木|建筑/],
-        ["bio", /生物|农学|食品|生态|园林/],
-        ["psych", /心理|社会工作|社会学/],
-        ["music", /音乐|表演|播音|舞蹈|戏剧/],
-        ["math", /数学|统计|物理|基础科学/]
+        ["computer_science", /计算机|算法|软件|人工智能|AI/],
+        ["electronic_info", /电子信息|通信|芯片|半导体/],
+        ["clinical_medicine", /临床|医学/],
+        ["law", /法学|法律/],
+        ["primary_education", /师范|教育|教师/],
+        ["finance", /金融|经济/],
+        ["mechanical_design", /机械|自动化|制造/],
+        ["new_energy", /新能源|能源|材料/],
+        ["applied_psychology", /心理/],
+        ["journalism", /传媒|新闻|传播|媒体/],
+        ["civil_engineering", /土木|建筑/],
+        ["pharmacy", /生物医药|药/],
+        ["accounting", /管理|会计|财会/],
+        ["chinese_literature", /中文|外语|语言|文学/],
+        ["mathematics", /数学|统计/]
       ];
-      return rules.find(([, pattern]) => pattern.test(value))?.[0] || state.major || majorKeys[0];
+      return rules.find(([, pattern]) => pattern.test(normalized))?.[0] || state.major || majorKeys[0];
     }
 
     function applyEntryMajor() {
@@ -3703,12 +5085,9 @@
     }
 
     function sceneArtUrls(index) {
-      const avatar = currentAvatarOption();
-      const genderFolder = avatarGenderFolder(avatar);
       const year = String((index % state.totalYears) + 1).padStart(2, "0");
       const scene = String((index % 3) + 1).padStart(2, "0");
       const urls = [
-        `${characterSceneBasePath}/${genderFolder}/${avatar.id}/year_${year}/scene_${scene}.webp`,
         `${characterSceneBasePath}/neutral/glass_avatar/year_${year}/scene_${scene}.webp`,
         `${characterSceneBasePath}/neutral/glass_avatar/year_${year}/scene_01.webp`,
         questionSketchUrls[index % questionSketchUrls.length]
@@ -3819,6 +5198,8 @@
       state.fixedQuestionBank = [];
       state.feedbackByYear = {};
       state.result = null;
+      state.debugTrace = [];
+      state.profile = { ...state.profile, relationName: "", relationGender: "", relationIntro: "" };
       state.loadError = "";
       state.values = {
         explore: 50,
@@ -3871,6 +5252,8 @@
         state.fixedQuestionBank = [];
         state.feedbackByYear = {};
         state.result = null;
+        state.debugTrace = [];
+        state.profile = { ...state.profile, relationName: "", relationGender: "", relationIntro: "" };
         state.loadError = "";
         state.values = {
           explore: 50,
@@ -3928,16 +5311,23 @@
       renderTags();
     }
 
-    async function apiPost(path, payload) {
+    async function apiPost(path, payload, options = {}) {
       if (runtimeFlags.pilot) {
         return handlePilotApi(path, payload);
       }
       const controller = new AbortController();
+      const externalSignal = options.signal;
+      const abortFromExternal = () => controller.abort();
+      if (externalSignal?.aborted) {
+        controller.abort();
+      } else {
+        externalSignal?.addEventListener("abort", abortFromExternal, { once: true });
+      }
       const timeout = window.setTimeout(() => controller.abort(), 45000);
       try {
         const response = await fetch(path, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", "x-prompt-lab-debug": "1" },
           body: JSON.stringify(payload),
           signal: controller.signal
         });
@@ -3949,12 +5339,14 @@
         logApiModel(path, payload, data, "fetch");
         return data;
       } catch (error) {
-        if (error.name === "AbortError") throw new Error("生成超时，请重试");
+        if (error.name === "AbortError") throw new Error(options.abortMessage || "生成超时，请重试");
         if (isNetworkFetchError(error)) {
-          return apiPostXHR(path, payload);
+          if (externalSignal?.aborted) throw new Error(options.abortMessage || "请求已取消");
+          return apiPostXHR(path, payload, options);
         }
         throw new Error(normalizeFetchError(error, "请求失败"));
       } finally {
+        externalSignal?.removeEventListener("abort", abortFromExternal);
         window.clearTimeout(timeout);
       }
     }
@@ -3967,7 +5359,7 @@
       try {
         const response = await fetch(streamPath, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", "x-prompt-lab-debug": "1" },
           body: JSON.stringify(payload),
           signal: controller.signal
         });
@@ -4018,40 +5410,81 @@
       }
     }
 
-    function apiPostXHR(path, payload) {
+    function apiPostXHR(path, payload, options = {}) {
       return new Promise((resolve, reject) => {
+        if (options.signal?.aborted) {
+          reject(new Error(options.abortMessage || "请求已取消"));
+          return;
+        }
         const xhr = new XMLHttpRequest();
+        let settled = false;
+        const cleanup = () => options.signal?.removeEventListener("abort", abortRequest);
+        const finish = fn => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          fn();
+        };
+        const abortRequest = () => {
+          xhr.abort();
+          finish(() => reject(new Error(options.abortMessage || "请求已取消")));
+        };
         xhr.open("POST", path, true);
         xhr.timeout = 45000;
         xhr.setRequestHeader("content-type", "application/json");
+        xhr.setRequestHeader("x-prompt-lab-debug", "1");
+        options.signal?.addEventListener("abort", abortRequest, { once: true });
         xhr.onload = () => {
           let data = {};
           try {
             data = JSON.parse(xhr.responseText || "{}");
           } catch {
-            reject(new Error("接口返回不是合法 JSON"));
+            finish(() => reject(new Error("接口返回不是合法 JSON")));
             return;
           }
           if (xhr.status < 200 || xhr.status >= 300 || !data.ok) {
             const ray = xhr.getResponseHeader && xhr.getResponseHeader("cf-ray");
-            reject(new Error(data.error || `请求失败：${xhr.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`));
+            finish(() => reject(new Error(data.error || `请求失败：${xhr.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`)));
             return;
           }
           logApiModel(path, payload, data, "xhr");
-          resolve(data);
+          finish(() => resolve(data));
         };
-        xhr.onerror = () => reject(new Error("XHR 网络连接失败"));
-        xhr.ontimeout = () => reject(new Error("生成超时，请重试"));
+        xhr.onerror = () => finish(() => reject(new Error("XHR 网络连接失败")));
+        xhr.ontimeout = () => finish(() => reject(new Error("生成超时，请重试")));
+        xhr.onabort = () => finish(() => reject(new Error(options.abortMessage || "请求已取消")));
         xhr.send(JSON.stringify(payload));
       });
     }
 
     function logApiModel(path, payload, data, transport) {
       if (!path.startsWith("/api/game/")) return;
+      recordApiExchange(path, payload, data, transport);
       const model = data?.model || payload?.model;
       if (!model) return;
       const degraded = data?.degraded || data?.result?.degraded;
       console.info(`[gaokao] ${path} model: ${model}${degraded ? " (degraded)" : ""}`, { transport });
+    }
+
+    function safeJsonClone(value) {
+      try {
+        return JSON.parse(JSON.stringify(value));
+      } catch {
+        return value == null ? value : String(value);
+      }
+    }
+
+    function recordApiExchange(path, payload, data, transport) {
+      const { debug, ...output } = data || {};
+      state.debugTrace.push({
+        at: new Date().toISOString(),
+        transport,
+        path,
+        input: safeJsonClone(payload),
+        output: safeJsonClone(output),
+        modelRequest: safeJsonClone(debug?.request || null),
+        modelRawOutput: debug?.rawOutput || ""
+      });
     }
 
     function updateStreamPreview(delta, event = {}) {
@@ -4085,7 +5518,7 @@
         lifeTrack: clampStreamTextBySentence(extractPartialJsonString(text, "lifeTrack"), 26, 1),
         relationshipTrack: clampStreamTextBySentence(extractPartialJsonString(text, "relationshipTrack"), 34, 1),
         sceneTitle: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "title"), 10, 1),
-        sceneBody: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "body"), 130, 3),
+        sceneBody: cleanStreamText(extractPartialJsonString(sceneSection, "body")),
         leftTitle,
         leftDesc: normalizeStreamChoiceDesc(extractPartialJsonString(leftSection, "desc"), leftTitle, "A"),
         rightTitle,
@@ -4102,6 +5535,10 @@
       const clipped = joined.slice(0, maxLength);
       const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
       return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
+    }
+
+    function cleanStreamText(value) {
+      return String(value || "").replace(/\s+/g, "").trim();
     }
 
     function normalizeStreamChoiceTitle(value, fallback) {
@@ -4320,7 +5757,8 @@
         .slice(0, 7);
     }
 
-    function composePreviousFeedback(card) {
+    function composePreviousFeedback(card, options = {}) {
+      const includeChoice = options.includeChoice !== false;
       const modelFeedback = shortFeedbackText(card.modelHeader || card.summary || card.context);
       const previousInfo = card.previous || reconstructPreviousInfo(card);
       if (!previousInfo) {
@@ -4329,6 +5767,7 @@
       }
       const choice = previousChoiceBrief(previousInfo);
       const previousOutcome = compactFeedbackPart(previousInfo.feedback || buildVisibleChoiceFeedback(previousInfo.choiceText, previousInfo.choiceKey), 44);
+      if (!includeChoice) return previousOutcome || modelFeedback;
       return [choice ? `你选了「${choice}」` : "上一轮选择", previousOutcome].filter(Boolean).join("，");
     }
 
@@ -4364,7 +5803,7 @@
     }
 
     function previousFeedbackHTML(card) {
-      const body = composePreviousFeedback(card) || "上一年的事已经留下后果，另一条线也没停下";
+      const body = composePreviousFeedback(card, { includeChoice: false }) || "上一年的事已经留下后果，另一条线也没停下";
       const title = previousFeedbackTitle(card, body);
       return `
         <aside class="previous-note" aria-label="上一年回响">
@@ -4389,7 +5828,7 @@
         relationshipTrack: stream.relationshipTrack || "",
         previous: previousInfoForYear(state.index + 1)
       };
-      const body = composePreviousFeedback(streamCard);
+      const body = composePreviousFeedback(streamCard, { includeChoice: false });
       if (!body) return "";
       const title = previousFeedbackTitle(streamCard, body);
       return `
@@ -4510,6 +5949,8 @@
     function shortFeedbackText(value) {
       const maxLength = 48;
       const clean = cleanFeedbackText(value)
+        .replace(/你选了[「『“"']?[^」』”"'\s，。！？!?；;]{0,42}[」』”"']?[，。！？!?；;]?/g, "")
+        .replace(/选了[「『“"']?[^」』”"'\s，。！？!?；;]{0,42}[」』”"']?[，。！？!?；;]?/g, "")
         .replace(/你选择了[^，。！？!?；;]{0,42}[，。！？!?；;]?/g, "")
         .replace(/选择了[^，。！？!?；;]{0,42}[，。！？!?；;]?/g, "")
         .replace(/\b[AB][.。:：]\s*/g, "")
@@ -4583,10 +6024,21 @@
       const data = await apiPostStream(path, payload, updateStreamPreview);
       if (!data.card) throw new Error(`第 ${yearNumber} 年生成失败：接口没有返回卡片`);
       const card = normalizeRemoteCard(data.card);
+      applyOpeningRelationFromCard(card);
       applyPreviousInfoToCard(card);
       state.deck[yearNumber - 1] = card;
       resetStreamState();
       return card;
+    }
+
+    function applyOpeningRelationFromCard(card) {
+      if (Number(card?.yearNumber || 0) !== 1 || !card.openingRelationName) return;
+      state.profile = {
+        ...state.profile,
+        relationName: card.openingRelationName,
+        relationGender: card.openingRelationGender || "",
+        relationIntro: card.openingRelationIntro || ""
+      };
     }
 
     function branchPrefetchSignature(card) {
@@ -4608,9 +6060,18 @@
       };
     }
 
-    function clearBranchPrefetch() {
+    function abortPrefetchBranch(branch) {
+      if (branch?.pending && branch.controller && !branch.controller.signal.aborted) {
+        branch.controller.abort();
+      }
+    }
+
+    function clearBranchPrefetch(keepBranch = null) {
       window.clearTimeout(state.branchPrefetchTimer);
       state.branchPrefetchTimer = null;
+      Object.values(state.branchPrefetch?.branches || {}).forEach(branch => {
+        if (branch !== keepBranch) abortPrefetchBranch(branch);
+      });
       state.branchPrefetch = null;
     }
 
@@ -4631,6 +6092,7 @@
 
     function startBranchPrefetchForCurrentCard(card, signature) {
       if (state.branchPrefetch?.signature === signature) return state.branchPrefetch;
+      clearBranchPrefetch();
       if (signature !== branchPrefetchSignature(card)) return null;
       const nextYear = (card.yearNumber || state.index + 1) + 1;
       if (nextYear > state.totalYears) return null;
@@ -4643,13 +6105,18 @@
       };
       state.branchPrefetch = prefetch;
       ["left", "right"].forEach(direction => {
+        const controller = new AbortController();
         const branch = {
           direction,
+          controller,
           payload: branchPrefetchPayload(card, direction, nextYear),
           pending: true,
           error: null
         };
-        branch.promise = apiPost("/api/game/next", branch.payload)
+        branch.promise = apiPost("/api/game/next", branch.payload, {
+          signal: controller.signal,
+          abortMessage: "预加载已取消"
+        })
           .then(data => data?.card || null)
           .catch(error => {
             branch.error = error;
@@ -4668,7 +6135,7 @@
       const branch = state.branchPrefetch?.signature === signature
         ? state.branchPrefetch.branches?.[direction]
         : null;
-      clearBranchPrefetch();
+      clearBranchPrefetch(branch);
       return branch || null;
     }
 
@@ -4704,7 +6171,10 @@
         keywords: profile.keywords,
         avatar: profile.avatar,
         major: profile.major,
-        majorLabel: profile.majorLabel
+        majorLabel: profile.majorLabel,
+        relationName: profile.relationName,
+        relationGender: profile.relationGender,
+        relationIntro: profile.relationIntro
       });
     }
 
@@ -4986,6 +6456,9 @@
         mainTrack: card.mainTrack || "",
         lifeTrack: card.lifeTrack || "",
         relationshipTrack: card.relationshipTrack || "",
+        openingRelationName: card.openingRelationName || "",
+        openingRelationGender: card.openingRelationGender || "",
+        openingRelationIntro: card.openingRelationIntro || "",
         callbackSeeds: normalizedCallbacks,
         fixedKey: card.fixedKey || "",
         previous: null,
@@ -6599,6 +8072,96 @@
       }
     }
 
+    function buildDebugFlowPayload() {
+      const { chosen } = classifyDebugTrace();
+      return {
+        generatedAt: new Date().toISOString(),
+        profile: safeJsonClone(state.profile),
+        selectedMajor: {
+          key: state.major,
+          label: majorLabel()
+        },
+        cards: state.deck.filter(Boolean).map(card => ({
+          yearNumber: card.yearNumber,
+          sceneTitle: card.eventTitle || card.scene,
+          sceneBody: card.prompt,
+          summary: card.summary,
+          lifeTrack: card.lifeTrack,
+          relationshipTrack: card.relationshipTrack,
+          left: safeJsonClone(card.left),
+          right: safeJsonClone(card.right)
+        })),
+        chosenHistory: safeJsonClone(state.history),
+        result: safeJsonClone(state.result),
+        apiTrace: safeJsonClone(chosen)
+      };
+    }
+
+    function classifyDebugTrace() {
+      const chosenByYear = new Map(state.history.map(item => [Number(item.year), item]));
+      return state.debugTrace.reduce((groups, item) => {
+        const branch = debugTraceBranch(item, chosenByYear);
+        const record = { ...safeJsonClone(item), branch };
+        if (branch === "prefetch") groups.prefetch.push(record);
+        else groups.chosen.push(record);
+        return groups;
+      }, { chosen: [], prefetch: [] });
+    }
+
+    function debugTraceBranch(item, chosenByYear) {
+      if (item.path !== "/api/game/next") return "chosen";
+      const year = Number(item.input?.year || item.output?.card?.yearNumber || 0);
+      if (!year || year <= 1) return "chosen";
+      const history = Array.isArray(item.input?.history) ? item.input.history : [];
+      const previous = history[history.length - 1];
+      const chosenPrevious = chosenByYear.get(year - 1);
+      return debugHistoryItemMatches(previous, chosenPrevious) ? "chosen" : "prefetch";
+    }
+
+    function debugHistoryItemMatches(inputItem, chosenItem) {
+      if (!inputItem || !chosenItem) return false;
+      const sameYear = Number(inputItem.year) === Number(chosenItem.year);
+      const sameChoice = String(inputItem.choiceText || "").trim() === String(chosenItem.choiceText || "").trim();
+      const sameConsequence = String(inputItem.consequence || "").trim() === String(chosenItem.consequence || "").trim();
+      return sameYear && sameChoice && sameConsequence;
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    async function copyDebugFlow() {
+      const button = document.querySelector("#copyDebugFlow");
+      if (!button) return;
+      const originalLabel = button.textContent;
+      button.disabled = true;
+      try {
+        await copyText(JSON.stringify(buildDebugFlowPayload(), null, 2));
+        button.textContent = "已复制";
+        window.setTimeout(() => {
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }, 1200);
+      } catch (error) {
+        console.error("copy debug flow failed", error);
+        button.disabled = false;
+        button.textContent = originalLabel;
+        window.alert("调试包复制失败，请稍后重试。");
+      }
+    }
+
     function escapeHTML(value) {
       return String(value).replace(/[&<>"']/g, char => ({
         "&": "&amp;",
@@ -6685,6 +8248,7 @@
     document.querySelector("#restartTop").addEventListener("click", () => resetGame(true, "entry"));
     document.querySelector("#restartResult").addEventListener("click", () => resetGame(true, "entry"));
     document.querySelector("#saveResult").addEventListener("click", saveResultImage);
+    document.querySelector("#copyDebugFlow")?.addEventListener("click", copyDebugFlow);
     els.leftChoice.addEventListener("click", () => choose("left"));
     els.rightChoice.addEventListener("click", () => choose("right"));
     els.undoChoice.addEventListener("click", undo);

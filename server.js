@@ -12,6 +12,7 @@ import {
   vNextResultTaskPrompt,
   vNextSystemPrompt
 } from "./deepseek-prompt-vnext.js";
+import { buildOpeningCard } from "./opening-cards-data.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const rootDir = resolve(__dirname);
@@ -25,6 +26,7 @@ const totalGameYears = 18;
 const finalResultAge = 36;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
+const relationshipMentionPattern = /(关系|暧昧|冷淡|冷战|分手|告别|对象|许青禾|沈晚晴|苏听澜|陈栀|她(?:约|等|问|回|没|不|主动|沉默|留|发|看|递|笑|说))/;
 const promptLabRealProxyBase = "https://gaokao.dsxzai.com";
 const promptLabRealProxyModel = "MiniMax-M2.7-highspeed";
 const promptLabRealProxyModels = [
@@ -74,13 +76,13 @@ function buildModelConfigs() {
   const minimaxBaseUrl = envValue("MINIMAX_BASE_URL", "https://api.minimax.io/v1");
   return [
     {
-      id: "mimo-v2.5-pro",
-      label: "Xiaomi MiMo V2.5 Pro",
-      provider: "mimo",
-      baseUrl: mimoBaseUrl,
-      apiKey: mimoApiKey,
-      authHeader: "api-key",
-      maxTokensField: "max_completion_tokens",
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
+      provider: "deepseek",
+      baseUrl: deepseekBaseUrl,
+      apiKey: deepseekApiKey,
+      authHeader: "authorization",
+      maxTokensField: "max_tokens",
       supportsThinking: true,
       supportsResponseFormat: true
     },
@@ -96,13 +98,13 @@ function buildModelConfigs() {
       supportsResponseFormat: true
     },
     {
-      id: "deepseek-v4-flash",
-      label: "DeepSeek V4 Flash",
-      provider: "deepseek",
-      baseUrl: deepseekBaseUrl,
-      apiKey: deepseekApiKey,
-      authHeader: "authorization",
-      maxTokensField: "max_tokens",
+      id: "mimo-v2.5-pro",
+      label: "Xiaomi MiMo V2.5 Pro",
+      provider: "mimo",
+      baseUrl: mimoBaseUrl,
+      apiKey: mimoApiKey,
+      authHeader: "api-key",
+      maxTokensField: "max_completion_tokens",
       supportsThinking: true,
       supportsResponseFormat: true
     },
@@ -125,9 +127,9 @@ function modelIsConfigured(config) {
 }
 
 function resolveDefaultModel() {
-  const requested = envValue("LLM_MODEL") || envValue("MIMO_MODEL") || envValue("DEEPSEEK_MODEL") || envValue("MINIMAX_MODEL");
+  const requested = envValue("LLM_MODEL") || envValue("DEEPSEEK_MODEL") || envValue("MIMO_MODEL") || envValue("MINIMAX_MODEL");
   if (modelConfigs.some(config => config.id === requested)) return requested;
-  return modelConfigs.find(modelIsConfigured)?.id || modelConfigs[0]?.id || "mimo-v2.5-pro";
+  return "deepseek-v4-flash";
 }
 
 function publicModelOptions() {
@@ -181,7 +183,10 @@ function normalizeProfile(profile = {}) {
     hope: clean(profile.hope, "未知"),
     keywords: clean(profile.keywords, "观察中"),
     major: clean(profile.major, "未选专业"),
-    majorLabel: clean(profile.majorLabel, clean(profile.major, "未选专业"))
+    majorLabel: clean(profile.majorLabel, clean(profile.major, "未选专业")),
+    relationName: clean(profile.relationName, ""),
+    relationGender: clean(profile.relationGender, ""),
+    relationIntro: clean(profile.relationIntro, "")
   };
 }
 
@@ -255,7 +260,13 @@ function buildResultMessages({ profile, history }) {
   ];
 }
 
-async function callModel(messages, validator, model = defaultModel, onDelta = null, debug = false, onDiscard = null) {
+function clientAbortError() {
+  const error = new Error("请求已取消");
+  error.status = 499;
+  return error;
+}
+
+async function callModel(messages, validator, model = defaultModel, onDelta = null, debug = false, onDiscard = null, clientSignal = null) {
   if (mockMode) {
     const raw = mockResponse(messages);
     return attachModelDebug(validator(raw), debug, {
@@ -274,11 +285,20 @@ async function callModel(messages, validator, model = defaultModel, onDelta = nu
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const useStream = llmStream && attempt === 0;
     let streamedAny = false;
+    let clientAborted = false;
+    const controller = new AbortController();
+    const abortFromClient = () => {
+      clientAborted = true;
+      controller.abort("client aborted");
+    };
+    if (clientSignal?.aborted) throw clientAbortError();
+    clientSignal?.addEventListener("abort", abortFromClient, { once: true });
     try {
       const body = requestBody(config, messages, useStream);
       const response = await fetch(`${String(config.baseUrl).replace(/\/+$/g, "")}/chat/completions`, {
         method: "POST",
         headers: requestHeaders(config),
+        signal: controller.signal,
         body: JSON.stringify(body)
       });
       if (!response.ok) {
@@ -294,8 +314,11 @@ async function callModel(messages, validator, model = defaultModel, onDelta = nu
       if (!content) throw new Error(`${config.label} returned empty content`);
       return attachModelDebug(validator(parseJsonContent(content)), debug, { request: body, rawOutput: content });
     } catch (error) {
+      if (clientAborted || clientSignal?.aborted) throw clientAbortError();
       lastError = error;
       if (useStream && streamedAny) onDiscard?.();
+    } finally {
+      clientSignal?.removeEventListener("abort", abortFromClient);
     }
   }
   console.error(`${config.label} unavailable, using fallback content:`, lastError?.message || lastError);
@@ -374,7 +397,7 @@ function sendNdjson(res, data) {
   res.write(`${JSON.stringify(data)}\n`);
 }
 
-async function sendAnnualStream(res, { pathname, profile, history, body, model }) {
+async function sendAnnualStream(res, { pathname, profile, history, body, model, debug = false, clientSignal = null }) {
   res.writeHead(200, {
     "content-type": "application/x-ndjson; charset=utf-8",
     "cache-control": "no-store",
@@ -383,15 +406,8 @@ async function sendAnnualStream(res, { pathname, profile, history, body, model }
   sendNdjson(res, { type: "meta", model });
   try {
     if (pathname === "/api/game/start/stream") {
-      const data = await callModel(
-        buildAnnualMessages({ profile, history: [], year: 1 }),
-        value => validateAnnual(value, [], [], 1),
-        model,
-        text => sendNdjson(res, { type: "delta", text }),
-        false,
-        () => sendNdjson(res, { type: "reset" })
-      );
-      sendNdjson(res, { type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+      const data = buildOpeningCard(profile, totalGameYears);
+      sendNdjson(res, { type: "done", ok: true, model, preset: true, card: annualCardFromData(data) });
       res.end();
       return;
     }
@@ -401,10 +417,11 @@ async function sendAnnualStream(res, { pathname, profile, history, body, model }
       value => validateAnnual(value, history, history, year),
       model,
       text => sendNdjson(res, { type: "delta", text }),
-      false,
-      () => sendNdjson(res, { type: "reset" })
+      debug,
+      () => sendNdjson(res, { type: "reset" }),
+      clientSignal
     );
-    sendNdjson(res, { type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+    sendNdjson(res, { type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data), ...debugField(data) });
   } catch (error) {
     sendNdjson(res, { type: "error", ok: false, error: error.message || "Request failed" });
   } finally {
@@ -484,9 +501,18 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   }
   const yearNumber = normalized.year;
   normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 52, 2);
+  if (yearNumber > 1) {
+    normalized.relationshipTrack = repairRelationshipTrackStage(normalized.relationshipTrack, history);
+  }
+  if (yearNumber > 1) {
+    normalized.summary = deDuplicateSummary(normalized, history);
+    normalized.summary = repairSummaryRelationshipStage(normalized.summary, normalized.relationshipTrack);
+  }
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
+  ensureSceneNotRepeated(normalized, repeatHistory);
+  validateContinuityText(normalized, history);
   return normalized;
 }
 
@@ -555,14 +581,14 @@ function buildOffstageFallback(sceneCategories) {
     return "你把作息往回拽了一点，家里这才没继续追着问你几点睡";
   }
   if (sceneCategories.has("work") || sceneCategories.has("study")) {
-    return "暧昧升温，沈晚晴已经会顺手给你留位置";
+    return "暧昧升温，亲密关系里有人开始顺手给你留位置";
   }
   return "你这边刚处理完一头，另一头也没闲着，身边几个人对你的站位已经变了";
 }
 
 function repairSummaryRelationshipStage(summary, relationshipTrack) {
   const text = optionalCleanText(summary);
-  if (!text || !/(关系|沈晚晴|沈晚晴|她)/.test(text) || relationshipStagePattern.test(text)) return text;
+  if (!text || !relationshipMentionPattern.test(text) || relationshipStagePattern.test(text)) return text;
   const track = optionalCleanText(relationshipTrack);
   const match = track.match(relationshipStagePattern);
   if (!match) return text;
@@ -573,6 +599,50 @@ function repairSummaryRelationshipStage(summary, relationshipTrack) {
     .trim();
   const staged = signal ? `${match[0]}，${signal}` : match[0];
   return mergeFeedbackParts(firstClause, staged);
+}
+
+function repairRelationshipTrackStage(relationshipTrack, history = []) {
+  const track = optionalCleanText(relationshipTrack);
+  if (!track) return track;
+  if (!shouldForceFarewellStage(history) || /^(体面告别|分手收束)[：:]/.test(track)) {
+    return normalizeRelationshipTrackStage(track);
+  }
+  const signal = track
+    .replace(relationshipStagePattern, "")
+    .replace(/^[：:，,]+/, "")
+    .replace(/[。！？!?；;]+$/g, "")
+    .trim();
+  return `体面告别：${signal || "你们把话说到这里，各自退出对方日常"}`;
+}
+
+function normalizeRelationshipTrackStage(track) {
+  if (relationshipStagePattern.test(track)) return track;
+  const alias = [
+    [/^(暧昧降温|关系降温|暧昧冷却|暧昧转冷|关系冷淡|冷淡疏远)/, "冷战后撤"],
+    [/^(恋爱确定|正式在一起|确认关系)/, "确定关系"],
+    [/^(和平告别|礼貌告别)/, "体面告别"],
+    [/^(分开|分手|关系结束)/, "分手收束"]
+  ].find(([pattern]) => pattern.test(track));
+  const stage = alias?.[1] || (/冷|沉默|不联系|减少主动|后撤|疏远|已读不回/.test(track) ? "冷战后撤" : "");
+  if (!stage) return track;
+  const signal = track
+    .replace(alias?.[0] || /^.*?[：:]/, "")
+    .replace(/^[：:，,]+/, "")
+    .replace(/[。！？!?；;]+$/g, "")
+    .trim();
+  return `${stage}：${signal || "对方开始减少主动联系"}`;
+}
+
+function shouldForceFarewellStage(history = []) {
+  const last = Array.isArray(history) ? history.at(-1) : null;
+  const text = [
+    last?.choice,
+    last?.choiceText,
+    last?.tag,
+    last?.consequence,
+    last?.relationshipTrack
+  ].map(optionalCleanText).join("，");
+  return /告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text);
 }
 
 function extractConsequenceClause(summary, sceneText) {
@@ -616,7 +686,7 @@ function validateContinuityText(card, history = []) {
     if (/接[住着下]?或错失|错失或接|错过或接|或错失|或错过|要么|无论|分叉|两条路|取决于|A或B|A\/B/.test(summary)) {
       throw new Error("Invalid annual JSON: summary contains parallel opposite outcomes");
     }
-    if (/关系|沈晚晴|沈晚晴|她/.test(summary) && !relationshipStagePattern.test(summary)) {
+    if (relationshipMentionPattern.test(summary) && !relationshipStagePattern.test(summary)) {
       throw new Error("Invalid annual JSON: summary mentions relationship without a clear stage");
     }
     const lastConsequence = optionalCleanText(Array.isArray(history) ? history.at(-1)?.consequence : "");
@@ -712,20 +782,13 @@ function uniqueTextTokens(value) {
 }
 
 function optionalCleanText(value) {
-  return String(value || "")
-    .replace(/关系线核心角色/g, "总坐靠窗位、笔记写得像攻略的同班女生沈晚晴")
-    .replace(/室友\/同伴/g, "总在上课路上边走边吃早餐的吃货舍友周越")
-    .replace(/导师\/老师|辅导员\/导师背景声/g, "辅导员兼专业导师林老师")
-    .replace(/外部机会角色背景压力|外部机会角色/g, "合作方")
-    .replace(/家庭型角色/g, "家里")
-    .replace(/团队群像/g, "项目群")
-    .trim();
+  return String(value || "").trim();
 }
 
 function clampTextBySentence(value, maxLength, maxSentences = 1) {
   const text = optionalCleanText(value).replace(/\s+/g, "");
   if (!text) return "";
-  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [text];
+  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?[」”』》）)]?/g) || [text];
   const joined = parts.slice(0, maxSentences).join("").replace(/[。！？!?；;]+$/g, "");
   if (joined.length <= maxLength) return joined;
   const clipped = joined.slice(0, maxLength);
@@ -737,7 +800,7 @@ function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
       title: clampTextBySentence(value.title, 10, 1),
-      body: clampTextBySentence(value.body, 130, 3)
+      body: cleanSceneBody(value.body)
     };
   }
   const raw = optionalCleanText(value);
@@ -746,14 +809,18 @@ function normalizeSceneData(value) {
   if (eventMatch || contextMatch) {
     return {
       title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 10, 1),
-      body: clampTextBySentence(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""), 130, 3)
+      body: cleanSceneBody(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""))
     };
   }
   const sentenceMatch = raw.match(/^(.{8,28}?[。！？!?])([\s\S]*)$/);
   return {
     title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 10, 1),
-    body: clampTextBySentence(sentenceMatch?.[2] || raw, 130, 3)
+    body: cleanSceneBody(sentenceMatch?.[2] || raw)
   };
+}
+
+function cleanSceneBody(value) {
+  return optionalCleanText(value).replace(/\s+/g, "");
 }
 
 function normalizeChoiceData(value, prefix) {
@@ -772,7 +839,7 @@ function normalizeChoiceData(value, prefix) {
 }
 
 function normalizeChoiceConsequence(value) {
-  return clampTextBySentence(value, 36, 1);
+  return balanceInlineQuote(clampTextBySentence(value, 36, 1));
 }
 
 function normalizeRiasecPayload(value) {
@@ -793,6 +860,8 @@ function normalizeChoiceTitle(value, prefix) {
     .replace(new RegExp(`^${prefix}[.。]\\s*`), "")
     .replace(/[，,。.!！?？；;].*$/g, "")
     .replace(/\s+/g, "");
+  if (/demo/i.test(text)) return "做Demo";
+  if (/邮件.*告别|写信.*告别|写封邮件/.test(text)) return "写信告别";
   if (text) return text.slice(0, 5);
   return prefix === "A" ? "直接推进" : "先稳住";
 }
@@ -803,12 +872,33 @@ function normalizeChoiceDesc(value, title, prefix) {
     .replace(title, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
-  if (text.length >= 8) return clampTextBySentence(text, 22, 1);
+  if (text.length >= 8) return balanceInlineQuote(clampTextBySentence(text, 22, 1));
   return prefix === "A" ? "把问题摊开当场处理" : "留出余地再判断";
 }
 
+function balanceInlineQuote(value) {
+  const text = optionalCleanText(value).replace(/[，,、：:]+$/g, "");
+  const openCount = (text.match(/“/g) || []).length;
+  const closeCount = (text.match(/”/g) || []).length;
+  const cornerOpenCount = (text.match(/「/g) || []).length;
+  const cornerCloseCount = (text.match(/」/g) || []).length;
+  if (openCount > closeCount) return `${text}”`;
+  if (cornerOpenCount > cornerCloseCount) return `${text}」`;
+  return text;
+}
+
 function normalizeChoiceTag(value, prefix) {
-  const text = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "").replace(/\s+/g, "");
+  let text = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "").replace(/\s+/g, "");
+  const hadRiasecPrefix = /^[RIASEC][：:·.\-—_、]?/i.test(text);
+  text = text.replace(/^[RIASEC][：:·.\-—_、]?/i, "");
+  if (hadRiasecPrefix) {
+    if (/^动手/.test(text)) return "动手";
+    if (/^查证/.test(text)) return "查证";
+    if (/^表达/.test(text)) return "表达";
+    if (/^(沟通|安抚)/.test(text)) return "沟通";
+    if (/^(争取|拍板)/.test(text)) return "争取";
+    if (/^(流程|保底)/.test(text)) return "流程";
+  }
   if (text && text !== "A" && text !== "B") return text.slice(0, 4);
   return prefix === "A" ? "主动处理" : "稳住节奏";
 }
@@ -1068,6 +1158,7 @@ function mockResponse(messages) {
   }
   if (content.includes("\"batchCount\"")) {
     const parsed = parseJsonFromPrompt(content);
+    const relationName = mockRelationName(parsed);
     const startYear = Number(parsed?.gameMeta?.startYear || 1);
     const count = Number(parsed?.gameMeta?.batchCount || 5);
     return {
@@ -1079,41 +1170,55 @@ function mockResponse(messages) {
           year,
           phase: outlineCard?.phase || "试播阶段",
           mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-          summary: mockSummary(year, parsed?.history, "暧昧升温，沈晚晴开始给你留座"),
+          summary: mockSummary(year, parsed?.history, `暧昧升温，${relationName}开始给你留座`),
           question: `第 ${year} 年 / ${totalGameYears}`,
           lifeTrack: "项目节奏更紧了，老师和同学开始把难活往你这里递",
-          relationshipTrack: "暧昧升温：沈晚晴开始固定留座",
+          relationshipTrack: `暧昧升温：${relationName}开始固定留座`,
           callbacks: outlineCard?.callbacks?.slice(0, 3) || ["朋友群新梗"],
           scene: {
             title: mockSceneTitle(year, outlineCard),
-            body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。沈晚晴刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
+            body: outlineCard?.conflict || `你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。${relationName}刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。`
           },
           a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: mockRiasec(axis[0]) },
-          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: "你把时间从杂活里抢了回来，沈晚晴却开始认真记你到底在躲什么", riasec: mockRiasec(axis[1]) }
+          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: `你把时间从杂活里抢了回来，${relationName}却开始认真记你到底在躲什么`, riasec: mockRiasec(axis[1]) }
         };
       })
     };
   }
   const parsed = parseJsonFromPrompt(content);
+  const relationName = mockRelationName(parsed);
   const year = Number(parsed?.gameMeta?.currentYear || 1);
   const outlineCard = getOutlineCard(year);
   const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
+  const relationState = year <= 2
+    ? `暧昧升温，${relationName}开始在群里留意你`
+    : `冷战后撤，${relationName}把见面时间往后挪`;
+  const relationshipTrack = year <= 2
+    ? `暧昧升温：${relationName}开始在群里留意你`
+    : `冷战后撤：${relationName}直接问你是不是在躲`;
   return {
     year,
     phase: outlineCard?.phase || "试播阶段",
     mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-    summary: mockSummary(year, parsed?.history, "冷战后撤，沈晚晴把见面时间往后挪"),
+    summary: mockSummary(year, parsed?.history, relationState),
     question: `第 ${year} 年 / ${totalGameYears}`,
     lifeTrack: "新机会把你的日程重新排了一遍，老师默认你该顶上更难的位置",
-    relationshipTrack: "冷战后撤：沈晚晴直接问你是不是在躲",
+    relationshipTrack,
     callbacks: outlineCard?.callbacks?.slice(0, 3) || ["茶水间吐槽"],
     scene: {
       title: mockSceneTitle(year, outlineCard),
-      body: outlineCard?.conflict || "你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，沈晚晴的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。"
+      body: outlineCard?.conflict || `你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，${relationName}的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。`
     },
     a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: mockRiasec(axis[0]) },
-    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: "你没再让自己多开一条战线，可沈晚晴那边也明显把手收了半步", riasec: mockRiasec(axis[1]) }
+    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: `你没再让自己多开一条战线，可${relationName}那边也明显把手收了半步`, riasec: mockRiasec(axis[1]) }
   };
+}
+
+function mockRelationName(parsed) {
+  const explicit = optionalCleanText(parsed?.storyCast?.relationName);
+  if (explicit) return explicit;
+  const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
+  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "沈晚晴";
 }
 
 function mockSceneTitle(year, outlineCard) {
@@ -1185,6 +1290,13 @@ async function handleApi(req, res, pathname) {
   let history = [];
   let requestModel = defaultModel;
   const promptLabDebug = isPromptLabDebugRequest(req);
+  const clientController = new AbortController();
+  const abortClientRequest = () => {
+    if (!res.writableEnded) clientController.abort();
+  };
+  req.on("aborted", abortClientRequest);
+  res.on("close", abortClientRequest);
+  const clientSignal = clientController.signal;
   try {
     body = await readJson(req);
     profile = normalizeProfile(body.profile);
@@ -1197,18 +1309,18 @@ async function handleApi(req, res, pathname) {
     }
 
     if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
-      await sendAnnualStream(res, { pathname, profile, history, body, model: requestModel });
+      await sendAnnualStream(res, { pathname, profile, history, body, model: requestModel, debug: promptLabDebug, clientSignal });
       return;
     }
 
     if (pathname === "/api/game/start") {
-      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, [], [], 1), requestModel, null, promptLabDebug);
-      sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
+      const data = buildOpeningCard(profile, totalGameYears);
+      sendJson(res, 200, { ok: true, model: requestModel, preset: true, card: annualCardFromData(data) });
       return;
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), requestModel, null, promptLabDebug);
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), requestModel, null, promptLabDebug, null, clientSignal);
       sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
       return;
     }
@@ -1220,23 +1332,29 @@ async function handleApi(req, res, pathname) {
         value => validateBatch(value, count, startYear, history),
         requestModel,
         null,
-        promptLabDebug
+        promptLabDebug,
+        null,
+        clientSignal
       );
       sendJson(res, 200, { ok: true, model: requestModel, cards: data.cards.map(annualCardFromData), ...debugField(data) });
       return;
     }
     if (pathname === "/api/game/result") {
-      const result = await callModel(buildResultMessages({ profile, history }), validateResult, requestModel, null, promptLabDebug);
+      const result = await callModel(buildResultMessages({ profile, history }), validateResult, requestModel, null, promptLabDebug, null, clientSignal);
       sendJson(res, 200, { ok: true, model: requestModel, result, ...debugField(result) });
       return;
     }
     sendJson(res, 404, { ok: false, error: "API route not found" });
   } catch (error) {
+    if (error?.status === 499) {
+      if (!res.writableEnded) sendJson(res, 499, { ok: false, error: error.message || "请求已取消" });
+      return;
+    }
     console.error(`API degraded fallback for ${pathname}:`, error?.message || error);
     try {
       if (pathname === "/api/game/start") {
-        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), [], [], 1);
-        sendJson(res, 200, { ok: true, model: requestModel, degraded: true, card: annualCardFromData(data) });
+        const data = buildOpeningCard(profile, totalGameYears);
+        sendJson(res, 200, { ok: true, model: requestModel, preset: true, card: annualCardFromData(data) });
         return;
       }
       if (pathname === "/api/game/next") {

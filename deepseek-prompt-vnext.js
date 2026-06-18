@@ -88,14 +88,14 @@ const outlineData = {
             "I",
             "E"
           ],
-          "conflict": "考研群、保研绩点和校外项目同一天冒泡。你要决定先闭门深造，还是把项目机会继续做大。",
+          "conflict": "考研群、保研绩点和校外项目同一天冒泡。你第一次认真面对要不要考研：先闭门深造，还是把项目机会继续做大。",
           "sideBeat": "关系线核心角色看见你开始为长期路线做取舍",
           "characters": [
             "学长/前辈",
             "导师/老师",
             "关系线核心角色"
           ],
-          "abType": "考研深造 / 项目机会",
+          "abType": "决定考研 / 项目机会",
           "summaryTask": "便签写上一年关系选择的余波 + 学业/项目线的小变化",
           "callbacks": [
             "考研群",
@@ -162,16 +162,16 @@ const outlineData = {
           "comedyDevice": "两头夹击",
           "riasecAxis": [
             "E",
-            "C"
+            "R"
           ],
-          "conflict": "导师点你上台，项目群同时爆雷。你要决定先保体面，还是今晚先救交付。",
+          "conflict": "导师点你上台，项目群同时爆雷。你要决定先公开承担，还是今晚动手救交付。",
           "sideBeat": "关系线核心角色开始不再无条件等你",
           "characters": [
             "导师/老师",
             "外部项目群",
             "关系线核心角色"
           ],
-          "abType": "公开承担 / 交付优先",
+          "abType": "公开承担 / 动手救交付",
           "summaryTask": "便签写上一年工作撞饭的余波 + 关系线后撤",
           "callbacks": [
             "导师点名",
@@ -186,14 +186,14 @@ const outlineData = {
           "comedyDevice": "成年人沉默成本",
           "riasecAxis": [
             "S",
-            "C"
+            "R"
           ],
-          "conflict": "对方问你最近是在忙，还是在躲。你要决定当面说清，还是继续用忙当挡箭牌。",
+          "conflict": "对方问你最近是在忙，还是在躲。你要决定当面说清，还是先动手把项目交完。",
           "sideBeat": "现实线里的项目和成绩没有因为谈关系暂停",
           "characters": [
             "关系线核心角色"
           ],
-          "abType": "当面回应 / 按计划先忙完",
+          "abType": "当面回应 / 动手交付",
           "summaryTask": "现实线只写一个具体压力，不要泛泛说项目继续推进",
           "callbacks": [
             "那句你在躲吗",
@@ -311,15 +311,15 @@ const outlineData = {
           "comedyDevice": "家庭会议开场",
           "riasecAxis": [
             "S",
-            "E"
+            "I"
           ],
-          "conflict": "家里把你的选择开成小型董事会，每个人都爱你，也都想改你剧本。你要决定先安抚，还是自己拍板。",
+          "conflict": "家里把你的选择开成小型董事会，每个人都爱你，也都想改你剧本。你要决定先安抚，还是把选择证据摊开。",
           "sideBeat": "关系线核心角色开始决定还要不要站在你旁边",
           "characters": [
             "家庭型角色",
             "关系线核心角色"
           ],
-          "abType": "照顾关系 / 主动拍板",
+          "abType": "照顾关系 / 摊开证据",
           "summaryTask": "关系线写站不站在你旁边的具体动作",
           "callbacks": [
             "家庭董事会",
@@ -356,10 +356,10 @@ const outlineData = {
           "phase": "压力做实，能力成型",
           "comedyDevice": "成年人补考感情",
           "riasecAxis": [
-            "S",
+            "R",
             "C"
           ],
-          "conflict": "对方不再问你忙不忙，只问这段关系有没有她的位置。你要决定拿出行动，还是先把现实排稳。",
+          "conflict": "对方不再问你忙不忙，只问这段关系有没有她的位置。你要决定拿出具体行动，还是先把现实排稳。",
           "sideBeat": "现实线里你已经开始像真正的大人",
           "characters": [
             "关系线核心角色"
@@ -471,14 +471,15 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 
 长度：
 - summary 28-52 字；lifeTrack 16-26 字；relationshipTrack 18-34 字，格式“阶段：具体信号”。
-- scene.title 6-10 字；scene.body 60-110 字，最多 130 字，2-3 句。
+- scene.title 6-10 字；scene.body 60-110 字，2-3 句。
 - A/B title 3-5 字，desc 12-22 字，tag 2-4 字，consequence 16-36 字。
 
 剧情：
 - 使用 outlineCard 的 conflict/hook/twist/choiceContrast/sideBeat/comedyDevice/riasecAxis。
 - 第 1 年必须使用 stateHints.openingFrame，和 profile.major 明确联动。
 - scene.body 要有历史锚点、人物锚点、事故锚点、喜剧锚点；只拍一个冲突，不塞满项目/家庭/感情多件事。
-- summary 只写上一张 last.consequence 的自然延续 + 另一条线同步近况；禁止“或/要么/分叉/取决于”等并行可能。
+- summary 承接 last.consequence；写关系状态时带阶段词。
+- 遵守 stateHints.repeatGuard / stageGuard：不重复上一张动作；若 stageGuard 提示补救成功，下一张关系必须发生变化，不要原地冷战。
 - 不复用 stateHints.recentSceneTitles；相邻卡换压力源和人物关系。
 - A 的行为对应 outlineCard.riasecAxis[0]，B 的行为对应 outlineCard.riasecAxis[1]；两个选项打法和 consequence 必须明显不同。
 
@@ -527,7 +528,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 本批次内每张 scene.title / scene.body 必须讲不同事件；不得复用 history.recentSceneTitles 或本批次前面已经写过的事件。
 - 不要连续使用同一组人物关系、地点和抉择结构；相邻卡的压力源必须明显不同。
 - 不要写空话，不要拿总结腔凑句子。
-- 每张卡都必须遵守手机卡片预算：scene.body 60-110 字、最多 130 字，选项短，summary 短。
+- 每张卡都必须遵守手机卡片预算：scene.body 60-110 字，选项短，summary 短。
 - 每张卡都必须使用对应 outlineCard 的 comedyDevice、sideBeat、riasecAxis。
 - 每张卡都必须使用对应 outlineCard 的 readableConflict、hook、twist、choiceContrast、mustNotInclude、resultEvidence；不要只复述 conflict。
 - 每张卡 A 行为必须对应该卡 riasecAxis[0]，B 行为必须对应 riasecAxis[1]，两个选项主分类型不得相同；不要输出 riasec。
@@ -796,6 +797,23 @@ const openingFrames = [
 
 function buildStoryCast(profile = {}) {
   const seed = profileSeed(profile);
+  const relationName = String(profile.relationName || "").trim();
+  if (relationName) {
+    const relationGender = String(profile.relationGender || "").trim() || (/男/.test(String(profile.gender || "")) ? "女生" : "男生");
+    const relationIntro = String(profile.relationIntro || "").trim() || `开局第一张牌里已经替你搭过手的${relationGender}${relationName}`;
+    const roommate = pickByHash(roommatePool, seed, 23);
+    const mentor = pickByHash(mentorPool, seed, 37);
+    return {
+      ...defaultStoryCast,
+      relationName,
+      relationGender,
+      relationIntro,
+      roommateName: roommate.name,
+      roommateIntro: roommate.intro,
+      mentorName: mentor.name,
+      mentorIntro: mentor.intro
+    };
+  }
   const relation = pickByHash(relationPool, seed, 11);
   const roommate = pickByHash(roommatePool, seed, 23);
   const mentor = pickByHash(mentorPool, seed, 37);
@@ -862,20 +880,27 @@ function deriveDramaFields(card = {}) {
   };
 }
 
-function directorText(value) {
+function directorText(value, storyCast = defaultStoryCast) {
+  const relationName = storyCast?.relationName || defaultStoryCast.relationName;
   return shortText(value, 90)
-    .replace(/关系线核心角色/g, defaultStoryCast.relationName)
+    .replace(/关系线核心角色/g, relationName)
     .replace(/关系线/g, "亲密关系")
     .replace(/生活线|现实线/g, "现实状态")
     .replace(/主线|副线/g, "当前事件");
 }
 
-function enrichOutlineCard(card) {
-  return card ? { ...card, ...deriveDramaFields(card) } : null;
+function enrichOutlineCard(card, storyCast = defaultStoryCast) {
+  const enriched = card ? { ...card, ...deriveDramaFields(card) } : null;
+  if (!enriched) return null;
+  return {
+    ...enriched,
+    sideBeat: directorText(enriched.sideBeat, storyCast),
+    callbacks: Array.isArray(enriched.callbacks) ? enriched.callbacks.map(item => directorText(item, storyCast)) : []
+  };
 }
 
-function compactOutlineCard(card) {
-  const enriched = enrichOutlineCard(card);
+function compactOutlineCard(card, storyCast = defaultStoryCast) {
+  const enriched = enrichOutlineCard(card, storyCast);
   if (!enriched) return null;
   return {
     year: enriched.year,
@@ -887,9 +912,9 @@ function compactOutlineCard(card) {
     hook: enriched.hook,
     twist: enriched.twist,
     choiceContrast: enriched.choiceContrast,
-    sideBeat: directorText(enriched.sideBeat),
+    sideBeat: enriched.sideBeat,
     abType: enriched.abType,
-    callbacks: Array.isArray(enriched.callbacks) ? enriched.callbacks.map(directorText) : []
+    callbacks: enriched.callbacks
   };
 }
 
@@ -927,13 +952,18 @@ function compactProfile(profile = {}) {
   return out;
 }
 
-function compactStoryCast(profile = {}) {
-  const cast = buildStoryCast(profile);
+function compactStoryCast(profile = {}, existingCast = null) {
+  const cast = existingCast || buildStoryCast(profile);
   return {
+    relationName: cast.relationName,
     relationIntro: shortText(cast.relationIntro, 34),
+    roommateName: cast.roommateName,
     roommateIntro: shortText(cast.roommateIntro, 34),
+    mentorName: cast.mentorName,
     mentorIntro: shortText(cast.mentorIntro, 34),
+    externalName: cast.externalName,
     externalIntro: shortText(cast.externalIntro, 34),
+    familyName: cast.familyName,
     familyIntro: shortText(cast.familyIntro, 34)
   };
 }
@@ -941,6 +971,38 @@ function compactStoryCast(profile = {}) {
 function compactAnnualHistory(history = []) {
   const last = history.at(-1);
   return last ? [normalizeChoiceHistoryItem(last)] : [];
+}
+
+function repeatGuard(history = []) {
+  const last = history.at(-1);
+  if (!last) return "";
+  const choice = shortText(last.choiceText || last.tag || last.choice, 24);
+  const consequence = shortText(last.consequence, 28);
+  if (!choice && !consequence) return "";
+  return `勿重复：${choice}${consequence ? `；已发生：${consequence}` : ""}`;
+}
+
+function stageGuard(history = []) {
+  const last = history.at(-1);
+  if (!last) return "";
+  const consequence = shortText(last.consequence, 56);
+  const text = [
+    last.choice,
+    last.choiceText,
+    last.tag,
+    last.consequence,
+    last.relationshipTrack
+  ].map(item => shortText(item, 42)).join("，");
+  if (/告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text)) {
+    return "关系阶段=体面告别/分手收束";
+  }
+  if (/愿意配合|说好|接过|回暖|主动来找|主动联系|打破僵局|还有缝|认真聊|当面说清|约法|确定|点赞评论/.test(consequence)) {
+    return "上一张已补救关系：下一张必须写确定关系或体面告别的具体信号，禁止原地继续冷战后撤";
+  }
+  if (/冷战|沉默|已读不回|没回|不再联系|疏远|礼貌区/.test(text)) {
+    return "冷淡后不回暧昧升温；除非 last.consequence 明确补救成功";
+  }
+  return "";
 }
 
 function normalizeResultHistoryItem(item) {
@@ -1023,10 +1085,11 @@ export function getOutlineCard(year) {
 }
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
-  const outlineCard = compactOutlineCard(getOutlineCard(year));
+  const storyCast = buildStoryCast(profile);
+  const outlineCard = compactOutlineCard(getOutlineCard(year), storyCast);
   return {
     profile: compactProfile(profile),
-    storyCast: compactStoryCast(profile),
+    storyCast: compactStoryCast(profile, storyCast),
     gameMeta: {
       totalYears: totalGameYears,
       currentYear: year
@@ -1036,6 +1099,8 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     stateHints: {
       recentCallbacks: getRecentCallbacks(history, 4),
       recentSceneTitles: getRecentSceneTitles(history, 6),
+      repeatGuard: repeatGuard(history),
+      stageGuard: stageGuard(history),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳"),
       openingFrame: Number(year) === 1 ? buildOpeningFrame(profile) : null
@@ -1044,9 +1109,10 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
 }
 
 export function buildBatchInput({ profile, history, startYear, count, totalGameYears = 18 }) {
+  const storyCast = buildStoryCast(profile);
   return {
     profile: compactProfile(profile),
-    storyCast: compactStoryCast(profile),
+    storyCast: compactStoryCast(profile, storyCast),
     gameMeta: {
       totalYears: totalGameYears,
       startYear,
@@ -1054,11 +1120,13 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     },
     outlineCards: outlineCards
       .filter(card => card.year >= startYear && card.year < startYear + count)
-      .map(compactOutlineCard),
+      .map(card => compactOutlineCard(card, storyCast)),
     history: compactAnnualHistory(history),
     stateHints: {
       recentCallbacks: getRecentCallbacks(history, 4),
       recentSceneTitles: getRecentSceneTitles(history, 6),
+      repeatGuard: repeatGuard(history),
+      stageGuard: stageGuard(history),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态在连续推进"),
       openingFrame: Number(startYear) <= 1 ? buildOpeningFrame(profile) : null,

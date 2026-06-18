@@ -225,9 +225,48 @@
   <script>
     const TYPE_COLORS = { R: "#315c9a", I: "#6c5ce7", A: "#ff5b23", S: "#0f8b8d", E: "#ed4710", C: "#8bbf16" };
     const TYPE_LABELS = { R: "实用", I: "研究", A: "艺术", S: "社会", E: "企业", C: "常规" };
-    const MAJORS = ["计算机 / 算法", "电子信息", "临床医学", "法学", "师范教育", "金融财会", "机械自动化", "新能源材料", "心理学", "传媒设计", "土木建筑", "生物医药", "经济管理", "中文 / 外语", "数学 / 统计"];
-    const DEFAULT_MODELS = ["MiniMax-M2.7-highspeed", "deepseek-v4-flash", "deepseek-v4-pro", "mimo-v2.5-pro"];
-    const PROMPT_LAB_DEFAULT_MODEL = "MiniMax-M2.7-highspeed";
+    const MAJORS = [
+          "计算机科学与技术",
+          "数据科学与大数据技术",
+          "信息安全",
+          "电子信息工程",
+          "微电子科学与工程",
+          "电气工程及其自动化",
+          "自动化",
+          "机械设计制造及其自动化",
+          "车辆工程",
+          "新能源科学与工程",
+          "飞行器设计与工程",
+          "生物医学工程",
+          "土木工程",
+          "建筑学",
+          "材料科学与工程",
+          "化学工程与工艺",
+          "临床医学",
+          "口腔医学",
+          "中医学",
+          "药学",
+          "护理学",
+          "法学",
+          "思想政治教育",
+          "小学教育",
+          "汉语言文学",
+          "新闻学",
+          "数学与应用数学",
+          "应用心理学",
+          "金融学",
+          "会计学",
+          "哲学",
+          "逻辑学",
+          "历史学",
+          "考古学",
+          "农学",
+          "动物医学",
+          "视觉传达设计",
+          "音乐学"
+    ];
+    const DEFAULT_MODELS = ["deepseek-v4-flash", "deepseek-v4-pro", "MiniMax-M2.7-highspeed", "mimo-v2.5-pro"];
+    const PROMPT_LAB_DEFAULT_MODEL = "deepseek-v4-flash";
     const ORDER = ["R", "I", "A", "S", "E", "C"];
     const BATCH_PLAN = Array.from({ length: 18 }, (_, index) => [index + 1, 1]); // 与主程序一致：第1年 start，之后当前卡双分支预生成下一年。
     const TOTAL_YEARS = BATCH_PLAN.length;
@@ -658,7 +697,10 @@
       return shared / Math.max(1, Math.min(a.size, b.size));
     }
     function relationshipStageText(value) {
-      return /(暧昧升温|暧昧试探|确定关系|热恋磨合|关系稳定|冷战后撤|分手收束|复合试探|婚恋压力|长期陪伴)/.test(String(value || ""));
+      return /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/.test(String(value || ""));
+    }
+    function relationshipMentionText(value) {
+      return /(关系|暧昧|冷淡|冷战|分手|告别|对象|许青禾|沈晚晴|苏听澜|陈栀|她(?:约|等|问|回|没|不|主动|沉默|留|发|看|递|笑|说))/.test(String(value || ""));
     }
     function characterAnchorIssues(card, index) {
       const text = [card.context, card.sceneTitle, card.sceneBody || card.prompt, card.lifeTrack, card.relationshipTrack].filter(Boolean).join(" ");
@@ -751,10 +793,9 @@
         if (/接[住着下]?或错失|错失或接|错过或接|或错失|或错过|要么|无论|分叉|两条路|取决于|A或B|A\/B/.test(summary)) add("warn", "summary 像在同时保留 A/B 两种结果");
         if (prevCons && textOverlap(summary.slice(0, 28), prevCons) < 0.08) add("warn", "summary 开头没有明显继承上一张所选 consequence");
       }
-      if (/关系|许闻笙|沈晚晴|她/.test(summary) && !relationshipStageText(summary)) add("warn", "summary 提到关系但没有明确阶段");
+      if (relationshipMentionText(summary) && !relationshipStageText(summary)) add("warn", "summary 提到关系但没有明确阶段");
       if (card.relationshipTrack && !relationshipStageText(card.relationshipTrack)) add("warn", "relationshipTrack 没有明确阶段");
       if (String(card.sceneTitle || "").length > 10) add("soft", "sceneTitle 超 10 字，主程序卡面标题可能换行");
-      if (String(card.sceneBody || card.prompt || "").length > 130) add("soft", "sceneBody 超 130 字，主程序卡面正文可能偏满");
       const repeated = run?.cards?.slice(0, index).some(prev => {
         const prevText = [prev.card.sceneTitle, prev.card.sceneBody || prev.card.prompt].filter(Boolean).join("");
         const nowText = [card.sceneTitle, card.sceneBody || card.prompt].filter(Boolean).join("");

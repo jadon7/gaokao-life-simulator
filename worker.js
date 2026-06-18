@@ -8,8 +8,9 @@ import {
   vNextResultTaskPrompt,
   vNextSystemPrompt
 } from "./deepseek-prompt-vnext.js";
+import { buildOpeningCard } from "./opening-cards-data.js";
 
-const defaultDeepSeekModel = "deepseek-v4-pro";
+const defaultDeepSeekModel = "deepseek-v4-flash";
 const defaultMiniMaxModel = "MiniMax-M2.7-highspeed";
 const defaultDeepSeekBaseUrl = "https://api.deepseek.com";
 const defaultMiniMaxBaseUrl = "https://api.minimax.io/v1";
@@ -31,7 +32,7 @@ function currentModel(env) {
   const requested = env?.LLM_MODEL || env?.DEEPSEEK_MODEL || env?.MINIMAX_MODEL;
   const configs = buildModelConfigs(env);
   if (configs.some(config => config.id === requested)) return requested;
-  return configs.find(config => modelIsConfigured(config, env))?.id || defaultDeepSeekModel;
+  return defaultDeepSeekModel;
 }
 
 function buildModelConfigs(env) {
@@ -39,8 +40,8 @@ function buildModelConfigs(env) {
   const minimaxBaseUrl = env?.MINIMAX_BASE_URL || defaultMiniMaxBaseUrl;
   return [
     {
-      id: "deepseek-v4-pro",
-      label: "DeepSeek V4 Pro",
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
       provider: "deepseek",
       baseUrl: deepseekBaseUrl,
       apiKey: env?.DEEPSEEK_API_KEY,
@@ -50,8 +51,8 @@ function buildModelConfigs(env) {
       supportsResponseFormat: true
     },
     {
-      id: "deepseek-v4-flash",
-      label: "DeepSeek V4 Flash",
+      id: "deepseek-v4-pro",
+      label: "DeepSeek V4 Pro",
       provider: "deepseek",
       baseUrl: deepseekBaseUrl,
       apiKey: env?.DEEPSEEK_API_KEY,
@@ -120,7 +121,10 @@ function normalizeProfile(profile = {}) {
     hope: clean(profile.hope, "未知"),
     keywords: clean(profile.keywords, "观察中"),
     major: clean(profile.major, "未选专业"),
-    majorLabel: clean(profile.majorLabel, clean(profile.major, "未选专业"))
+    majorLabel: clean(profile.majorLabel, clean(profile.major, "未选专业")),
+    relationName: clean(profile.relationName, ""),
+    relationGender: clean(profile.relationGender, ""),
+    relationIntro: clean(profile.relationIntro, "")
   };
 }
 
@@ -194,7 +198,13 @@ function buildResultMessages({ profile, history }) {
   ];
 }
 
-async function callModel(messages, validator, env, model = currentModel(env), onDelta = null, debug = false, onDiscard = null) {
+function clientAbortError() {
+  const error = new Error("请求已取消");
+  error.status = 499;
+  return error;
+}
+
+async function callModel(messages, validator, env, model = currentModel(env), onDelta = null, debug = false, onDiscard = null, clientSignal = null) {
   const config = resolveModelConfig(env, model);
   if (env?.LLM_MOCK === "1" || env?.DEEPSEEK_MOCK === "1") {
     const raw = mockResponse(messages);
@@ -216,9 +226,17 @@ async function callModel(messages, validator, env, model = currentModel(env), on
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const useStream = llmStream && attempt === 0;
     let streamedAny = false;
+    let clientAborted = false;
+    const controller = new AbortController();
+    const abortFromClient = () => {
+      clientAborted = true;
+      controller.abort("client aborted");
+    };
+    if (clientSignal?.aborted) throw clientAbortError();
+    clientSignal?.addEventListener("abort", abortFromClient, { once: true });
+    let timeout = null;
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(`${config.label} request timeout`), llmTimeoutMs);
+      timeout = setTimeout(() => controller.abort(`${config.label} request timeout`), llmTimeoutMs);
       const body = requestBody(config, messages, useStream);
       const response = await fetch(`${String(config.baseUrl).replace(/\/+$/g, "")}/chat/completions`, {
         method: "POST",
@@ -226,7 +244,6 @@ async function callModel(messages, validator, env, model = currentModel(env), on
         signal: controller.signal,
         body: JSON.stringify(body)
       });
-      clearTimeout(timeout);
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         const error = new Error(payload?.error?.message || `${config.label} request failed: ${response.status}`);
@@ -242,9 +259,13 @@ async function callModel(messages, validator, env, model = currentModel(env), on
       if (!content) throw new Error(`${config.label} returned empty content`);
       return attachModelDebug(validator(parseJsonContent(content)), debug, { request: body, rawOutput: content });
     } catch (error) {
+      if (clientAborted || clientSignal?.aborted) throw clientAbortError();
       lastError = error;
       if (useStream && streamedAny) onDiscard?.();
       console.error(`${config.label} attempt ${attempt + 1}/2 failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
+    } finally {
+      clearTimeout(timeout);
+      clientSignal?.removeEventListener("abort", abortFromClient);
     }
   }
   console.error(`${config.label} unavailable, using fallback content:`, lastError?.message || lastError);
@@ -319,7 +340,7 @@ async function readChatStream(response, onDelta = null) {
   return content.trim();
 }
 
-function annualStreamResponse({ pathname, profile, history, body, env, model }) {
+function annualStreamResponse({ pathname, profile, history, body, env, model, debug = false, clientSignal = null }) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -327,16 +348,8 @@ function annualStreamResponse({ pathname, profile, history, body, env, model }) 
       send({ type: "meta", model });
       try {
         if (pathname === "/api/game/start/stream") {
-          const data = await callModel(
-            buildAnnualMessages({ profile, history: [], year: 1 }),
-            value => validateAnnual(value, [], [], 1),
-            env,
-            model,
-            text => send({ type: "delta", text }),
-            false,
-            () => send({ type: "reset" })
-          );
-          send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+          const data = buildOpeningCard(profile, totalGameYears);
+          send({ type: "done", ok: true, model, preset: true, card: annualCardFromData(data) });
           return;
         }
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
@@ -346,10 +359,11 @@ function annualStreamResponse({ pathname, profile, history, body, env, model }) 
           env,
           model,
           text => send({ type: "delta", text }),
-          false,
-          () => send({ type: "reset" })
+          debug,
+          () => send({ type: "reset" }),
+          clientSignal
         );
-        send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data) });
+        send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data), ...debugField(data) });
       } catch (error) {
         send({ type: "error", ok: false, error: error.message || "Request failed" });
       } finally {
@@ -420,10 +434,57 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   }
   const yearNumber = normalized.year;
   normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 52, 2);
+  if (yearNumber > 1) {
+    normalized.relationshipTrack = repairRelationshipTrackStage(normalized.relationshipTrack, history);
+  }
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
   return normalized;
+}
+
+function repairRelationshipTrackStage(relationshipTrack, history = []) {
+  const track = optionalCleanText(relationshipTrack);
+  if (!track) return track;
+  if (!shouldForceFarewellStage(history) || /^(体面告别|分手收束)[：:]/.test(track)) {
+    return normalizeRelationshipTrackStage(track);
+  }
+  const signal = track
+    .replace(relationshipStagePattern, "")
+    .replace(/^[：:，,]+/, "")
+    .replace(/[。！？!?；;]+$/g, "")
+    .trim();
+  return `体面告别：${signal || "你们把话说到这里，各自退出对方日常"}`;
+}
+
+function normalizeRelationshipTrackStage(track) {
+  if (relationshipStagePattern.test(track)) return track;
+  const alias = [
+    [/^(暧昧降温|关系降温|暧昧冷却|暧昧转冷|关系冷淡|冷淡疏远)/, "冷战后撤"],
+    [/^(恋爱确定|正式在一起|确认关系)/, "确定关系"],
+    [/^(和平告别|礼貌告别)/, "体面告别"],
+    [/^(分开|分手|关系结束)/, "分手收束"]
+  ].find(([pattern]) => pattern.test(track));
+  const stage = alias?.[1] || (/冷|沉默|不联系|减少主动|后撤|疏远|已读不回/.test(track) ? "冷战后撤" : "");
+  if (!stage) return track;
+  const signal = track
+    .replace(alias?.[0] || /^.*?[：:]/, "")
+    .replace(/^[：:，,]+/, "")
+    .replace(/[。！？!?；;]+$/g, "")
+    .trim();
+  return `${stage}：${signal || "对方开始减少主动联系"}`;
+}
+
+function shouldForceFarewellStage(history = []) {
+  const last = Array.isArray(history) ? history.at(-1) : null;
+  const text = [
+    last?.choice,
+    last?.choiceText,
+    last?.tag,
+    last?.consequence,
+    last?.relationshipTrack
+  ].map(optionalCleanText).join("，");
+  return /告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text);
 }
 
 function applyOutlineRiasec(card) {
@@ -646,7 +707,7 @@ function optionalCleanText(value) {
 function clampTextBySentence(value, maxLength, maxSentences = 1) {
   const text = optionalCleanText(value).replace(/\s+/g, "");
   if (!text) return "";
-  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [text];
+  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?[」”』》）)]?/g) || [text];
   const joined = parts.slice(0, maxSentences).join("").replace(/[。！？!?；;]+$/g, "");
   if (joined.length <= maxLength) return joined;
   const clipped = joined.slice(0, maxLength);
@@ -658,7 +719,7 @@ function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
       title: clampTextBySentence(value.title, 10, 1),
-      body: clampTextBySentence(value.body, 130, 3)
+      body: cleanSceneBody(value.body)
     };
   }
   const raw = optionalCleanText(value);
@@ -667,14 +728,18 @@ function normalizeSceneData(value) {
   if (eventMatch || contextMatch) {
     return {
       title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 10, 1),
-      body: clampTextBySentence(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""), 130, 3)
+      body: cleanSceneBody(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""))
     };
   }
   const sentenceMatch = raw.match(/^(.{8,28}?[。！？!?])([\s\S]*)$/);
   return {
     title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 10, 1),
-    body: clampTextBySentence(sentenceMatch?.[2] || raw, 130, 3)
+    body: cleanSceneBody(sentenceMatch?.[2] || raw)
   };
+}
+
+function cleanSceneBody(value) {
+  return optionalCleanText(value).replace(/\s+/g, "");
 }
 
 function normalizeChoiceData(value, prefix) {
@@ -693,7 +758,7 @@ function normalizeChoiceData(value, prefix) {
 }
 
 function normalizeChoiceConsequence(value) {
-  return clampTextBySentence(value, 36, 1);
+  return balanceInlineQuote(clampTextBySentence(value, 36, 1));
 }
 
 function normalizeRiasecPayload(value) {
@@ -714,6 +779,8 @@ function normalizeChoiceTitle(value, prefix) {
     .replace(new RegExp(`^${prefix}[.。]\\s*`), "")
     .replace(/[，,。.!！?？；;].*$/g, "")
     .replace(/\s+/g, "");
+  if (/demo/i.test(text)) return "做Demo";
+  if (/邮件.*告别|写信.*告别|写封邮件/.test(text)) return "写信告别";
   if (text) return text.slice(0, 5);
   return prefix === "A" ? "直接推进" : "先稳住";
 }
@@ -724,12 +791,33 @@ function normalizeChoiceDesc(value, title, prefix) {
     .replace(title, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
-  if (text.length >= 8) return clampTextBySentence(text, 22, 1);
+  if (text.length >= 8) return balanceInlineQuote(clampTextBySentence(text, 22, 1));
   return prefix === "A" ? "把问题摊开当场处理" : "留出余地再判断";
 }
 
+function balanceInlineQuote(value) {
+  const text = optionalCleanText(value).replace(/[，,、：:]+$/g, "");
+  const openCount = (text.match(/“/g) || []).length;
+  const closeCount = (text.match(/”/g) || []).length;
+  const cornerOpenCount = (text.match(/「/g) || []).length;
+  const cornerCloseCount = (text.match(/」/g) || []).length;
+  if (openCount > closeCount) return `${text}”`;
+  if (cornerOpenCount > cornerCloseCount) return `${text}」`;
+  return text;
+}
+
 function normalizeChoiceTag(value, prefix) {
-  const text = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "").replace(/\s+/g, "");
+  let text = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "").replace(/\s+/g, "");
+  const hadRiasecPrefix = /^[RIASEC][：:·.\-—_、]?/i.test(text);
+  text = text.replace(/^[RIASEC][：:·.\-—_、]?/i, "");
+  if (hadRiasecPrefix) {
+    if (/^动手/.test(text)) return "动手";
+    if (/^查证/.test(text)) return "查证";
+    if (/^表达/.test(text)) return "表达";
+    if (/^(沟通|安抚)/.test(text)) return "沟通";
+    if (/^(争取|拍板)/.test(text)) return "争取";
+    if (/^(流程|保底)/.test(text)) return "流程";
+  }
   if (text && text !== "A" && text !== "B") return text.slice(0, 4);
   return prefix === "A" ? "主动处理" : "稳住节奏";
 }
@@ -1113,16 +1201,16 @@ async function handleApi(request, env, pathname) {
 
   try {
     if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
-      return annualStreamResponse({ pathname, profile, history, body, env, model });
+      return annualStreamResponse({ pathname, profile, history, body, env, model, debug: promptLabDebug, clientSignal: request.signal });
     }
 
     if (pathname === "/api/game/start") {
-      const data = await callModel(buildAnnualMessages({ profile, history: [], year: 1 }), value => validateAnnual(value, [], [], 1), env, model, null, promptLabDebug);
-      return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
+      const data = buildOpeningCard(profile, totalGameYears);
+      return sendJson(200, { ok: true, model, preset: true, card: annualCardFromData(data) });
     }
     if (pathname === "/api/game/next") {
       const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
-      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), env, model, null, promptLabDebug);
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), env, model, null, promptLabDebug, null, request.signal);
       return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/batch") {
@@ -1134,22 +1222,27 @@ async function handleApi(request, env, pathname) {
         env,
         model,
         null,
-        promptLabDebug
+        promptLabDebug,
+        null,
+        request.signal
       );
       return sendJson(200, { ok: true, model, cards: data.cards.map(annualCardFromData), ...debugField(data) });
     }
     if (pathname === "/api/game/result") {
-      const result = await callModel(buildResultMessages({ profile, history }), validateResult, env, model, null, promptLabDebug);
+      const result = await callModel(buildResultMessages({ profile, history }), validateResult, env, model, null, promptLabDebug, null, request.signal);
       return sendJson(200, { ok: true, model, result, ...debugField(result) });
     }
     return sendJson(404, { ok: false, error: "API route not found" });
   } catch (error) {
+    if (error?.status === 499) {
+      return sendJson(499, { ok: false, error: error.message || "请求已取消" });
+    }
     // 兜底降级：任何异常都返回 200 + 本地模拟内容，避免把上游 5xx 透传给前端
     console.error(`API degraded fallback for ${pathname}:`, error?.message || error);
     try {
       if (pathname === "/api/game/start") {
-        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history: [], year: 1 })), [], [], 1);
-        return sendJson(200, { ok: true, model, degraded: true, card: annualCardFromData(data) });
+        const data = buildOpeningCard(profile, totalGameYears);
+        return sendJson(200, { ok: true, model, preset: true, card: annualCardFromData(data) });
       }
       if (pathname === "/api/game/next") {
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);

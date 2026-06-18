@@ -4,20 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-「高考人生模拟器」：18 张牌的连续人生短剧 + 霍兰德（RIASEC）兴趣隐藏计分。前端是翻牌 UI，剧情内容由后端调用 DeepSeek 逐年生成，保证每一年的提示词都拿到玩家已经做出的完整历史选择。仓库内文档与文案均为中文。
+「高考人生模拟器」：18 张牌的连续人生短剧 + 霍兰德（RIASEC）兴趣隐藏计分。前端是翻牌 UI，第 1 年用本地预置开场牌（`opening-cards-data.js`），第 2～18 年由后端调用大模型逐年生成，保证每一年的提示词都拿到玩家已经做出的完整历史选择。后端模型是可切换的多 provider（DeepSeek / 小米 MiMo / MiniMax），不再写死 DeepSeek。仓库内文档与文案均为中文。
 
 ## 常用命令
 
 ```bash
-npm start                      # 本地开发服务（默认 http://127.0.0.1:8765/），需要 .env 里有 DEEPSEEK_API_KEY
-DEEPSEEK_MOCK=1 npm start      # mock 模式，不调 DeepSeek，纯测 UI
+npm start                      # 本地开发服务（默认 http://127.0.0.1:8765/），需要 .env 里有当前模型对应 provider 的 API Key
+LLM_MOCK=1 npm start           # mock 模式，不调任何大模型，纯测 UI（旧别名 DEEPSEEK_MOCK 仍兼容）
 npm run cf:dry-run             # wrangler deploy --dry-run 验证 Worker
 npm run cf:deploy              # 部署到 Cloudflare（生产域名 gaokao.dsxzai.com）
+
+# UI 验收测试：先用 mock 跑服务，再用 headless Chrome 跑 DOM 断言（需本机装 Google Chrome）
+LLM_MOCK=1 PORT=8788 npm start                  # 终端 A
+BASE=http://127.0.0.1:8788 node tests/run-ui-tests.mjs [suite]   # 终端 B；可只跑某个 suite，如 jad80
 ```
 
-没有构建步骤、测试和 lint。前端无框架、无打包，改完刷新浏览器即可。
+没有构建步骤和 lint，前端无框架、无打包，改完刷新浏览器即可。测试只有 `tests/run-ui-tests.mjs` 一个 headless Chrome 套件：它访问 `/?selftest=<name>`，由 `index.html` 里的探针把结果写进 `document.title`（`SELFTEST:{json}`）再断言，新增用例时两端都要加探针分支。
 
-环境变量从 `.env` 读取（`server.js` 自带解析器，不依赖 dotenv）：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`DEEPSEEK_MOCK`、`DEEPSEEK_STREAM`、`PORT`。生产环境的 `DEEPSEEK_API_KEY` 通过 Cloudflare Worker Secret 配置，不在仓库里。
+环境变量从 `.env` 读取（`server.js` 自带解析器，不依赖 dotenv）。通用开关：`LLM_MODEL`（选模型，决定 provider）、`LLM_MOCK`、`LLM_STREAM`、`PORT`（旧的 `DEEPSEEK_MODEL/DEEPSEEK_MOCK/DEEPSEEK_STREAM` 作为兼容回退）。各 provider 各有一组 key/base：`DEEPSEEK_API_KEY`/`DEEPSEEK_BASE_URL`、`MIMO_API_KEY`/`MIMO_BASE_URL`、`MINIMAX_API_KEY`/`MINIMAX_BASE_URL`。生产环境的 API Key 通过 Cloudflare Worker Secret 配置，不在仓库里。
 
 ## 架构
 
@@ -25,14 +29,17 @@ npm run cf:deploy              # 部署到 Cloudflare（生产域名 gaokao.dsxz
 
 同一套 API 有两份实现，逻辑大量重复，**改其一时必须同步改另一个**：
 
-- `server.js` — Node 本地开发服务：静态托管仓库根目录（根 `index.html` + `assets/`）+ DeepSeek 代理。
+- `server.js` — Node 本地开发服务：静态托管仓库根目录（根 `index.html` + `assets/`）+ 大模型代理。模型路由（deepseek/mimo/minimax 三套 key、base、`resolveModelConfig`、MiniMax 用 `api-key` 头而非 `Bearer`）也在这里，worker.js 有一份平行实现。
 - `worker.js` — Cloudflare Worker 生产版：静态资源走 `public/` 目录（wrangler ASSETS binding），API 逻辑与 server.js 平行。
 
-两者都从 `deepseek-prompt-vnext.js` 导入 prompt 与输入构造器。该文件是 prompt 的唯一事实来源：`vNextSystemPrompt`、`vNextAnnualTaskPrompt`、`vNextBatchTaskPrompt`、`vNextResultTaskPrompt`，以及 `buildAnnualInput/buildBatchInput/buildResultInput`、18 张黄金题纲 `getOutlineCard`。
+两者共享两个事实来源模块，**改其一时这两个模块都要保证两端一致**：
+
+- `deepseek-prompt-vnext.js` — prompt 与输入构造器的唯一来源：`vNextSystemPrompt`、`vNextAnnualTaskPrompt`、`vNextBatchTaskPrompt`、`vNextResultTaskPrompt`，以及 `buildAnnualInput/buildBatchInput/buildResultInput`、18 张黄金题纲 `getOutlineCard`。
+- `opening-cards-data.js` — 第 1 年开场牌的唯一来源：内置男/女两套固定开场牌，`buildOpeningCard(profile, totalYears)` 按玩家档案挑一张本地返回（不调大模型）。server.js 与 worker.js 都 import 它。
 
 API 端点（两个后端一致）：
 
-- `POST /api/game/start` — 生成第 1 年卡牌。
+- `POST /api/game/start` — 返回第 1 年开场牌。注意：这是 `buildOpeningCard` 的本地预置牌（响应里带 `preset: true`），**不走大模型**。
 - `POST /api/game/next` — 根据当前完整 `history` 逐年生成下一张卡牌。**index.html 主流程和 prompt-lab.html 都必须使用这条逐年机制**。
 - `POST /api/game/batch` — 按 `startYear/count` 批量生成多张卡牌。仅作为兼容/实验接口保留，不能在主流程里替代逐年机制。
 - `POST /api/game/result` — 18 年结束后生成结果页 JSON。
@@ -41,12 +48,12 @@ API 端点（两个后端一致）：
 
 `index.html` 和 `prompt-lab.html` 是同一套提示词效果的生产入口与测试入口。凡是修改提示词调用机制时，必须同时检查并同步两边：
 
-- 请求节奏：第 1 年走 `/api/game/start`，之后每次只生成 1 年，走 `/api/game/next`。
+- 请求节奏：第 1 年走 `/api/game/start`（本地开场牌），之后每次只生成 1 年，走 `/api/game/next`。
 - 历史输入：每次 `/api/game/next` 都必须传入当前已选择的完整 `history`。
 - 模型选择、降级策略、结果页调用和请求 payload 字段，不能只改一边。
 - 如果未来要重新启用批量生成、预热、桥接题或本地固定题，必须让 `prompt-lab.html` 也能用同一机制复现实验；否则不要接入 `index.html` 主流程。
 
-DeepSeek 调用细节：`response_format: json_object`、流式 SSE 解析、超时控制、失败重试一次（第二次降级为非流式）。两次都失败后**不报错**，而是回落到 `mockResponse` 并在返回中标记 `degraded: true`。返回内容经 `validateAnnual/validateBatch/validateResult` 校验并补默认值后才返回前端。
+大模型调用细节（所有 provider 共用一条 `callModel` 路径）：`response_format: json_object`、流式 SSE 解析、超时控制、失败重试一次（第二次降级为非流式）。两次都失败后**不报错**，而是回落到 `mockResponse` 并在返回中标记 `degraded: true`。返回内容经 `validateAnnual/validateBatch/validateResult` 校验并补默认值后才返回前端。
 
 ### 前端：单文件巨石
 

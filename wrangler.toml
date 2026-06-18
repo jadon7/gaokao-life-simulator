@@ -8,7 +8,7 @@ account_id = "0eedb61d5ddbea42f84455c9455addb0"
 enabled = true
 
 [vars]
-LLM_MODEL = "MiniMax-M2.7-highspeed"
+LLM_MODEL = "deepseek-v4-flash"
 
 [assets]
 directory = "./public"

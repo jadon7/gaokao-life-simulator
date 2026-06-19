@@ -474,6 +474,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 剧情：
 - 使用 outlineCard 的 conflict/hook/twist/choiceContrast/sideBeat/comedyDevice/riasecAxis。
 - 第 1 年必须使用 stateHints.openingFrame，和 profile.major 明确联动。
+- 时间锚点：每张卡发生在上一张选择至少一年之后的某一天；必须遵守 stateHints.timeAnchor。
 - 阶段约束：{{PHASE_PROMPT}}
 - scene.body 要有历史锚点、人物锚点、事故锚点、喜剧锚点；只拍一个冲突，不塞满项目/家庭/感情多件事。
 - summary 承接 last.consequence；写关系状态时带阶段词。
@@ -518,6 +519,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 
 特别规则：
 - 这些卡片用于预生成，所以你不能假设未来玩家一定会选 A 或 B。
+- 每张卡都发生在上一张至少一年之后的某一天；必须遵守 stateHints.timeAnchor，不要写成同一周连续剧。
 - 未发生年份的 summary 只能写“当前趋势 + 另一条线同步近况”，不能写死未来具体后果。
 - 未发生年份可以埋人物、关系、压力和冲突，但不能把未来选择写成既成事实。
 - 如果输入 history 已经包含上一张实际 consequence，即使在 batch 模式也必须以 history 为准；禁止用“或/分叉”保留两个相反选择。
@@ -570,13 +572,13 @@ function phasePromptForYear(year = 1) {
     return "入学适应：专业首锚、角色首登、第一次被看见；角色首次出现必须带 storyCast 身份短语。";
   }
   if (currentYear <= 6) {
-    return "分岔选择：考研/保研/实习/项目只能保一头；A/B 必须写清放弃的窗口；consequence 同时写生活后果和另一条线代价。";
+    return "分岔选择：考研/保研/实习/项目只能保一头；A/B 必须写清放弃的窗口；第6年应接近毕业或毕业后，不再写宿舍/食堂小事。";
   }
   if (currentYear <= 9) {
-    return "进入现实：必须出现毕业、读研、实习、校招或第一份工作之一；禁止继续只写课程/小组作业；专业事故最多连续两年。";
+    return "进入现实：必须出现毕业、读研、实习、校招或第一份工作之一；禁止宿舍/食堂/班群/学院群，除非 history 明确读研仍在校。";
   }
   if (currentYear <= 12) {
-    return "职业关系翻面：必须出现晋升、跳槽、换城市、新平台、确定关系或分手之一；上一张若仍是项目事故，本张换到岗位/城市/职级。";
+    return "职业关系翻面：必须出现晋升、跳槽、换城市、新平台、确定关系或分手之一；地点放到公司/通勤/租房/城市。";
   }
   if (currentYear <= 15) {
     return "成年压力：围绕收入、家庭、长期伴侣、职级或城市；关系顺利写见家长/订婚/同居，不顺写分手/复合/新恋情。";
@@ -1058,6 +1060,19 @@ function compactStoryCast(profile = {}, existingCast = null) {
   };
 }
 
+function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
+  const cast = compactStoryCast(profile, existingCast);
+  const currentYear = Number(year || 1);
+  if (currentYear >= 6) {
+    cast.roommateIntro = shortText(`大学老同学${cast.roommateName}，现在常在微信里吐槽你`, 34);
+    cast.mentorIntro = shortText(`曾经带过你的专业导师${cast.mentorName}老师，现在像行业前辈`, 34);
+  }
+  if (currentYear >= 10) {
+    cast.roommateIntro = shortText(`不同城市的大学老友${cast.roommateName}，偶尔给你泼冷水`, 34);
+  }
+  return cast;
+}
+
 function compactAnnualHistory(history = []) {
   const last = history.at(-1);
   return last ? [normalizeChoiceHistoryItem(last)] : [];
@@ -1197,6 +1212,23 @@ function lifeStageHint(year = 1, history = []) {
   return `${careerArcHint(year)}；${relationshipArcHint(history, year)}`;
 }
 
+function timeAnchorHint(year = 1, history = []) {
+  const currentYear = Number(year || 1);
+  const text = JSON.stringify(history || []);
+  const choseStudy = /考研|保研|读研|深造|研究生/.test(text) && !/放弃考研|退出考研|不考研/.test(text);
+  if (currentYear <= 3) return "时间：18-20岁，大学早期；可以写校园，但每张卡相隔至少一年。";
+  if (currentYear <= 5) return "时间：21-22岁，毕业分岔期；考研/保研/实习/项目只能保一头。";
+  if (currentYear === 6) return "时间：23岁左右，毕业前后或第一份工作前夜；不要再写食堂新窗口、宿舍日常。";
+  if (currentYear <= 9) {
+    return choseStudy
+      ? "时间：24-26岁，读研/实习或第一份工作阶段；可写实验室/导师，但不要写本科班群和宿舍。"
+      : "时间：24-26岁，已毕业进入实习/第一份工作；禁止食堂、宿舍、班级群、学院群截图。";
+  }
+  if (currentYear <= 12) return "时间：27-29岁，职场和城市选择阶段；地点用公司、租房、通勤、客户现场。";
+  if (currentYear <= 15) return "时间：30-32岁，收入、家庭、长期伴侣和职级压力做实。";
+  return "时间：33-36岁，成为前辈并收束职业定位和亲密关系；不要写本科校园日常。";
+}
+
 function castIntroHint(storyCast = defaultStoryCast, history = []) {
   const text = JSON.stringify(history || []);
   const intros = [
@@ -1236,10 +1268,11 @@ export function getOutlineCard(year) {
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
+  const compactCast = compactStoryCastForYear(profile, storyCast, year);
   const outlineCard = compactOutlineCard(getOutlineCard(year), storyCast);
   return {
     profile: compactProfile(profile),
-    storyCast: compactStoryCast(profile, storyCast),
+    storyCast: compactCast,
     gameMeta: {
       totalYears: totalGameYears,
       currentYear: year
@@ -1252,8 +1285,9 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
       repeatGuard: repeatGuard(history),
       stageGuard: stageGuard(history),
       majorAnchor: majorAnchorHint(profile, year),
+      timeAnchor: timeAnchorHint(year, history),
       lifeStage: lifeStageHint(year, history),
-      castIntroRule: castIntroHint(storyCast, history),
+      castIntroRule: castIntroHint(compactCast, history),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳"),
       openingFrame: Number(year) === 1 ? buildOpeningFrame(profile) : null
@@ -1263,9 +1297,10 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
 
 export function buildBatchInput({ profile, history, startYear, count, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
+  const compactCast = compactStoryCastForYear(profile, storyCast, startYear);
   return {
     profile: compactProfile(profile),
-    storyCast: compactStoryCast(profile, storyCast),
+    storyCast: compactCast,
     gameMeta: {
       totalYears: totalGameYears,
       startYear,
@@ -1281,8 +1316,9 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
       repeatGuard: repeatGuard(history),
       stageGuard: stageGuard(history),
       majorAnchor: majorAnchorHint(profile, startYear),
+      timeAnchor: timeAnchorHint(startYear, history),
       lifeStage: lifeStageHint(startYear, history),
-      castIntroRule: castIntroHint(storyCast, history),
+      castIntroRule: castIntroHint(compactCast, history),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态在连续推进"),
       openingFrame: Number(startYear) <= 1 ? buildOpeningFrame(profile) : null,

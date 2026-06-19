@@ -4448,6 +4448,38 @@
       };
     }
 
+    function apiProfile(profile = state.profile) {
+      const out = {
+        gender: profile.gender || "不限定",
+        hope: profile.hope || "稳定且体面",
+        major: profile.majorLabel || profile.major || majorLabel()
+      };
+      if (profile.relationName) out.relationName = profile.relationName;
+      if (profile.relationGender) out.relationGender = profile.relationGender;
+      if (profile.relationIntro) out.relationIntro = profile.relationIntro;
+      return out;
+    }
+
+    function apiHistoryItem(item = {}, includeHolland = false) {
+      const out = {
+        year: item.year,
+        sceneTitle: item.sceneTitle || item.scene || "",
+        choice: item.choice || "",
+        choiceText: item.choiceText || "",
+        consequence: item.consequence || "",
+        tag: item.tag || "",
+        lifeTrack: item.lifeTrack || "",
+        relationshipTrack: item.relationshipTrack || "",
+        callbackSeeds: Array.isArray(item.callbackSeeds) ? item.callbackSeeds.slice(0, 3) : []
+      };
+      if (includeHolland) out.holland = normalizeRiasecScores(item.holland);
+      return out;
+    }
+
+    function apiHistory(includeHolland = false) {
+      return state.history.map(item => apiHistoryItem(item, includeHolland));
+    }
+
     function setFamilyHope(value = "稳定且体面") {
       const input = document.querySelector("#familyHope");
       const options = Array.from(document.querySelectorAll("#familyHopeOptions button"));
@@ -5704,6 +5736,56 @@
       }
     }
 
+    function compactTraceChoice(choice = {}) {
+      return {
+        title: choice.title || "",
+        desc: choice.desc || "",
+        tag: choice.tag || "",
+        consequence: choice.consequence || "",
+        label: choice.label || [choice.title, choice.desc].filter(Boolean).join("，"),
+        riasec: normalizeRiasecScores(choice.riasec)
+      };
+    }
+
+    function compactTraceCard(card = {}) {
+      const scene = typeof card.scene === "object" && card.scene
+        ? card.scene
+        : { title: card.sceneTitle || card.eventTitle || "", body: card.sceneBody || card.prompt || card.scene || "" };
+      const left = card.a || card.left || {};
+      const right = card.b || card.right || {};
+      return {
+        yearNumber: Number(card.yearNumber || card.year || card.question?.match?.(/\d+/)?.[0] || 0) || undefined,
+        question: card.question || "",
+        phase: card.phase || "",
+        mainTrack: card.mainTrack || "",
+        summary: card.summary || card.context || "",
+        lifeTrack: card.lifeTrack || "",
+        relationshipTrack: card.relationshipTrack || "",
+        callbackSeeds: Array.isArray(card.callbackSeeds) ? card.callbackSeeds : [],
+        scene: {
+          title: scene.title || "",
+          body: scene.body || ""
+        },
+        a: compactTraceChoice(left),
+        b: compactTraceChoice(right),
+        left: compactTraceChoice(card.left || left),
+        right: compactTraceChoice(card.right || right)
+      };
+    }
+
+    function compactTraceOutput(output = {}) {
+      const compact = {
+        ok: Boolean(output.ok),
+        model: output.model || "",
+        degraded: Boolean(output.degraded)
+      };
+      if (output.card) compact.card = compactTraceCard(output.card);
+      if (Array.isArray(output.cards)) compact.cards = output.cards.map(compactTraceCard);
+      if (output.result) compact.result = safeJsonClone(output.result);
+      if (output.error) compact.error = output.error;
+      return compact;
+    }
+
     function recordApiExchange(path, payload, data, transport) {
       const { debug, ...output } = data || {};
       state.debugTrace.push({
@@ -5711,7 +5793,7 @@
         transport,
         path,
         input: safeJsonClone(payload),
-        output: safeJsonClone(output),
+        output: compactTraceOutput(output),
         modelRequest: safeJsonClone(debug?.request || null),
         modelRawOutput: debug?.rawOutput || ""
       });
@@ -6248,8 +6330,8 @@
       const path = yearNumber === 1 ? "/api/game/start" : "/api/game/next";
       resetStreamState();
       const payload = {
-        profile: state.profile,
-        history: yearNumber === 1 ? [] : state.history,
+        profile: apiProfile(),
+        history: yearNumber === 1 ? [] : apiHistory(false),
         year: yearNumber
       };
       const data = await apiPostStream(path, payload, updateStreamPreview);
@@ -6285,8 +6367,8 @@
 
     function branchPrefetchPayload(card, direction, nextYear) {
       return {
-        profile: state.profile,
-        history: [...state.history, buildHistoryItem(card, direction, state.index)],
+        profile: apiProfile(),
+        history: [...apiHistory(false), apiHistoryItem(buildHistoryItem(card, direction, state.index), false)],
         year: nextYear
       };
     }
@@ -6423,7 +6505,7 @@
       state.warmupSignature = signature;
       state.warmupCards = [];
       state.warmupPromise = apiPost("/api/game/batch", {
-        profile,
+        profile: apiProfile(profile),
         history: [],
         startYear: 1,
         count: Math.min(firstCardSize, deepseekBatchSize)
@@ -6516,8 +6598,8 @@
             continue;
           }
         const data = await apiPost("/api/game/batch", {
-          profile: state.profile,
-          history: state.history,
+          profile: apiProfile(),
+          history: apiHistory(false),
           startYear,
           count
         });
@@ -6547,8 +6629,8 @@
       state.deck[state.index] = buildBridgeCard(startYear);
       render();
       const data = await apiPost("/api/game/batch", {
-        profile: state.profile,
-        history: state.history,
+        profile: apiProfile(),
+        history: apiHistory(false),
         startYear,
         count: 1
       });
@@ -7810,11 +7892,11 @@
       try {
         let data;
         try {
-          data = await apiPost("/api/game/result", { profile: state.profile, history: state.history });
+          data = await apiPost("/api/game/result", { profile: apiProfile(), history: apiHistory(true) });
         } catch (firstError) {
           console.warn("result request failed, retrying once:", firstError?.message);
           await new Promise(resolve => window.setTimeout(resolve, 1500));
-          data = await apiPost("/api/game/result", { profile: state.profile, history: state.history });
+          data = await apiPost("/api/game/result", { profile: apiProfile(), history: apiHistory(true) });
         }
         state.result = data.result;
         renderResult(data.result);
@@ -8307,15 +8389,17 @@
         },
         cards: state.deck.filter(Boolean).map(card => ({
           yearNumber: card.yearNumber,
-          sceneTitle: card.eventTitle || card.scene,
-          sceneBody: card.prompt,
+          scene: {
+            title: card.eventTitle || card.scene,
+            body: card.prompt
+          },
           summary: card.summary,
           lifeTrack: card.lifeTrack,
           relationshipTrack: card.relationshipTrack,
-          left: safeJsonClone(card.left),
-          right: safeJsonClone(card.right)
+          left: compactTraceChoice(card.left),
+          right: compactTraceChoice(card.right)
         })),
-        chosenHistory: safeJsonClone(state.history),
+        chosenHistory: apiHistory(true),
         result: safeJsonClone(state.result),
         apiTrace: safeJsonClone(chosen)
       };
@@ -8404,6 +8488,22 @@
       return item.output?.model || item.input?.model || item.modelRequest?.model || "未知模型";
     }
 
+    function debugModelInput(item = {}) {
+      const content = item.modelRequest?.messages?.find(message => message.role === "user")?.content || "";
+      const marker = "输入数据：";
+      const start = content.indexOf(marker);
+      if (start < 0) return null;
+      const afterMarker = content.slice(start + marker.length).trim();
+      const endMarker = "\n\n输出字段";
+      const end = afterMarker.indexOf(endMarker);
+      const jsonText = (end >= 0 ? afterMarker.slice(0, end) : afterMarker).trim();
+      try {
+        return JSON.parse(jsonText);
+      } catch {
+        return null;
+      }
+    }
+
     function debugTraceTitle(item = {}, index = 0) {
       if (item.path === "/api/game/result") return "结果页";
       const year = Number(item.input?.year || item.input?.gameMeta?.currentYear || item.output?.card?.yearNumber || 0);
@@ -8413,14 +8513,18 @@
 
     function debugInputHTML(item = {}) {
       const input = item.input || {};
+      const modelInput = debugModelInput(item) || {};
       const history = Array.isArray(input.history) ? input.history : [];
       const last = history.at(-1);
-      const stateHints = input.stateHints || {};
-      const outline = input.outlineCard || {};
+      const modelHistory = Array.isArray(modelInput.history) ? modelInput.history : [];
+      const stateHints = modelInput.stateHints || {};
+      const outline = modelInput.outlineCard || {};
+      const profile = modelInput.profile || input.profile || {};
       const facts = [
         ["接口", item.path],
         ["模型", debugModelName(item)],
-        ["历史", `${history.length} 条已选记录`],
+        ["专业", profile.major],
+        ["历史", `${modelHistory.length || history.length} 条模型摘要 / ${history.length} 条接口记录`],
         ["时间", stateHints.timeFrame],
         ["考研", stateHints.educationState],
         ["阶段", outline.phase],
@@ -8453,10 +8557,10 @@
 
     function debugDetailsHTML(item = {}) {
       return [
-        ["请求 payload", item.input],
-        ["模型请求", item.modelRequest],
-        ["接口输出", item.output],
-        ["模型原始输出", item.modelRawOutput]
+        ["模型请求（真正进模型）", item.modelRequest],
+        ["模型原始输出", item.modelRawOutput],
+        ["接口 payload（前端到后端）", item.input],
+        ["接口输出（后端到前端）", item.output]
       ].map(([label, value]) => {
         const text = debugJsonText(value);
         if (!text) return "";

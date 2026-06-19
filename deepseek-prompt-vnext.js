@@ -454,15 +454,14 @@ const outlineData = {
 };
 
 export const vNextSystemPrompt = `你是互动剧情游戏“18 张牌人生短剧”的结构化内容引擎。
-定位：虚构故事，不是预测、诊断或升学就业建议；目标是好看、好选、好截图。
+定位：虚构故事。
 
 全局规则：
-- 只输出 JSON，不要 Markdown、代码块、解释或额外字段。
+- 只输出 JSON，不做额外解释。
 - 每张牌只拍一个具体事故，短、直、有反差；scene 只拍一条主线。
-- 禁止后台词：关系线、生活线、现实线、主线、副线、当前趋势。
-- 关键角色首次出现带 storyCast 身份短语；不要写“有人/某个人”。
+- 关键角色首次出现带 storyCast 身份短语。
 - summary 继承上一张实际 consequence；relationshipTrack 用允许阶段。
-- A/B 是立刻能选的互斥动作，分别对应 outlineCard.riasecAxis，不输出 riasec。`;
+- A/B 是立刻能选的互斥动作，分别对应 outlineCard.riasecAxis。`;
 
 export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 个 JSON 对象。
 
@@ -1024,16 +1023,11 @@ function normalizeChoiceHistoryItem(item) {
 function compactProfile(profile = {}) {
   const major = shortText(profile.majorLabel || profile.major, 24);
   const out = {
-    name: shortText(profile.name, 16),
-    province: shortText(profile.province, 16),
-    score: shortText(profile.score, 12),
     hope: shortText(profile.hope, 18),
     major
   };
   const gender = shortText(profile.gender, 12);
   if (gender && gender !== "不限定") out.gender = gender;
-  const dream = shortText(profile.dream, 24);
-  if (dream && dream !== "暂未填写") out.dream = dream;
   return out;
 }
 
@@ -1056,9 +1050,43 @@ function compactStoryCast(profile = {}, existingCast = null) {
 function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
   const cast = compactStoryCast(profile, existingCast);
   const currentYear = Number(year || 1);
+  if (currentYear <= 3) {
+    return {
+      relationName: cast.relationName,
+      relationIntro: cast.relationIntro,
+      roommateName: cast.roommateName,
+      roommateIntro: cast.roommateIntro,
+      mentorName: cast.mentorName,
+      mentorIntro: cast.mentorIntro
+    };
+  }
+  if (currentYear <= 5) {
+    return {
+      relationName: cast.relationName,
+      relationIntro: cast.relationIntro,
+      roommateName: cast.roommateName,
+      roommateIntro: cast.roommateIntro,
+      mentorName: cast.mentorName,
+      mentorIntro: cast.mentorIntro,
+      externalName: cast.externalName,
+      externalIntro: cast.externalIntro
+    };
+  }
   if (currentYear >= 6) {
     cast.roommateIntro = shortText(`大学老同学${cast.roommateName}，现在常在微信里吐槽你`, 34);
     cast.mentorIntro = shortText(`曾经带过你的专业导师${cast.mentorName}老师，现在像行业前辈`, 34);
+  }
+  if (currentYear < 10) {
+    return {
+      relationName: cast.relationName,
+      relationIntro: cast.relationIntro,
+      roommateName: cast.roommateName,
+      roommateIntro: cast.roommateIntro,
+      mentorName: cast.mentorName,
+      mentorIntro: cast.mentorIntro,
+      externalName: cast.externalName,
+      externalIntro: cast.externalIntro
+    };
   }
   if (currentYear >= 10) {
     cast.roommateIntro = shortText(`不同城市的大学老友${cast.roommateName}，偶尔给你泼冷水`, 34);
@@ -1174,7 +1202,7 @@ const majorAnchorRules = [
 
 function majorAnchorHint(profile = {}, year = 1) {
   const major = profile.majorLabel || profile.major || "所学专业";
-  const text = `${major} ${profile.dream || ""} ${profile.keywords || ""}`;
+  const text = major;
   const matched = majorAnchorRules.find(([pattern]) => pattern.test(text));
   const anchors = matched?.[1] || ["专业课程", "实习现场", "作品/项目证据", "导师评审", "行业机会", "岗位选择"];
   const anchor = anchors[(hashString(`${text}:${year}`) || 0) % anchors.length];

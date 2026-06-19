@@ -1975,7 +1975,7 @@ function normalizeMajorText(value) {
 }
 
 function profileMajorText(profile = {}) {
-  return [profile.majorLabel, profile.major, profile.dream, profile.keywords]
+  return [profile.majorLabel, profile.major]
     .filter(Boolean)
     .join(" ");
 }

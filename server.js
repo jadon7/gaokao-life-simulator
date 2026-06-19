@@ -3,12 +3,12 @@ import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  annualTaskPromptForYear,
+  batchTaskPromptForStartYear,
   buildAnnualInput,
   buildBatchInput,
   buildResultInput,
   getOutlineCard,
-  vNextAnnualTaskPrompt,
-  vNextBatchTaskPrompt,
   vNextResultTaskPrompt,
   vNextSystemPrompt
 } from "./deepseek-prompt-vnext.js";
@@ -222,7 +222,7 @@ function buildAnnualMessages({ profile, history, year }) {
     { role: "system", content: systemPrompt() },
     {
       role: "user",
-      content: taskPromptWithInput(vNextAnnualTaskPrompt, input)
+      content: taskPromptWithInput(annualTaskPromptForYear(year), input)
     }
   ];
 }
@@ -239,7 +239,7 @@ function buildBatchMessages({ profile, history, startYear, count }) {
     { role: "system", content: systemPrompt() },
     {
       role: "user",
-      content: taskPromptWithInput(vNextBatchTaskPrompt.replaceAll("{{count}}", String(count)), input)
+      content: taskPromptWithInput(batchTaskPromptForStartYear(startYear, count).replaceAll("{{count}}", String(count)), input)
     }
   ];
 }

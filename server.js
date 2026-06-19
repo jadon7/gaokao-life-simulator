@@ -1319,7 +1319,12 @@ async function handleApi(req, res, pathname) {
       return;
     }
     if (pathname === "/api/game/next") {
-      const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
+      const requestedYear = Number(body.year || history.length + 1);
+      if (requestedYear > totalGameYears || history.length >= totalGameYears) {
+        sendJson(res, 409, { ok: false, error: "游戏已结束" });
+        return;
+      }
+      const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
       const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), requestModel, null, promptLabDebug, null, clientSignal);
       sendJson(res, 200, { ok: true, model: requestModel, card: annualCardFromData(data), ...debugField(data) });
       return;
@@ -1358,7 +1363,12 @@ async function handleApi(req, res, pathname) {
         return;
       }
       if (pathname === "/api/game/next") {
-        const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
+        const requestedYear = Number(body.year || history.length + 1);
+        if (requestedYear > totalGameYears || history.length >= totalGameYears) {
+          sendJson(res, 409, { ok: false, error: "游戏已结束" });
+          return;
+        }
+        const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
         const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history, history, year);
         sendJson(res, 200, { ok: true, model: requestModel, degraded: true, card: annualCardFromData(data) });
         return;

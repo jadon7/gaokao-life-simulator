@@ -6014,6 +6014,7 @@
     }
 
     async function loadAnnualCard(yearNumber) {
+      if (yearNumber < 1 || yearNumber > state.totalYears) return null;
       const path = yearNumber === 1 ? "/api/game/start" : "/api/game/next";
       resetStreamState();
       const payload = {
@@ -6082,6 +6083,7 @@
       if (state.index >= state.totalYears - 1) return;
       const card = state.deck[state.index];
       if (!card) return;
+      if (Number(card.yearNumber || state.index + 1) >= state.totalYears) return;
       const signature = branchPrefetchSignature(card);
       if (state.branchPrefetch?.signature === signature) return;
       state.branchPrefetchTimer = window.setTimeout(() => {
@@ -6140,6 +6142,7 @@
     }
 
     async function loadAnnualCardAfterChoice(yearNumber, prefetchedBranch) {
+      if (yearNumber < 1 || yearNumber > state.totalYears) return null;
       if (prefetchedBranch?.promise) {
         const rawCard = await prefetchedBranch.promise;
         if (rawCard) {
@@ -6270,6 +6273,7 @@
     }
 
     async function ensureDeckBuffer(size = batchSize, options = {}) {
+      if (state.index >= state.totalYears) return Promise.resolve();
       if (state.bufferPromise) return state.bufferPromise;
       const targetLength = Math.min(state.totalYears, state.index + size);
       const firstMissing = findFirstMissingYear(targetLength);
@@ -6319,6 +6323,7 @@
     }
 
     async function ensureCurrentCard() {
+      if (state.index >= state.totalYears) return;
       if (state.deck[state.index]) return;
       const startYear = state.index + 1;
       if (appendFixedCard(startYear)) {
@@ -6844,7 +6849,7 @@
     }
 
     async function retryCurrentStep() {
-      if (state.isLoading) return;
+      if (state.isLoading || state.index >= state.totalYears) return;
       state.loadError = "";
       state.isLoading = true;
       clearBranchPrefetch();
@@ -6864,12 +6869,15 @@
     }
 
     function choose(direction) {
-      if (state.isAnimating || state.isLoading || state.loadError || state.index >= state.totalYears) return;
+      if (state.isAnimating || state.isLoading || state.loadError || state.index >= state.totalYears || state.history.length >= state.totalYears) return;
       const card = state.deck[state.index];
       if (!card) return;
       const chosen = card[direction];
       const currentEl = els.cardStack.querySelector(".life-card:not(.behind-one):not(.behind-two)");
-      const prefetchedBranch = takeBranchPrefetch(direction, card);
+      const currentYear = Number(card.yearNumber || state.index + 1);
+      const isFinalChoice = state.index >= state.totalYears - 1 || currentYear >= state.totalYears;
+      const prefetchedBranch = isFinalChoice ? null : takeBranchPrefetch(direction, card);
+      if (isFinalChoice) clearBranchPrefetch();
       state.isAnimating = true;
       hapticTap(40);
       state.history = [...state.history, buildHistoryItem(card, direction)];
@@ -6892,7 +6900,8 @@
       window.setTimeout(() => {
         state.index += 1;
         state.isAnimating = false;
-        if (state.index >= state.totalYears) {
+        if (state.index >= state.totalYears || isFinalChoice) {
+          state.index = state.totalYears;
           state.isLoading = false;
           render();
           keepPlayViewport();

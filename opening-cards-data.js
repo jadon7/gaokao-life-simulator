@@ -2030,7 +2030,7 @@ function relationNameHit(card) {
 
 function withRandomRelationName(sourceCard) {
   const hit = relationNameHit(sourceCard);
-  if (!hit) return { card: sourceCard, relationName: "", relationGender: "" };
+  if (!hit) return { card: sourceCard, relationName: "", relationGender: "", relationIntro: "" };
   const relationName = randomReplacementName(hit.pool, hit.sourceName);
   const card = JSON.parse(JSON.stringify(sourceCard));
   const replaceName = value => String(value || "").replaceAll(hit.sourceName, relationName);
@@ -2048,7 +2048,16 @@ function withRandomRelationName(sourceCard) {
     card[key].tag = replaceName(card[key].tag);
     card[key].consequence = replaceName(card[key].consequence);
   }
-  return { card, relationName, relationGender: hit.gender };
+  return { card, relationName, relationGender: hit.gender, relationIntro: relationIntroFromCard(card, relationName, hit.gender) };
+}
+
+function relationIntroFromCard(card, relationName, relationGender) {
+  const text = [card.relationshipTrack, card.scene?.body].filter(Boolean).join(" ");
+  const match = text.match(new RegExp(`(?:：|，|。|\\s)([^，。：“”]{1,8})${relationName}`));
+  const prefix = String(match?.[1] || "").replace(/第一次|主动|替你|把|在|给你/g, "").trim();
+  if (prefix && !/男生|女生/.test(prefix)) return `${prefix}${relationName}`;
+  if (prefix) return `${prefix}${relationName}`;
+  return `开局第一张牌里已经替你搭过手的${relationGender}${relationName}`;
 }
 
 function mainRiasecType(choice = {}) {
@@ -2090,7 +2099,7 @@ function normalizeChoice(choice = {}) {
 
 export function buildOpeningCard(profile = {}, totalYears = 18) {
   const selected = selectOpeningCard(profile);
-  const { card, relationName, relationGender } = withRandomRelationName(selected);
+  const { card, relationName, relationGender, relationIntro } = withRandomRelationName(selected);
   return {
     summary: "",
     question: "第 1 年 / " + totalYears,
@@ -2105,7 +2114,7 @@ export function buildOpeningCard(profile = {}, totalYears = 18) {
     openingCategory: card.category,
     openingRelationName: relationName,
     openingRelationGender: relationGender,
-    openingRelationIntro: relationName ? `开局第一张牌里已经替你搭过手的${relationGender}${relationName}` : "",
+    openingRelationIntro: relationIntro,
     scene: {
       title: card.scene.title,
       body: card.scene.body

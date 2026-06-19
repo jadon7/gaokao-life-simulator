@@ -88,14 +88,14 @@ const outlineData = {
             "I",
             "E"
           ],
-          "conflict": "考研群、保研绩点和校外项目同一天冒泡。你第一次认真面对要不要考研：先闭门深造，还是把项目机会继续做大。",
+          "conflict": "考研群、保研绩点和校外项目同一天冒泡。你第一次认真面对要不要考研：锁定备考窗口就退出项目，抢项目机会就放弃今年完整备考。",
           "sideBeat": "关系线核心角色看见你开始为长期路线做取舍",
           "characters": [
             "学长/前辈",
             "导师/老师",
             "关系线核心角色"
           ],
-          "abType": "决定考研 / 项目机会",
+          "abType": "锁定考研窗口 / 放弃备考抢项目",
           "summaryTask": "便签写上一年关系选择的余波 + 学业/项目线的小变化",
           "callbacks": [
             "考研群",
@@ -477,6 +477,8 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 剧情：
 - 使用 outlineCard 的 conflict/hook/twist/choiceContrast/sideBeat/comedyDevice/riasecAxis。
 - 第 1 年必须使用 stateHints.openingFrame，和 profile.major 明确联动。
+- 第 4 年后必须使用 stateHints.majorAnchor / lifeStage，推进到升学、毕业、入职、晋升、换城、承诺或告别，不要停在同一学期小事。
+- 角色首次出场用 storyCast 身份短语；A/B 必须排他，写清放弃的窗口、机会或关系代价。
 - scene.body 要有历史锚点、人物锚点、事故锚点、喜剧锚点；只拍一个冲突，不塞满项目/家庭/感情多件事。
 - summary 承接 last.consequence；写关系状态时带阶段词。
 - 遵守 stateHints.repeatGuard / stageGuard：不重复上一张动作；若 stageGuard 提示补救成功，下一张关系必须发生变化，不要原地冷战。
@@ -525,6 +527,8 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 如果输入 history 已经包含上一张实际 consequence，即使在 batch 模式也必须以 history 为准；禁止用“或/分叉”保留两个相反选择。
 - 对本批次内尚未发生的未来卡，summary 也不要写“A 或 B”的二择一描述；宁可写阶段趋势和具体小动作。
 - relationshipTrack 必须始终带明确阶段，例如“暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女”。
+- 使用 stateHints.majorAnchor / lifeStage 推进年龄阶段，不要连续停在同一地点和同一批小事。
+- 角色首次出场用 storyCast 身份短语；A/B 必须排他，写清牺牲的窗口、机会或关系代价。
 - 本批次内每张 scene.title / scene.body 必须讲不同事件；不得复用 history.recentSceneTitles 或本批次前面已经写过的事件。
 - 不要连续使用同一组人物关系、地点和抉择结构；相邻卡的压力源必须明显不同。
 - 不要写空话，不要拿总结腔凑句子。
@@ -652,25 +656,63 @@ function profileSeed(profile = {}) {
   ].filter(Boolean).join("|") || "default";
 }
 
-const relationPool = [
-  { name: "沈晚晴", intro: "总坐第一排靠窗位、笔记写得像小型攻略的同班女生沈晚晴" },
-  { name: "许青禾", intro: "经常把课堂提问整理成共享文档的隔壁班女生许青禾" },
-  { name: "苏听澜", intro: "说话很轻但每次都问到重点的实验搭档苏听澜" },
-  { name: "陈栀", intro: "总在截止日前把小组群从沉默里捞起来的同学陈栀" }
+const castNamePools = {
+  female: ["知夏", "南枝", "晚晴", "予宁", "初然"],
+  male: ["以恒", "景川", "星野", "清越", "承宇"]
+};
+
+const relationTraitPool = [
+  { trait: "清冷学霸", intro: name => `总把课堂重点整理成共享文档的清冷学霸${name}` },
+  { trait: "天然呆", intro: name => `说话慢半拍但总能看见关键细节的天然呆${name}` },
+  { trait: "温柔白月光", intro: name => `常在截止日前替人留一盏灯的温柔白月光${name}` },
+  { trait: "校花", intro: name => `人缘很好、说话直接的校花型同学${name}` }
 ];
 
-const roommatePool = [
-  { name: "周越", intro: "总在上课路上边走边吃早餐的吃货舍友周越" },
-  { name: "李子奇", intro: "消息回得飞快、社团八卦也最灵的同班同学李子奇" },
-  { name: "程野", intro: "刚开学就把小组分工表建好的舍友程野" },
-  { name: "陆一川", intro: "篮球场和自习室两头跑、体力像外挂的舍友陆一川" }
+const roommateTraitPool = [
+  { trait: "吃货舍友", intro: name => `总在上课路上边走边吃早餐的吃货舍友${name}` },
+  { trait: "消息雷达", intro: name => `消息回得飞快、社团八卦也最灵的消息雷达同学${name}` },
+  { trait: "表格控舍友", intro: name => `刚开学就把小组分工表建好的表格控舍友${name}` },
+  { trait: "运动挂舍友", intro: name => `篮球场和自习室两头跑、体力像外挂的运动挂舍友${name}` }
 ];
 
-const mentorPool = [
-  { name: "林老师", intro: "辅导员兼专业导师林老师，常在班群里用一句话把人点上台" },
-  { name: "赵老师", intro: "说话很慢但要求很细的专业课赵老师" },
-  { name: "陈老师", intro: "总把课堂作业改成真实项目的任课陈老师" }
+const mentorTraitPool = [
+  { intro: name => `常在班群里用一句话把人点上台的专业导师${name}老师` },
+  { intro: name => `说话很慢但要求很细的专业课${name}老师` },
+  { intro: name => `总把课堂作业改成真实项目的任课${name}老师` }
 ];
+
+const externalTraitPool = [
+  { intro: name => `合作方负责人${name}经理，说话不多但每次都带来新截止时间` },
+  { intro: name => `校外项目负责人${name}经理，最擅长把机会和压力一起递过来` },
+  { intro: name => `行业前辈${name}经理，第一次见面就问你能不能扛真实交付` }
+];
+
+function genderKey(value) {
+  if (/女/.test(String(value || ""))) return "female";
+  if (/男/.test(String(value || ""))) return "male";
+  return "";
+}
+
+function genderLabelFromKey(key) {
+  return key === "male" ? "男生" : "女生";
+}
+
+function oppositeGenderKey(profile = {}) {
+  return genderKey(profile.gender) === "female" ? "male" : "female";
+}
+
+function sameGenderKey(profile = {}) {
+  return genderKey(profile.gender) || "male";
+}
+
+function pickNameByHash(pool, seed, offset, used = new Set()) {
+  const start = (hashString(`${seed}:${offset}`) || 0) % pool.length;
+  for (let index = 0; index < pool.length; index += 1) {
+    const name = pool[(start + index) % pool.length];
+    if (!used.has(name)) return name;
+  }
+  return pool[start];
+}
 
 const openingFrames = [
   {
@@ -798,33 +840,45 @@ const openingFrames = [
 function buildStoryCast(profile = {}) {
   const seed = profileSeed(profile);
   const relationName = String(profile.relationName || "").trim();
+  const usedNames = new Set(relationName ? [relationName] : []);
+  const relationGenderKey = genderKey(profile.relationGender) || oppositeGenderKey(profile);
+  const relationGender = String(profile.relationGender || "").trim() || genderLabelFromKey(relationGenderKey);
+  const roommateName = pickNameByHash(castNamePools[sameGenderKey(profile)], seed, 23, usedNames);
+  usedNames.add(roommateName);
+  const mentorName = pickNameByHash([...castNamePools.female, ...castNamePools.male], seed, 37, usedNames);
+  usedNames.add(mentorName);
+  const externalName = pickNameByHash([...castNamePools.male, ...castNamePools.female], seed, 53, usedNames);
+  const roommateTrait = pickByHash(roommateTraitPool, seed, 29);
+  const mentorTrait = pickByHash(mentorTraitPool, seed, 41);
+  const externalTrait = pickByHash(externalTraitPool, seed, 59);
   if (relationName) {
-    const relationGender = String(profile.relationGender || "").trim() || (/男/.test(String(profile.gender || "")) ? "女生" : "男生");
     const relationIntro = String(profile.relationIntro || "").trim() || `开局第一张牌里已经替你搭过手的${relationGender}${relationName}`;
-    const roommate = pickByHash(roommatePool, seed, 23);
-    const mentor = pickByHash(mentorPool, seed, 37);
     return {
       ...defaultStoryCast,
       relationName,
       relationGender,
       relationIntro,
-      roommateName: roommate.name,
-      roommateIntro: roommate.intro,
-      mentorName: mentor.name,
-      mentorIntro: mentor.intro
+      roommateName,
+      roommateIntro: roommateTrait.intro(roommateName),
+      mentorName,
+      mentorIntro: mentorTrait.intro(mentorName),
+      externalName,
+      externalIntro: externalTrait.intro(externalName)
     };
   }
-  const relation = pickByHash(relationPool, seed, 11);
-  const roommate = pickByHash(roommatePool, seed, 23);
-  const mentor = pickByHash(mentorPool, seed, 37);
+  const fallbackRelationName = pickNameByHash(castNamePools[relationGenderKey], seed, 11, usedNames);
+  const relationTrait = pickByHash(relationTraitPool, seed, 17);
   return {
     ...defaultStoryCast,
-    relationName: relation.name,
-    relationIntro: relation.intro,
-    roommateName: roommate.name,
-    roommateIntro: roommate.intro,
-    mentorName: mentor.name,
-    mentorIntro: mentor.intro
+    relationName: fallbackRelationName,
+    relationGender,
+    relationIntro: relationTrait.intro(fallbackRelationName),
+    roommateName,
+    roommateIntro: roommateTrait.intro(roommateName),
+    mentorName,
+    mentorIntro: mentorTrait.intro(mentorName),
+    externalName,
+    externalIntro: externalTrait.intro(externalName)
   };
 }
 
@@ -1061,6 +1115,66 @@ function describeTrack(history = [], key, fallback) {
   return latest || fallback;
 }
 
+const majorAnchorRules = [
+  [/飞行器|航空|航天/, ["航模结构", "风洞测试", "飞控联调", "试飞数据", "机翼强度评审", "航研院项目", "低空经济机会"]],
+  [/计算机|软件|数据|人工智能|AI|信息安全|网络|数学|统计/, ["代码仓库", "算法评测", "线上故障", "数据口径", "安全审计", "模型上线", "技术面试"]],
+  [/电子|通信|微电子|芯片|电气|自动化/, ["电路联调", "芯片测试", "信号波形", "控制柜", "产线验收", "硬件方案", "实验室样机"]],
+  [/机械|车辆|制造|能源|材料|化工|土木|建筑/, ["结构图纸", "样机测试", "工地现场", "材料报告", "能耗数据", "供应商验收", "设计院评审"]],
+  [/临床|医学|口腔|中医|护理|药|生物/, ["病例讨论", "实验记录", "规培选择", "科室轮转", "药品审评", "患者沟通", "科研课题"]],
+  [/法学|法律|思政|哲学|逻辑|历史|考古/, ["案例检索", "庭审旁听", "论文选题", "田野记录", "政策材料", "答辩现场", "研究所机会"]],
+  [/金融|会计|经济|管理/, ["财报模型", "审计底稿", "路演材料", "风控报告", "客户尽调", "考证窗口", "平台跳槽"]],
+  [/新闻|传播|中文|汉语|设计|视觉|音乐|艺术/, ["选题会", "作品集", "采访现场", "展览评审", "甲方改稿", "账号出圈", "版权合同"]],
+  [/教育|小学|心理/, ["试讲课堂", "个案访谈", "实习班级", "教研记录", "家长沟通", "资格证考试", "学校聘用"]],
+  [/动物|农学|农业/, ["田间试验", "动物查房", "检疫记录", "育种数据", "基地实习", "乡镇项目", "科研站机会"]]
+];
+
+function majorAnchorHint(profile = {}, year = 1) {
+  const major = profile.majorLabel || profile.major || "所学专业";
+  const text = `${major} ${profile.dream || ""} ${profile.keywords || ""}`;
+  const matched = majorAnchorRules.find(([pattern]) => pattern.test(text));
+  const anchors = matched?.[1] || ["专业课程", "实习现场", "作品/项目证据", "导师评审", "行业机会", "岗位选择"];
+  const anchor = anchors[(hashString(`${text}:${year}`) || 0) % anchors.length];
+  return Number(year) >= 4 ? `专业锚点：${major}；本年落到${anchor}` : "";
+}
+
+function relationshipArcHint(history = [], year = 1) {
+  const text = history.map(item => `${item?.relationshipTrack || ""} ${item?.consequence || ""} ${item?.choiceText || ""}`).join(" ");
+  const good = (text.match(/确定|公开|回暖|主动来找|认真聊|肯定|一起|见家长|结婚|孩子/g) || []).length;
+  const cold = (text.match(/冷战|沉默|没再联系|分手|告别|疏远|你忙吧|删/g) || []).length;
+  if (year <= 6) return "关系阶段：暧昧可推进到确定，也可第一次后撤";
+  if (year <= 9) return cold > good ? "关系阶段：不顺就写分手/复合苗头，不要只已读不回" : "关系阶段：顺利就确定关系或进入异地磨合";
+  if (year <= 12) return cold > good ? "关系阶段：可分手后出现新恋情或复合窗口" : "关系阶段：应进入承诺、见朋友或同居压力";
+  if (year <= 15) return cold > good ? "关系阶段：不顺要有第二段关系/复合/体面告别" : "关系阶段：顺利可见家长、订婚或谈婚育";
+  return cold > good ? "关系阶段：收束到体面告别、新恋情稳定或独身选择" : "关系阶段：收束到订婚结婚、生儿育女或共同生活";
+}
+
+function careerArcHint(year = 1) {
+  if (year <= 3) return "人生阶段：入学适应和第一次被看见";
+  if (year <= 6) return "人生阶段：考研/保研/实习/项目只能保一头";
+  if (year <= 9) return "人生阶段：毕业、读研或第一份工作落地";
+  if (year <= 12) return "人生阶段：换城市、换平台、晋升或转向";
+  if (year <= 15) return "人生阶段：收入、家庭、长期关系和职级压力做实";
+  return "人生阶段：成为前辈，职业定位和亲密关系收束";
+}
+
+function lifeStageHint(year = 1, history = []) {
+  return `${careerArcHint(year)}；${relationshipArcHint(history, year)}`;
+}
+
+function castIntroHint(storyCast = defaultStoryCast, history = []) {
+  const text = JSON.stringify(history || []);
+  const intros = [
+    [storyCast.relationName, storyCast.relationIntro],
+    [storyCast.roommateName, storyCast.roommateIntro],
+    [storyCast.mentorName, storyCast.mentorIntro],
+    [storyCast.externalName, storyCast.externalIntro],
+    [storyCast.familyName, storyCast.familyIntro]
+  ]
+    .filter(([name, intro]) => name && intro && !text.includes(name))
+    .map(([, intro]) => intro);
+  return intros.length ? `未出场角色首次出现用全称：${intros.slice(0, 3).join("；")}` : "";
+}
+
 function topHollandCode(history = []) {
   const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
   history.forEach(item => {
@@ -1101,6 +1215,9 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
       recentSceneTitles: getRecentSceneTitles(history, 6),
       repeatGuard: repeatGuard(history),
       stageGuard: stageGuard(history),
+      majorAnchor: majorAnchorHint(profile, year),
+      lifeStage: lifeStageHint(year, history),
+      castIntroRule: castIntroHint(storyCast, history),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳"),
       openingFrame: Number(year) === 1 ? buildOpeningFrame(profile) : null
@@ -1127,6 +1244,9 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
       recentSceneTitles: getRecentSceneTitles(history, 6),
       repeatGuard: repeatGuard(history),
       stageGuard: stageGuard(history),
+      majorAnchor: majorAnchorHint(profile, startYear),
+      lifeStage: lifeStageHint(startYear, history),
+      castIntroRule: castIntroHint(storyCast, history),
       relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
       lifeStatus: describeTrack(history, "lifeTrack", "现实状态在连续推进"),
       openingFrame: Number(startYear) <= 1 ? buildOpeningFrame(profile) : null,

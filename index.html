@@ -6077,19 +6077,7 @@
     }
 
     function scheduleBranchPrefetchForCurrentCard() {
-      window.clearTimeout(state.branchPrefetchTimer);
-      state.branchPrefetchTimer = null;
-      if (state.isLoading || state.isAnimating || state.loadError || state.result) return;
-      if (state.index >= state.totalYears - 1) return;
-      const card = state.deck[state.index];
-      if (!card) return;
-      if (Number(card.yearNumber || state.index + 1) >= state.totalYears) return;
-      const signature = branchPrefetchSignature(card);
-      if (state.branchPrefetch?.signature === signature) return;
-      state.branchPrefetchTimer = window.setTimeout(() => {
-        state.branchPrefetchTimer = null;
-        startBranchPrefetchForCurrentCard(card, signature);
-      }, 0);
+      clearBranchPrefetch();
     }
 
     function startBranchPrefetchForCurrentCard(card, signature) {
@@ -6133,12 +6121,8 @@
     }
 
     function takeBranchPrefetch(direction, card) {
-      const signature = branchPrefetchSignature(card);
-      const branch = state.branchPrefetch?.signature === signature
-        ? state.branchPrefetch.branches?.[direction]
-        : null;
-      clearBranchPrefetch(branch);
-      return branch || null;
+      clearBranchPrefetch();
+      return null;
     }
 
     async function loadAnnualCardAfterChoice(yearNumber, prefetchedBranch) {

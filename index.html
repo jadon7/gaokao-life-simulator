@@ -6938,6 +6938,7 @@
       state.bufferPromise = null;
       clearBranchPrefetch();
       state.deck = state.deck.slice(0, state.index + 1);
+      pruneDebugTraceAfterUndo();
       restoreFeedbackAfterUndo(previous);
       render();
       revealTopCard();
@@ -8112,9 +8113,10 @@
         const branch = debugTraceBranch(item, chosenByYear);
         const record = { ...safeJsonClone(item), branch };
         if (branch === "prefetch") groups.prefetch.push(record);
+        else if (branch === "discarded") groups.discarded.push(record);
         else groups.chosen.push(record);
         return groups;
-      }, { chosen: [], prefetch: [] });
+      }, { chosen: [], prefetch: [], discarded: [] });
     }
 
     function debugTraceBranch(item, chosenByYear) {
@@ -8124,7 +8126,24 @@
       const history = Array.isArray(item.input?.history) ? item.input.history : [];
       const previous = history[history.length - 1];
       const chosenPrevious = chosenByYear.get(year - 1);
-      return debugHistoryItemMatches(previous, chosenPrevious) ? "chosen" : "prefetch";
+      if (!debugHistoryItemMatches(previous, chosenPrevious)) return "prefetch";
+      return debugTraceOutputMatchesFinalCard(item, year) ? "chosen" : "discarded";
+    }
+
+    function debugTraceOutputMatchesFinalCard(item, year) {
+      const outputCard = item.output?.card;
+      const finalCard = state.deck[year - 1];
+      if (!outputCard || !finalCard) return false;
+      return debugCardTraceKey(outputCard) === debugCardTraceKey(finalCard);
+    }
+
+    function debugCardTraceKey(card) {
+      return [
+        Number(card.yearNumber || card.question?.match?.(/\d+/)?.[0] || 0),
+        String(card.sceneTitle || card.eventTitle || card.scene || "").trim(),
+        String(card.left?.label || card.a?.label || card.left?.title || card.a?.title || "").trim(),
+        String(card.right?.label || card.b?.label || card.right?.title || card.b?.title || "").trim()
+      ].join("|");
     }
 
     function debugHistoryItemMatches(inputItem, chosenItem) {
@@ -8133,6 +8152,16 @@
       const sameChoice = String(inputItem.choiceText || "").trim() === String(chosenItem.choiceText || "").trim();
       const sameConsequence = String(inputItem.consequence || "").trim() === String(chosenItem.consequence || "").trim();
       return sameYear && sameChoice && sameConsequence;
+    }
+
+    function pruneDebugTraceAfterUndo() {
+      const maxYear = state.index + 1;
+      state.debugTrace = state.debugTrace.filter(item => {
+        if (item.path === "/api/game/result") return false;
+        if (item.path !== "/api/game/next") return true;
+        const year = Number(item.input?.year || item.output?.card?.yearNumber || 0);
+        return !year || year <= maxYear;
+      });
     }
 
     async function copyText(text) {

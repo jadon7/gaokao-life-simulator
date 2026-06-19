@@ -1943,6 +1943,214 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.32);
     }
 
+    /* process viewer */
+    .process-sheet[hidden] {
+      display: none;
+    }
+
+    .process-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      overflow-y: auto;
+      padding: 20px 14px;
+      background: rgba(232, 237, 246, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .process-panel {
+      width: min(960px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+      border-radius: 24px;
+      background: #f7f9fc;
+      color: var(--ink);
+      box-shadow: 0 24px 70px rgba(38, 54, 80, 0.2);
+    }
+
+    .process-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: -18px -18px 16px;
+      padding: 16px 18px;
+      border-radius: 24px 24px 0 0;
+      background: rgba(247, 249, 252, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .process-head h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .process-head p {
+      margin: 4px 0 0;
+      color: #768197;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .process-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .process-actions button {
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #3b465c;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 10px 22px rgba(40, 56, 82, 0.1);
+    }
+
+    .process-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .process-stat {
+      padding: 12px;
+      border: 1px solid rgba(119, 134, 160, 0.16);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    .process-stat b {
+      display: block;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .process-stat span {
+      color: #768197;
+      font-size: 12px;
+    }
+
+    .process-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .process-item {
+      overflow: hidden;
+      border: 1px solid rgba(119, 134, 160, 0.16);
+      border-radius: 18px;
+      background: #ffffff;
+    }
+
+    .process-item-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid rgba(119, 134, 160, 0.12);
+    }
+
+    .process-item-head b {
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .process-item-head span {
+      color: #7d8798;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .process-io {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .process-box {
+      min-width: 0;
+      padding: 12px;
+      border-radius: 14px;
+      background: #f5f7fb;
+    }
+
+    .process-box h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #61708a;
+    }
+
+    .process-box p {
+      margin: 0 0 6px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #263043;
+    }
+
+    .process-details {
+      padding: 0 14px 14px;
+    }
+
+    .process-details details {
+      border-top: 1px solid rgba(119, 134, 160, 0.12);
+    }
+
+    .process-details summary {
+      cursor: pointer;
+      padding: 12px 0;
+      color: #526078;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .process-details pre {
+      max-height: 280px;
+      overflow: auto;
+      margin: 0 0 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #111827;
+      color: #dbeafe;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    @media (max-width: 720px) {
+      .process-panel {
+        padding: 14px;
+        border-radius: 20px;
+      }
+
+      .process-head {
+        align-items: flex-start;
+        margin: -14px -14px 14px;
+        padding: 14px;
+        border-radius: 20px 20px 0 0;
+      }
+
+      .process-actions {
+        flex-direction: column;
+      }
+
+      .process-summary,
+      .process-io {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* result error */
     .result-error-card {
       gap: 16px;
@@ -2103,9 +2311,26 @@
       <div class="result-block" id="resultGuides"></div>
       <div class="result-actions">
         <button id="saveResult" type="button">分享结果</button>
-        <button id="copyDebugFlow" type="button">复制调试包</button>
+        <button id="copyDebugFlow" type="button">查看过程</button>
         <button id="restartResult" class="primary" type="button">开始验牌</button>
       </div>
+    </div>
+  </section>
+
+  <section class="process-sheet" id="processSheet" aria-modal="true" role="dialog" aria-labelledby="processTitle" hidden>
+    <div class="process-panel">
+      <header class="process-head">
+        <div>
+          <h2 id="processTitle">生成过程</h2>
+          <p>按请求顺序整理输入、输出和模型原始信息。</p>
+        </div>
+        <div class="process-actions">
+          <button id="copyProcessDebug" type="button">复制完整调试包</button>
+          <button id="closeProcessDebug" type="button">关闭</button>
+        </div>
+      </header>
+      <div class="process-summary" id="processSummary"></div>
+      <div class="process-list" id="processList"></div>
     </div>
   </section>
 
@@ -4193,7 +4418,12 @@
       resultHighlights: document.querySelector("#resultHighlights"),
       resultGuides: document.querySelector("#resultGuides"),
       resultPortrait: document.querySelector("#resultPortrait"),
-      resultHero: document.querySelector("#resultHero")
+      resultHero: document.querySelector("#resultHero"),
+      processSheet: document.querySelector("#processSheet"),
+      processSummary: document.querySelector("#processSummary"),
+      processList: document.querySelector("#processList"),
+      copyProcessDebug: document.querySelector("#copyProcessDebug"),
+      closeProcessDebug: document.querySelector("#closeProcessDebug")
     };
 
     function readProfile() {
@@ -8164,8 +8394,138 @@
       textarea.remove();
     }
 
-    async function copyDebugFlow() {
-      const button = document.querySelector("#copyDebugFlow");
+    function debugJsonText(value) {
+      if (value == null || value === "") return "";
+      if (typeof value === "string") return value;
+      return JSON.stringify(value, null, 2);
+    }
+
+    function debugModelName(item = {}) {
+      return item.output?.model || item.input?.model || item.modelRequest?.model || "未知模型";
+    }
+
+    function debugTraceTitle(item = {}, index = 0) {
+      if (item.path === "/api/game/result") return "结果页";
+      const year = Number(item.input?.year || item.input?.gameMeta?.currentYear || item.output?.card?.yearNumber || 0);
+      if (year) return `第 ${year} 年`;
+      return `请求 ${index + 1}`;
+    }
+
+    function debugInputHTML(item = {}) {
+      const input = item.input || {};
+      const history = Array.isArray(input.history) ? input.history : [];
+      const last = history.at(-1);
+      const stateHints = input.stateHints || {};
+      const outline = input.outlineCard || {};
+      const facts = [
+        ["接口", item.path],
+        ["模型", debugModelName(item)],
+        ["历史", `${history.length} 条已选记录`],
+        ["时间", stateHints.timeFrame],
+        ["考研", stateHints.educationState],
+        ["阶段", outline.phase],
+        ["上一选项", last?.choiceText || last?.choiceTag]
+      ].filter(([, value]) => value);
+      return facts.map(([label, value]) => `<p><b>${escapeHTML(label)}：</b>${escapeHTML(value)}</p>`).join("");
+    }
+
+    function debugOutputHTML(item = {}) {
+      const output = item.output || {};
+      const card = output.card || output.normalizedCard;
+      const result = output.result;
+      if (result) {
+        return [
+          ["标题", result.title],
+          ["状态", result.status42],
+          ["职业出口", Array.isArray(result.careerPossibilities) ? result.careerPossibilities.map(item => item.label).filter(Boolean).join(" / ") : ""]
+        ].filter(([, value]) => value).map(([label, value]) => `<p><b>${escapeHTML(label)}：</b>${escapeHTML(value)}</p>`).join("");
+      }
+      if (card) {
+        return [
+          ["标题", card.sceneTitle || card.eventTitle || card.scene?.title],
+          ["正文", card.sceneBody || card.prompt || card.scene?.body],
+          ["A", card.left?.label || card.a?.label || card.left?.title || card.a?.title],
+          ["B", card.right?.label || card.b?.label || card.right?.title || card.b?.title]
+        ].filter(([, value]) => value).map(([label, value]) => `<p><b>${escapeHTML(label)}：</b>${escapeHTML(value)}</p>`).join("");
+      }
+      return `<p>${escapeHTML(Object.keys(output).join(" / ") || "无输出摘要")}</p>`;
+    }
+
+    function debugDetailsHTML(item = {}) {
+      return [
+        ["请求 payload", item.input],
+        ["模型请求", item.modelRequest],
+        ["接口输出", item.output],
+        ["模型原始输出", item.modelRawOutput]
+      ].map(([label, value]) => {
+        const text = debugJsonText(value);
+        if (!text) return "";
+        return `
+          <details>
+            <summary>${escapeHTML(label)}</summary>
+            <pre>${escapeHTML(text)}</pre>
+          </details>
+        `;
+      }).join("");
+    }
+
+    function renderProcessDebug() {
+      const payload = buildDebugFlowPayload();
+      const trace = Array.isArray(payload.apiTrace) ? payload.apiTrace : [];
+      if (els.processSummary) {
+        els.processSummary.innerHTML = [
+          ["专业", payload.selectedMajor?.label || "未选专业"],
+          ["卡片", `${payload.cards?.length || 0} 张`],
+          ["已选", `${payload.chosenHistory?.length || 0} 次`],
+          ["请求", `${trace.length} 次`]
+        ].map(([label, value]) => `
+          <div class="process-stat">
+            <b>${escapeHTML(value)}</b>
+            <span>${escapeHTML(label)}</span>
+          </div>
+        `).join("");
+      }
+      if (!els.processList) return;
+      if (!trace.length) {
+        els.processList.innerHTML = `<div class="process-item"><div class="process-item-head"><b>暂无过程记录</b></div></div>`;
+        return;
+      }
+      els.processList.innerHTML = trace.map((item, index) => `
+        <article class="process-item">
+          <div class="process-item-head">
+            <b>${escapeHTML(debugTraceTitle(item, index))}</b>
+            <span>${escapeHTML(debugModelName(item))} · ${escapeHTML(item.transport || "fetch")}</span>
+          </div>
+          <div class="process-io">
+            <section class="process-box">
+              <h3>输入</h3>
+              ${debugInputHTML(item)}
+            </section>
+            <section class="process-box">
+              <h3>输出</h3>
+              ${debugOutputHTML(item)}
+            </section>
+          </div>
+          <div class="process-details">
+            ${debugDetailsHTML(item)}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function openProcessDebug() {
+      if (!els.processSheet) return;
+      renderProcessDebug();
+      els.processSheet.hidden = false;
+      els.processSheet.scrollTo(0, 0);
+    }
+
+    function closeProcessDebug() {
+      if (els.processSheet) els.processSheet.hidden = true;
+    }
+
+    async function copyProcessDebug() {
+      const button = els.copyProcessDebug;
       if (!button) return;
       const originalLabel = button.textContent;
       button.disabled = true;
@@ -8270,12 +8630,21 @@
     document.querySelector("#restartTop").addEventListener("click", () => resetGame(true, "entry"));
     document.querySelector("#restartResult").addEventListener("click", () => resetGame(true, "entry"));
     document.querySelector("#saveResult").addEventListener("click", saveResultImage);
-    document.querySelector("#copyDebugFlow")?.addEventListener("click", copyDebugFlow);
+    document.querySelector("#copyDebugFlow")?.addEventListener("click", openProcessDebug);
+    els.copyProcessDebug?.addEventListener("click", copyProcessDebug);
+    els.closeProcessDebug?.addEventListener("click", closeProcessDebug);
+    els.processSheet?.addEventListener("click", event => {
+      if (event.target === els.processSheet) closeProcessDebug();
+    });
     els.leftChoice.addEventListener("click", () => choose("left"));
     els.rightChoice.addEventListener("click", () => choose("right"));
     els.undoChoice.addEventListener("click", undo);
 
     window.addEventListener("keydown", event => {
+      if (!els.processSheet?.hidden) {
+        if (event.key === "Escape") closeProcessDebug();
+        return;
+      }
       if (isTypingTarget(event.target)) return;
       if (document.body.dataset.flow === "play") {
         if (event.key === "ArrowLeft") choose("left");

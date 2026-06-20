@@ -474,12 +474,13 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 {{OPENING_PROMPT}}
 - 按 stateHints.timeFrame 写年龄/阶段；有 stateHints.educationState 就承接。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
+- relationshipTrack 阶段使用 stateHints.relationshipStage。
 - 阶段约束：{{PHASE_PROMPT}}
 - scene.body 自然包含上一年余波、人物、事故和轻喜剧细节；只拍一个冲突。
 {{CAST_INTRO_PROMPT}}
 - summary 写上一年余波；scene.body 写本年事故。
 - 承接 stateHints.lastYear / storySoFar / repeatGuard / stageGuard，不原地复读。
-- 不复用 stateHints.recentSceneTitles / recentIncidents；相邻卡换压力源和人物关系。
+- 不复用 stateHints.recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
 - A 的行为对应 outlineCard.riasecAxis[0]，B 的行为对应 outlineCard.riasecAxis[1]；两个选项打法和 consequence 必须明显不同。
 
 输入数据：
@@ -520,11 +521,12 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 特别规则：
 - 每张卡按 stateHints.timeFrame 推进；有 stateHints.educationState 就承接。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
+- relationshipTrack 阶段使用 stateHints.relationshipStage。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
 - 阶段约束：{{PHASE_PROMPT}}
-- 不复用 recentSceneTitles；相邻卡换压力源和人物关系。
+- 不复用 recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
 {{CAST_INTRO_PROMPT}}
 - 每张卡使用对应 outlineCard；A/B 对应 riasecAxis[0]/[1]，不要输出 riasec。
 - summary 写上一年余波；scene.body 写本年事故；选项短；consequence 写选择后的直接后果。
@@ -571,13 +573,15 @@ function phasePromptForYear(year = 1, history = []) {
   if (currentYear <= 3) {
     return "大学早期：专业开局、角色入场、第一次被看见。";
   }
-  if (currentYear <= 5) {
-    if (educationState === "已放弃考研") return "毕业分岔：项目/实习成为主路。";
-    if (educationState === "继续读研") return "毕业分岔：备考/读研与项目分流。";
-    return "毕业分岔：考研、项目、实习分流。";
+  if (currentYear === 4) {
+    return "大四分流：考研、项目、实习分流。";
+  }
+  if (currentYear === 5) {
+    if (educationState === "继续读研") return "毕业后一年：读研/实习起步。";
+    return "毕业后一年：项目、实习或第一份工作落地。";
   }
   if (currentYear === 6) {
-    return educationState === "继续读研" ? "毕业前后：读研和实习落地。" : "毕业前后：学生身份转向工作身份。";
+    return educationState === "继续读研" ? "毕业后两年：读研和实习落地。" : "毕业后两年：学生身份转向工作身份。";
   }
   if (currentYear <= 9) {
     return educationState === "继续读研" ? "读研/实习：课题、实习和关系拉扯。" : "初入职场：工作、客户和城市落地。";
@@ -1162,13 +1166,13 @@ function stageGuard(history = []) {
     last.relationshipTrack
   ].map(item => shortText(item, 42)).join("，");
   if (/告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text)) {
-    return "关系阶段=体面告别或分手收束";
+    return "上一年关系=体面告别";
   }
   if (/愿意配合|说好|接过|回暖|主动来找|主动联系|打破僵局|还有缝|认真聊|当面说清|约法|确定|点赞评论/.test(consequence)) {
-    return "关系已补救：推进到确定关系或订婚结婚";
+    return "上一年关系=确定关系";
   }
   if (/冷战|沉默|已读不回|没回|不再联系|疏远|礼貌区/.test(text)) {
-    return "关系冷淡中：推进到分手收束、体面告别或新恋情萌芽";
+    return "上一年关系=冷战后撤";
   }
   return "";
 }
@@ -1263,13 +1267,18 @@ const professionalIncidentRules = [
       incidentItem("导出尺寸", ["导出", "尺寸"]),
       incidentItem("版权撞图", ["版权", "撞图", "相似"]),
       incidentItem("甲方临改", ["甲方", "临改"]),
-      incidentItem("logo相似度", ["logo", "Logo", "LOGO"])
+      incidentItem("logo相似度", ["logo", "Logo", "LOGO"]),
+      incidentItem("物料打样", ["物料", "打样"]),
+      incidentItem("用户走查", ["走查", "用户"]),
+      incidentItem("预算砍半", ["预算", "砍半"])
     ],
     mature: [
       incidentItem("展览评审", ["展览", "评审"]),
       incidentItem("品牌改版", ["品牌", "改版"]),
       incidentItem("账号出圈", ["账号", "出圈"]),
-      incidentItem("版权合同", ["版权", "合同"])
+      incidentItem("版权合同", ["版权", "合同"]),
+      incidentItem("团队招募", ["团队", "招募"]),
+      incidentItem("城市巡展", ["巡展", "城市"])
     ]
   }],
   [/计算机|软件|数据|人工智能|AI|信息安全|网络|数学|统计/, {
@@ -1366,9 +1375,12 @@ function currentIncidentHint(profile = {}, year = 1, history = [], outlineCard =
   const items = professionalIncidentItems(profile, currentYear);
   if (!items.length) return "";
   const recentText = recentIncidentText(history, 2);
+  const usedText = recentIncidentText(history, Math.max(2, history.length));
   const start = (hashString(`${profile.majorLabel || profile.major || ""}:${currentYear}`) || 0) % items.length;
   const ordered = items.slice(start).concat(items.slice(0, start));
-  const picked = ordered.find(item => !incidentAppears(item, recentText)) || ordered[0];
+  const picked = ordered.find(item => !incidentAppears(item, recentText) && !incidentAppears(item, usedText))
+    || ordered.find(item => !incidentAppears(item, recentText))
+    || ordered[0];
   return `本年事故：${picked.label}`;
 }
 
@@ -1383,17 +1395,63 @@ function recentIncidentsHint(profile = {}, history = [], year = 1) {
   return labels.length ? `近两年事故：${labels.slice(0, 3).join("、")}` : "";
 }
 
-function relationshipArcHint(history = [], year = 1) {
+function usedIncidentsHint(profile = {}, history = []) {
+  if (!history.length) return "";
+  const text = recentIncidentText(history, history.length);
+  const labels = [];
+  allProfessionalIncidentItems(profile).forEach(item => {
+    if (incidentAppears(item, text) && !labels.includes(item.label)) labels.push(item.label);
+  });
+  return labels.length ? `已用事故：${labels.slice(-6).join("、")}` : "";
+}
+
+const allowedRelationshipStages = ["暧昧升温", "确定关系", "冷战后撤", "分手收束", "体面告别", "新恋情萌芽", "订婚结婚", "生儿育女"];
+
+function extractRelationshipStage(text = "") {
+  const value = String(text || "");
+  return allowedRelationshipStages.find(stage => value.includes(stage)) || "";
+}
+
+function relationshipStageHint(history = [], year = 1) {
+  const currentYear = Number(year || 1);
   const text = history.map(item => `${item?.relationshipTrack || ""} ${item?.consequence || ""} ${item?.choiceText || ""}`).join(" ");
+  const recentText = [...history].slice(-3).map(item => `${item?.relationshipTrack || ""} ${item?.consequence || ""} ${item?.choiceText || ""}`).join(" ");
+  const last = history.at(-1) || {};
+  const lastResultText = `${last?.relationshipTrack || ""} ${last?.consequence || ""}`;
+  const lastStage = [...history].reverse().map(item => extractRelationshipStage(item?.relationshipTrack)).find(Boolean);
   const good = (text.match(/确定|公开|回暖|主动来找|认真聊|肯定|一起|见家长|结婚|孩子/g) || []).length;
   const cold = (text.match(/冷战|沉默|没再联系|分手|告别|疏远|你忙吧|删/g) || []).length;
-  if (year <= 2) return "关系阶段：暧昧升温";
-  if (year <= 4) return cold > good ? "关系阶段：冷战后撤或分手收束" : "关系阶段：确定关系或冷战后撤";
-  if (year <= 6) return cold > good ? "关系阶段：分手收束或新恋情萌芽" : "关系阶段：确定关系";
-  if (year <= 9) return cold > good ? "关系阶段：分手收束或新恋情萌芽" : "关系阶段：确定关系或订婚结婚";
-  if (year <= 12) return cold > good ? "关系阶段：体面告别或新恋情萌芽" : "关系阶段：订婚结婚";
-  if (year <= 15) return cold > good ? "关系阶段：体面告别或新恋情萌芽" : "关系阶段：订婚结婚或生儿育女";
-  return cold > good ? "关系阶段：体面告别或新恋情萌芽" : "关系阶段：生儿育女或订婚结婚";
+  const ended = /体面告别|分手收束|分手|告别|缘分已尽|到此为止|不再联系/.test(recentText);
+  const repaired = /当面说清|说清|说出来|承诺|给行动|拿出行动|回暖|认真聊|公开|确定|排进/.test(lastResultText);
+  if (lastStage === "体面告别") return "体面告别";
+  if (lastStage === "分手收束" && !repaired) return "分手收束";
+  if (lastStage === "分手收束" && repaired) return "冷战后撤";
+  if (lastStage === "冷战后撤" && !repaired) return currentYear >= 14 ? "体面告别" : currentYear >= 10 ? "分手收束" : "冷战后撤";
+  if (lastStage === "冷战后撤" && repaired) return "确定关系";
+  if (ended && !repaired) return currentYear >= 14 ? "体面告别" : "分手收束";
+  if (currentYear <= 2) return "暧昧升温";
+  if (currentYear <= 4) return cold > good ? "冷战后撤" : "确定关系";
+  if (currentYear <= 6) return cold > good + 1 ? "冷战后撤" : "确定关系";
+  if (currentYear <= 9) {
+    if (cold > good + 2) return "分手收束";
+    if (cold > good) return "冷战后撤";
+    return "确定关系";
+  }
+  if (currentYear <= 12) {
+    if (cold > good + 2) return "分手收束";
+    if (cold > good) return "冷战后撤";
+    return "订婚结婚";
+  }
+  if (currentYear <= 15) {
+    if (cold > good + 2) return "体面告别";
+    if (cold > good) return "冷战后撤";
+    return "订婚结婚";
+  }
+  return cold > good ? "体面告别" : "生儿育女";
+}
+
+function relationshipArcHint(history = [], year = 1) {
+  return `关系阶段：${relationshipStageHint(history, year)}`;
 }
 
 function careerArcHint(year = 1) {
@@ -1481,8 +1539,9 @@ function timeFrameHint(year = 1, history = []) {
   const educationState = educationStateHint(history);
   let stage = "大学早期";
   if (currentYear <= 3) stage = "大学早期";
-  else if (currentYear <= 5) stage = "毕业分岔";
-  else if (currentYear === 6) stage = "毕业前后";
+  else if (currentYear === 4) stage = "大四分流";
+  else if (currentYear === 5) stage = educationState === "继续读研" ? "读研/实习起步" : "毕业后一年";
+  else if (currentYear === 6) stage = educationState === "继续读研" ? "读研/实习落地" : "毕业后两年";
   else if (currentYear <= 9) stage = educationState === "继续读研" ? "读研/实习" : "初入职场";
   else if (currentYear <= 12) stage = "城市平台";
   else if (currentYear <= 15) stage = "成年压力";
@@ -1537,6 +1596,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const visibleEducationState = visibleEducationStateHint(history, year);
   const currentIncident = currentIncidentHint(profile, year, history, outlineCard);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
+  const relationshipStage = relationshipStageHint(history, year);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
   const stateHints = {
@@ -1546,6 +1606,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     stageGuard: stageGuard(history),
     timeFrame: timeFrameHint(year, history),
     lifeStage: lifeStageHint(year, history),
+    relationshipStage,
     relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
     lifeStatus: lifeStatusHint(history, year)
   };
@@ -1555,8 +1616,10 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, year);
+  const usedIncidents = usedIncidentsHint(profile, history);
   if (currentIncident) stateHints.currentIncident = currentIncident;
   if (recentIncidents) stateHints.recentIncidents = recentIncidents;
+  if (usedIncidents) stateHints.usedIncidents = usedIncidents;
   if (Number(year) === 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(year || 1) <= 5) {
@@ -1584,6 +1647,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const firstOutlineCard = compactOutlineCard(getOutlineCard(startYear), storyCast);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
+  const relationshipStage = relationshipStageHint(history, startYear);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
   const stateHints = {
@@ -1593,6 +1657,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     stageGuard: stageGuard(history),
     timeFrame: timeFrameHint(startYear, history),
     lifeStage: lifeStageHint(startYear, history),
+    relationshipStage,
     relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
     lifeStatus: lifeStatusHint(history, startYear),
     batchMode: "prefetch"
@@ -1603,8 +1668,10 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, startYear);
+  const usedIncidents = usedIncidentsHint(profile, history);
   if (currentIncident) stateHints.currentIncident = currentIncident;
   if (recentIncidents) stateHints.recentIncidents = recentIncidents;
+  if (usedIncidents) stateHints.usedIncidents = usedIncidents;
   if (Number(startYear) <= 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(startYear || 1) <= 5) {

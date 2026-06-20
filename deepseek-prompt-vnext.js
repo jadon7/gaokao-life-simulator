@@ -475,6 +475,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 按 stateHints.timeFrame 写年龄/阶段；有 stateHints.educationState 就承接。
 - 按 stateHints.routeState 承接选择惯性。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
+- lifeTrack 写本年新状态。
 - 按 stateHints.relationshipBeat 推进关系事实。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的事实。
 - 新恋情阶段只写 stateHints.newRelation。
@@ -528,6 +529,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 特别规则：
 - 每张卡按 stateHints.timeFrame 推进；有 stateHints.educationState 就承接。
 - 每张卡按 stateHints.routeState 承接选择惯性。
+- lifeTrack 写本年新状态。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 每张卡按 stateHints.relationshipBeat 推进关系事实。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的事实。
@@ -1125,7 +1127,7 @@ function compactStoryCast(profile = {}, existingCast = null) {
   return out;
 }
 
-function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
+function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, history = [], relationshipStage = "") {
   const cast = compactStoryCast(profile, existingCast);
   const currentYear = Number(year || 1);
   if (currentYear <= 3) {
@@ -1148,9 +1150,14 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
       externalIntro: cast.externalIntro
     };
   }
+  const historyText = JSON.stringify(history || []);
+  const useSecondaryRelation = currentYear >= 9 && (
+    relationshipStage === "新恋情萌芽" ||
+    (cast.secondaryRelationName && historyText.includes(cast.secondaryRelationName))
+  );
   const matureCast = {
-    relationName: cast.relationName,
-    relationIntro: shortText(`与你关系反复推进的${cast.relationName}`, 34),
+    relationName: useSecondaryRelation ? cast.secondaryRelationName : cast.relationName,
+    relationIntro: useSecondaryRelation ? cast.secondaryRelationIntro : shortText(`与你关系反复推进的${cast.relationName}`, 34),
     friendName: cast.roommateName,
     friendIntro: shortText(`从大学项目熟到现在的同行朋友${cast.roommateName}`, 34),
     externalName: cast.externalName,
@@ -1548,6 +1555,7 @@ function relationshipBeatHint(history = [], year = 1) {
   }
   if (currentYear <= 14) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系事实：${pickFreshFact(["旧爱偶遇", "新伴侣稳定", "独自生活成型"], history, year)}`;
+    if (["暧昧升温", "确定关系"].includes(stage)) return `关系事实：${pickFreshFact(["新伴侣稳定", "共同租房", "双方家人见面"], history, year)}`;
     return `关系事实：${pickFreshFact(["产检请假冲突", "孩子夜醒分工", "学区房取舍", "父母照护撞项目", "家庭现金流紧张"], history, year)}`;
   }
   if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系事实：${pickFreshFact(["分开结果", "第二段关系落地", "独自生活稳定"], history, year)}`;
@@ -1734,13 +1742,13 @@ export function getOutlineCard(year) {
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
-  const compactCast = compactStoryCastForYear(profile, storyCast, year);
   const outlineCard = compactOutlineCard(getOutlineCard(year), storyCast);
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, year);
   const currentIncident = currentIncidentHint(profile, year, history, outlineCard);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
   const relationshipStage = relationshipStageHint(history, year);
+  const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage);
   const relationshipBeat = relationshipBeatHint(history, year);
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
@@ -1755,8 +1763,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     routeState: routeStateHint(history),
     relationshipStage,
     relationshipBeat,
-    relationshipStatus: relationshipStage,
-    lifeStatus: lifeStatusHint(history, year)
+    relationshipStatus: relationshipStage
   };
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history);
@@ -1794,13 +1801,13 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
 
 export function buildBatchInput({ profile, history, startYear, count, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
-  const compactCast = compactStoryCastForYear(profile, storyCast, startYear);
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, startYear);
   const firstOutlineCard = compactOutlineCard(getOutlineCard(startYear), storyCast);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
   const relationshipStage = relationshipStageHint(history, startYear);
+  const compactCast = compactStoryCastForYear(profile, storyCast, startYear, history, relationshipStage);
   const relationshipBeat = relationshipBeatHint(history, startYear);
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
@@ -1816,7 +1823,6 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     relationshipStage,
     relationshipBeat,
     relationshipStatus: relationshipStage,
-    lifeStatus: lifeStatusHint(history, startYear),
     batchMode: "prefetch"
   };
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;

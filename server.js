@@ -533,6 +533,10 @@ function optionalCleanText(value) {
   return String(value || "").trim();
 }
 
+function shortText(value, limit = 80) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
+}
+
 function clampTextBySentence(value, maxLength, maxSentences = 1) {
   const text = optionalCleanText(value).replace(/\s+/g, "");
   if (!text) return "";
@@ -960,28 +964,7 @@ function mockResponse(messages) {
   const year = Number(parsed?.gameMeta?.currentYear || 1);
   const outlineCard = getOutlineCard(year);
   const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
-  const relationState = year <= 2
-    ? `暧昧升温，${relationName}开始在群里留意你`
-    : `冷战后撤，${relationName}把见面时间往后挪`;
-  const relationshipTrack = year <= 2
-    ? `暧昧升温：${relationName}开始在群里留意你`
-    : `冷战后撤：${relationName}直接问你是不是在躲`;
-  return {
-    year,
-    phase: outlineCard?.phase || "试播阶段",
-    mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-    summary: mockSummary(year, parsed?.history, relationState),
-    question: `第 ${year} 年 / ${totalGameYears}`,
-    lifeTrack: "新机会把你的日程重新排了一遍，老师默认你该顶上更难的位置",
-    relationshipTrack,
-    callbacks: outlineCard?.callbacks?.slice(0, 3) || ["茶水间吐槽"],
-    scene: {
-      title: mockSceneTitle(year, outlineCard),
-      body: outlineCard?.conflict || `你刚把上一轮麻烦收拾完，朋友又带来一个新岔路，${relationName}的未读消息还挂在聊天顶上。机会来得很响，代价也写在脸上，连茶水间的饮水机都像在等你做决定。`
-    },
-    a: { title: "立刻接下", desc: "把自己推到更大场面", tag: "主动推进", consequence: "你一接手就被默认成这局负责人，机会确实更大了，但这周的觉也基本没了", riasec: mockRiasec(axis[0]) },
-    b: { title: "当场拒绝", desc: "先守住成形的节奏", tag: "稳住生活", consequence: `你没再让自己多开一条战线，可${relationName}那边也明显把手收了半步`, riasec: mockRiasec(axis[1]) }
-  };
+  return mockAnnualCard(parsed, year, outlineCard, relationName, axis);
 }
 
 function mockRelationName(parsed) {
@@ -994,6 +977,63 @@ function mockRelationName(parsed) {
 function mockSceneTitle(year, outlineCard) {
   const seed = outlineCard?.callbacks?.[0] || outlineCard?.comedyDevice || outlineCard?.phase || "人生弹窗";
   return `第${year}年·${String(seed).slice(0, 6)}`;
+}
+
+function mockAnnualCard(parsed, year, outlineCard, relationName, axis) {
+  const [leftText, rightText] = String(outlineCard?.abType || "争取机会 / 稳住底盘").split(/\s*\/\s*/);
+  const relationTrack = mockRelationshipTrack(parsed, year, relationName);
+  const incident = mockIncidentText(parsed, outlineCard);
+  return {
+    year,
+    phase: outlineCard?.phase || "年度推进",
+    mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
+    summary: mockSummary(year, parsed?.history, relationTrack.replace("：", "，")),
+    question: `第 ${year} 年 / ${totalGameYears}`,
+    lifeTrack: mockLifeTrack(parsed, year, incident),
+    relationshipTrack: relationTrack,
+    callbacks: outlineCard?.callbacks?.slice(0, 3) || [incident],
+    scene: {
+      title: mockSceneTitle(year, outlineCard),
+      body: mockSceneBody(parsed, outlineCard, relationName, incident)
+    },
+    a: mockChoice(leftText, `先处理${incident}，把局面往前推`, leftText, `你把${incident}推进一步，代价也马上追上来`, axis[0]),
+    b: mockChoice(rightText, `先稳住节奏，再决定下一步`, rightText, `你守住眼前节奏，${relationName}把期待往回收`, axis[1])
+  };
+}
+
+function mockIncidentText(parsed, outlineCard) {
+  return optionalCleanText(parsed?.stateHints?.currentIncident).replace(/^本年事故：/, "")
+    || outlineCard?.callbacks?.[0]
+    || outlineCard?.phase
+    || "年度大事";
+}
+
+function mockLifeTrack(parsed, year, incident) {
+  const timeFrame = optionalCleanText(parsed?.stateHints?.timeFrame) || `${Math.min(35, 17 + year)}岁左右`;
+  return shortText(`${timeFrame}，${incident}压到台面`, 26);
+}
+
+function mockRelationshipTrack(parsed, year, relationName) {
+  const stage = optionalCleanText(parsed?.stateHints?.relationshipStage) || (year <= 2 ? "暧昧升温" : "订婚结婚");
+  const fact = optionalCleanText(parsed?.stateHints?.relationshipBeat).replace(/^关系事实：/, "");
+  return shortText(`${stage}：${relationName}${fact ? `面对${fact}` : "关系继续推进"}`, 34);
+}
+
+function mockSceneBody(parsed, outlineCard, relationName, incident) {
+  const last = optionalCleanText(parsed?.stateHints?.lastYear).replace(/^上一年：/, "");
+  const conflict = outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`;
+  return shortText(`${last ? `${last}。` : ""}${conflict}${relationName}在旁边等你给一句准话，场面尴尬得像会议室空调突然失灵。`, 110);
+}
+
+function mockChoice(source, desc, tag, consequence, mainType) {
+  const title = shortText(String(source || "先处理").replace(/[，。！？!?；;：:].*$/g, ""), 5) || "先处理";
+  return {
+    title,
+    desc: shortText(desc, 22),
+    tag: shortText(tag || title, 4),
+    consequence: shortText(consequence, 36),
+    riasec: mockRiasec(mainType)
+  };
 }
 
 function mockRiasec(mainType, secondaryType = "I") {

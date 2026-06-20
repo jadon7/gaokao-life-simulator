@@ -224,9 +224,11 @@ async function callModel(messages, validator, env, model = currentModel(env), on
     throw error;
   }
 
+  const useInitialStream = llmStream && typeof onDelta === "function";
+  const maxAttempts = useInitialStream ? 2 : 1;
   let lastError;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const useStream = llmStream && attempt === 0;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const useStream = useInitialStream && attempt === 0;
     let streamedAny = false;
     let clientAborted = false;
     const controller = new AbortController();
@@ -263,8 +265,8 @@ async function callModel(messages, validator, env, model = currentModel(env), on
     } catch (error) {
       if (clientAborted || clientSignal?.aborted) throw clientAbortError();
       lastError = error;
-      if (useStream && streamedAny) onDiscard?.();
-      console.error(`${config.label} attempt ${attempt + 1}/2 failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
+      console.error(`${config.label} attempt ${attempt + 1}/${maxAttempts} failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
+      if (useStream && streamedAny) throw error;
     } finally {
       clearTimeout(timeout);
       clientSignal?.removeEventListener("abort", abortFromClient);

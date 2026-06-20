@@ -4347,7 +4347,8 @@
     const runtimeFlags = {
       dev: urlParams.get("dev") === "1",
       pilot: urlParams.get("pilot") === "1",
-      pilotResult: urlParams.get("pilotResult") === "1"
+      pilotResult: urlParams.get("pilotResult") === "1",
+      debug: urlParams.get("debug") === "1" || urlParams.get("trace") === "1"
     };
 
     const randomProfiles = [
@@ -5723,7 +5724,7 @@
       try {
         const response = await fetch(path, {
           method: "POST",
-          headers: { "content-type": "application/json", "x-prompt-lab-debug": "1" },
+          headers: apiHeaders(),
           body: JSON.stringify(payload),
           signal: controller.signal
         });
@@ -5755,11 +5756,15 @@
       try {
         const response = await fetch(streamPath, {
           method: "POST",
-          headers: { "content-type": "application/json", "x-prompt-lab-debug": "1" },
+          headers: apiHeaders(),
           body: JSON.stringify(payload),
           signal: controller.signal
         });
-        if (!response.ok || !response.body) return apiPost(path, payload);
+        if (!response.ok || !response.body) {
+          const data = await response.json().catch(() => ({}));
+          const ray = response.headers.get("cf-ray");
+          throw new Error(data.error || `请求失败：${response.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`);
+        }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -5782,18 +5787,22 @@
         const trailing = parseStreamLine(buffer);
         if (trailing?.type === "done") finalData = trailing;
         if (!finalData?.ok) {
-          onDelta?.("", { reset: true });
-          return apiPost(path, payload);
+          throw new Error(finalData?.error || "生成没有完成，请重试");
         }
         logApiModel(path, payload, finalData, "stream");
         return finalData;
       } catch (error) {
         if (error.name === "AbortError") throw new Error("生成超时，请重试");
-        if (isNetworkFetchError(error)) return apiPost(path, payload);
         throw new Error(normalizeFetchError(error, "请求失败"));
       } finally {
         window.clearTimeout(timeout);
       }
+    }
+
+    function apiHeaders() {
+      const headers = { "content-type": "application/json" };
+      if (runtimeFlags.debug) headers["x-prompt-lab-debug"] = "1";
+      return headers;
     }
 
     function parseStreamLine(line) {
@@ -5828,7 +5837,7 @@
         xhr.open("POST", path, true);
         xhr.timeout = 45000;
         xhr.setRequestHeader("content-type", "application/json");
-        xhr.setRequestHeader("x-prompt-lab-debug", "1");
+        if (runtimeFlags.debug) xhr.setRequestHeader("x-prompt-lab-debug", "1");
         options.signal?.addEventListener("abort", abortRequest, { once: true });
         xhr.onload = () => {
           let data = {};

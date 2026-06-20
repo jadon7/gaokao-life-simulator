@@ -25,8 +25,6 @@ const defaultModel = resolveDefaultModel();
 const totalGameYears = 18;
 const finalResultAge = 36;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
-const relationshipStagePattern = /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/;
-const relationshipMentionPattern = /(关系|暧昧|冷淡|冷战|分手|告别|对象|许青禾|沈晚晴|苏听澜|陈栀|她(?:约|等|问|回|没|不|主动|沉默|留|发|看|递|笑|说))/;
 const promptLabRealProxyBase = "https://gaokao.dsxzai.com";
 const promptLabRealProxyModel = "MiniMax-M2.7-highspeed";
 const promptLabRealProxyModels = [
@@ -201,6 +199,7 @@ function compactHistory(history = []) {
     lifeTrack: item.lifeTrack,
     relationshipTrack: item.relationshipTrack,
     callbackSeeds: item.callbackSeeds,
+    appearedRoles: Array.isArray(item.appearedRoles) ? item.appearedRoles.slice(0, 8) : [],
     choice: item.choice,
     choiceText: item.choiceText,
     consequence: item.consequence,
@@ -217,20 +216,22 @@ function taskPromptWithInput(taskPrompt, input) {
 }
 
 function buildAnnualMessages({ profile, history, year }) {
-  const input = buildAnnualInput({ profile: normalizeProfile(profile), history: compactHistory(history), year, totalGameYears });
+  const historyDigest = compactHistory(history);
+  const input = buildAnnualInput({ profile: normalizeProfile(profile), history: historyDigest, year, totalGameYears });
   return [
     { role: "system", content: systemPrompt() },
     {
       role: "user",
-      content: taskPromptWithInput(annualTaskPromptForYear(year), input)
+      content: taskPromptWithInput(annualTaskPromptForYear(year, historyDigest), input)
     }
   ];
 }
 
 function buildBatchMessages({ profile, history, startYear, count }) {
+  const historyDigest = compactHistory(history);
   const input = buildBatchInput({
     profile: normalizeProfile(profile),
-    history: compactHistory(history),
+    history: historyDigest,
     startYear,
     count,
     totalGameYears
@@ -239,7 +240,7 @@ function buildBatchMessages({ profile, history, startYear, count }) {
     { role: "system", content: systemPrompt() },
     {
       role: "user",
-      content: taskPromptWithInput(batchTaskPromptForStartYear(startYear, count).replaceAll("{{count}}", String(count)), input)
+      content: taskPromptWithInput(batchTaskPromptForStartYear(startYear, count, historyDigest).replaceAll("{{count}}", String(count)), input)
     }
   ];
 }
@@ -477,11 +478,8 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
   normalized.summary = clampTextBySentence(data.summary, 52, 2);
   const fallbackYear = Math.min(Math.max(Number(expectedYear || (Array.isArray(history) ? history.length + 1 : 1)) || 1, 1), totalGameYears);
-  const yearNumberFromData = Number(data?.year || 0);
-  normalized.question = typeof data?.question === "string" && data.question.trim()
-    ? data.question.trim()
-    : `第 ${yearNumberFromData || fallbackYear} 年 / ${totalGameYears}`;
-  normalized.year = Number(normalized.question.match(/\d+/)?.[0] || yearNumberFromData || fallbackYear);
+  normalized.year = fallbackYear;
+  normalized.question = `第 ${fallbackYear} 年 / ${totalGameYears}`;
   const outline = getOutlineCard(normalized.year);
   normalized.phase = optionalCleanText(data.phase) || optionalCleanText(outline?.phase);
   normalized.mainTrack = outline?.mainTrack || (/relationship/i.test(String(data.mainTrack || "").trim()) ? "relationship" : "life");
@@ -495,24 +493,11 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   normalized.a = normalizeChoiceData(data.a, "A");
   normalized.b = normalizeChoiceData(data.b, "B");
   applyOutlineRiasec(normalized);
-  validateRiasecAgainstOutline(normalized);
-  if (!new RegExp(`^第\\s*\\d+\\s*年\\s*\\/\\s*${totalGameYears}$`).test(normalized.question)) {
-    throw new Error("Invalid annual JSON: bad question field");
-  }
   const yearNumber = normalized.year;
   normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 52, 2);
-  if (yearNumber > 1) {
-    normalized.relationshipTrack = repairRelationshipTrackStage(normalized.relationshipTrack, history);
-  }
-  if (yearNumber > 1) {
-    normalized.summary = deDuplicateSummary(normalized, history);
-    normalized.summary = repairSummaryRelationshipStage(normalized.summary, normalized.relationshipTrack);
-  }
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
-  ensureSceneNotRepeated(normalized, repeatHistory);
-  validateContinuityText(normalized, history);
   return normalized;
 }
 
@@ -520,141 +505,6 @@ function applyOutlineRiasec(card) {
   const axis = Array.isArray(getOutlineCard(card.year)?.riasecAxis) ? getOutlineCard(card.year).riasecAxis : [];
   if (axis[0]) card.a.riasec = mockRiasec(axis[0], "");
   if (axis[1]) card.b.riasec = mockRiasec(axis[1], "");
-}
-
-function sceneTextForRepeatCheck(item) {
-  if (!item) return "";
-  const title = item.scene?.title || item.sceneTitle || item.eventTitle || item.scene || "";
-  const body = item.scene?.body || item.sceneBody || item.prompt || "";
-  return [title, body].filter(Boolean).join(" ");
-}
-
-function ensureSceneNotRepeated(card, history = []) {
-  const currentTitle = optionalCleanText(card.scene?.title);
-  const currentText = sceneTextForRepeatCheck(card);
-  if (!currentText) return;
-  const repeated = history.some(item => {
-    const title = optionalCleanText(item?.sceneTitle || item?.eventTitle || item?.scene?.title || item?.scene);
-    if (currentTitle && title && currentTitle === title) return true;
-    const priorText = sceneTextForRepeatCheck(item);
-    return priorText && textSimilarityScore(currentText, priorText) >= 0.68;
-  });
-  if (repeated) throw new Error("Invalid annual JSON: repeated scene");
-}
-
-function deDuplicateSummary(card, history = []) {
-  const summary = optionalCleanText(card.summary);
-  if (!summary) return "";
-  const sceneText = [card.scene?.title, card.scene?.body].filter(Boolean).join("");
-  const sceneCategories = textCategories(sceneText);
-  if (!hasCategoryOverlap(textCategories(summary), sceneCategories) && textSimilarityScore(summary, sceneText) < 0.34) return summary;
-  const preferRelationship = !sceneCategories.has("relationship");
-  const candidates = [
-    { value: card.lifeTrack, type: "life" },
-    { value: card.relationshipTrack, type: "relationship" }
-  ]
-    .map(item => ({ ...item, value: optionalCleanText(item.value) }))
-    .filter(item => item.value)
-    .map(item => ({
-      ...item,
-      score: textSimilarityScore(item.value, sceneText),
-      categoryOverlap: hasCategoryOverlap(textCategories(item.value), sceneCategories)
-    }))
-    .filter(item => !item.categoryOverlap)
-    .sort((a, b) => {
-      const aPreferred = preferRelationship ? a.type === "relationship" : a.type === "life";
-      const bPreferred = preferRelationship ? b.type === "relationship" : b.type === "life";
-      if (aPreferred !== bPreferred) return aPreferred ? -1 : 1;
-      return a.score - b.score;
-    });
-  const best = candidates[0];
-  const consequence = extractConsequenceClause(summary, sceneText) || buildHistoryConsequence(history);
-  const offstage = best && best.score < 0.34 ? best.value : buildOffstageFallback(sceneCategories);
-  return mergeFeedbackParts(consequence, offstage);
-}
-
-function buildOffstageFallback(sceneCategories) {
-  if (sceneCategories.has("relationship")) {
-    return "课表和项目没为你停下，家里那边也开始追问你接下来怎么打算";
-  }
-  if (sceneCategories.has("health")) {
-    return "你把作息往回拽了一点，家里这才没继续追着问你几点睡";
-  }
-  if (sceneCategories.has("work") || sceneCategories.has("study")) {
-    return "暧昧升温，亲密关系里有人开始顺手给你留位置";
-  }
-  return "你这边刚处理完一头，另一头也没闲着，身边几个人对你的站位已经变了";
-}
-
-function repairSummaryRelationshipStage(summary, relationshipTrack) {
-  const text = optionalCleanText(summary);
-  if (!text || !relationshipMentionPattern.test(text) || relationshipStagePattern.test(text)) return text;
-  const track = optionalCleanText(relationshipTrack);
-  const match = track.match(relationshipStagePattern);
-  if (!match) return text;
-  const firstClause = text.split(/[，。！？!?；;]/).map(item => item.trim()).find(Boolean) || text;
-  const signal = track
-    .replace(new RegExp(`^${match[0]}[：:，,]?`), "")
-    .replace(/[。！？!?；;]+$/g, "")
-    .trim();
-  const staged = signal ? `${match[0]}，${signal}` : match[0];
-  return mergeFeedbackParts(firstClause, staged);
-}
-
-function repairRelationshipTrackStage(relationshipTrack, history = []) {
-  const track = optionalCleanText(relationshipTrack);
-  if (!track) return track;
-  if (!shouldForceFarewellStage(history) || /^(体面告别|分手收束)[：:]/.test(track)) {
-    return normalizeRelationshipTrackStage(track);
-  }
-  const signal = track
-    .replace(relationshipStagePattern, "")
-    .replace(/^[：:，,]+/, "")
-    .replace(/[。！？!?；;]+$/g, "")
-    .trim();
-  return `体面告别：${signal || "你们把话说到这里，各自退出对方日常"}`;
-}
-
-function normalizeRelationshipTrackStage(track) {
-  if (relationshipStagePattern.test(track)) return track;
-  const alias = [
-    [/^(暧昧降温|关系降温|暧昧冷却|暧昧转冷|关系冷淡|冷淡疏远)/, "冷战后撤"],
-    [/^(恋爱确定|正式在一起|确认关系)/, "确定关系"],
-    [/^(和平告别|礼貌告别)/, "体面告别"],
-    [/^(分开|分手|关系结束)/, "分手收束"]
-  ].find(([pattern]) => pattern.test(track));
-  const stage = alias?.[1] || (/冷|沉默|不联系|减少主动|后撤|疏远|已读不回/.test(track) ? "冷战后撤" : "");
-  if (!stage) return track;
-  const signal = track
-    .replace(alias?.[0] || /^.*?[：:]/, "")
-    .replace(/^[：:，,]+/, "")
-    .replace(/[。！？!?；;]+$/g, "")
-    .trim();
-  return `${stage}：${signal || "对方开始减少主动联系"}`;
-}
-
-function shouldForceFarewellStage(history = []) {
-  const last = Array.isArray(history) ? history.at(-1) : null;
-  const text = [
-    last?.choice,
-    last?.choiceText,
-    last?.tag,
-    last?.consequence,
-    last?.relationshipTrack
-  ].map(optionalCleanText).join("，");
-  return /告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text);
-}
-
-function extractConsequenceClause(summary, sceneText) {
-  const clauses = optionalCleanText(summary)
-    .split(/[，。！？!?；;]/)
-    .map(item => item.trim())
-    .filter(Boolean);
-  const first = clauses[0] || "";
-  if (first.length >= 8 && textSimilarityScore(first, sceneText) < 0.56) {
-    return first.slice(0, 26);
-  }
-  return "";
 }
 
 function buildHistoryConsequence(history = []) {
@@ -675,110 +525,6 @@ function mergeFeedbackParts(consequence, offstage) {
   const right = optionalCleanText(offstage).replace(/^(上一年|上一年的决定|这一年)[，,]*/g, "").replace(/[，。！？!?；;]+$/g, "");
   const merged = [left, right].filter(Boolean).join("，");
   return clampTextBySentence(merged, 52, 2);
-}
-
-function validateContinuityText(card, history = []) {
-  if (card.year > 1) {
-    const summary = optionalCleanText(card.summary);
-    if (/(^|[^核])关系线|生活线|现实线|主线|副线|当前趋势/.test(summary)) {
-      throw new Error("Invalid annual JSON: summary exposes internal track wording");
-    }
-    if (/接[住着下]?或错失|错失或接|错过或接|或错失|或错过|要么|无论|分叉|两条路|取决于|A或B|A\/B/.test(summary)) {
-      throw new Error("Invalid annual JSON: summary contains parallel opposite outcomes");
-    }
-    if (relationshipMentionPattern.test(summary) && !relationshipStagePattern.test(summary)) {
-      throw new Error("Invalid annual JSON: summary mentions relationship without a clear stage");
-    }
-    const lastConsequence = optionalCleanText(Array.isArray(history) ? history.at(-1)?.consequence : "");
-    if (lastConsequence && textSimilarityScore(summary.slice(0, Math.min(24, summary.length)), lastConsequence) < 0.08) {
-      throw new Error("Invalid annual JSON: summary does not inherit previous selected consequence");
-    }
-  }
-  const relationshipTrack = optionalCleanText(card.relationshipTrack);
-  if (relationshipTrack) {
-    if (/(^|[^核])关系线|生活线|现实线|主线|副线/.test(relationshipTrack)) {
-      throw new Error("Invalid annual JSON: relationshipTrack exposes internal wording");
-    }
-    if (!relationshipStagePattern.test(relationshipTrack)) {
-      throw new Error("Invalid annual JSON: relationshipTrack missing clear relationship stage");
-    }
-  }
-}
-
-function validateRiasecAgainstOutline(card) {
-  const outline = getOutlineCard(card.year);
-  const axis = Array.isArray(outline?.riasecAxis) ? outline.riasecAxis : [];
-  if (axis.length < 2) return;
-  validateChoiceAxis(card.a, axis[0], "A");
-  validateChoiceAxis(card.b, axis[1], "B");
-}
-
-function validateChoiceAxis(choice, expectedMain, label) {
-  const scores = choice?.riasec;
-  if (!scores) throw new Error(`Invalid annual JSON: ${label} missing riasec`);
-  const keys = ["R", "I", "A", "S", "E", "C"];
-  const ranked = keys.slice().sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
-  const main = ranked[0];
-  const mainScore = Number(scores[expectedMain] || 0);
-  const positiveSecondary = keys.filter(key => key !== expectedMain && Number(scores[key] || 0) > 0);
-  const total = keys.reduce((sum, key) => sum + Number(scores[key] || 0), 0);
-  if (main !== expectedMain || mainScore < 4 || mainScore > 6) {
-    throw new Error(`Invalid annual JSON: ${label} riasec main must be ${expectedMain} with 4-6 points`);
-  }
-  if (positiveSecondary.length > 1 || positiveSecondary.some(key => Number(scores[key] || 0) > 2) || total > 7) {
-    throw new Error(`Invalid annual JSON: ${label} riasec secondary weights invalid`);
-  }
-}
-
-function textCategories(value) {
-  const text = String(value || "");
-  const categories = new Set();
-  const rules = [
-    ["relationship", /恋|爱|暧昧|暗恋|表白|伴侣|陪伴|对象|结婚|分手|复合|喜欢|心动|搭子|约会/],
-    ["health", /健康|身体|体检|医院|医生|熬夜|作息|胸闷|心律|生病|焦虑|睡眠|运动|爬山|休息/],
-    ["family", /父母|家里|家庭|亲戚|妈妈|爸爸|孩子|老人|婚礼|买房|房贷/],
-    ["friend", /朋友|室友|同学|同事|群|饭搭子|兄弟|闺蜜|聚会/],
-    ["work", /工作|项目|上线|老板|领导|甲方|公司|岗位|调岗|职场|代码|产品|需求|汇报|团队|加班/],
-    ["study", /课程|考试|作业|社团|导师|竞赛|保研|考研|论文|实习|专业课|学校|大学/]
-  ];
-  rules.forEach(([category, pattern]) => {
-    if (pattern.test(text)) categories.add(category);
-  });
-  return categories;
-}
-
-function hasCategoryOverlap(left, right) {
-  for (const item of left) {
-    if (right.has(item)) return true;
-  }
-  return false;
-}
-
-function textSimilarityScore(a, b) {
-  const left = uniqueTextTokens(a);
-  const right = uniqueTextTokens(b);
-  if (!left.size || !right.size) return 0;
-  let shared = 0;
-  for (const token of left) {
-    if (right.has(token)) shared += 1;
-  }
-  return shared / Math.max(1, Math.min(left.size, right.size));
-}
-
-function uniqueTextTokens(value) {
-  const text = String(value || "")
-    .replace(/[，。！？!?；;：:\s"'“”‘’、（）()《》]/g, "")
-    .trim();
-  const tokens = new Set();
-  for (let size = 2; size <= 3; size += 1) {
-    for (let index = 0; index <= text.length - size; index += 1) {
-      const token = text.slice(index, index + size);
-      if (!/[的一是在和了有就把也都而及与或你我他她它这那]/.test(token)) {
-        tokens.add(token);
-      }
-    }
-  }
-  return tokens;
 }
 
 function optionalCleanText(value) {
@@ -855,13 +601,27 @@ function normalizeRiasecPayload(value) {
   return hasValue ? scores : null;
 }
 
-function normalizeChoiceTitle(value, prefix) {
-  const text = optionalCleanText(value)
+function stripChoiceTypeNoise(value, prefix = "") {
+  return optionalCleanText(value)
     .replace(new RegExp(`^${prefix}[.。]\\s*`), "")
+    .replace(/\s+/g, "")
+    .replace(/^[RIASEC][：:·.\-—_、]?/i, "")
+    .replace(/^(现实型?|研究型?|艺术型?|社会型?|企业型?|常规型?)[：:·.\-—_、]?/g, "")
+    .replace(/^型[：:·.\-—_、]?/g, "")
+    .replace(/[RIASEC]$/i, "")
+    .replace(/型$/g, "")
+    .trim();
+}
+
+function normalizeChoiceTitle(value, prefix) {
+  const text = stripChoiceTypeNoise(value, prefix)
     .replace(/[，,。.!！?？；;].*$/g, "")
     .replace(/\s+/g, "");
   if (/demo/i.test(text)) return "做Demo";
   if (/邮件.*告别|写信.*告别|写封邮件/.test(text)) return "写信告别";
+  if (/金句收|体面金句/.test(text)) return "金句收尾";
+  if (/简历证|证明/.test(text)) return "重写证据";
+  if (/谁动文|谁动/.test(text)) return "查清去向";
   if (text) return text.slice(0, 5);
   return prefix === "A" ? "直接推进" : "先稳住";
 }
@@ -882,23 +642,29 @@ function balanceInlineQuote(value) {
   const closeCount = (text.match(/”/g) || []).length;
   const cornerOpenCount = (text.match(/「/g) || []).length;
   const cornerCloseCount = (text.match(/」/g) || []).length;
+  const singleOpenCount = (text.match(/‘/g) || []).length;
+  const singleCloseCount = (text.match(/’/g) || []).length;
   if (openCount > closeCount) return `${text}”`;
   if (cornerOpenCount > cornerCloseCount) return `${text}」`;
+  if (singleOpenCount > singleCloseCount) return `${text}’`;
   return text;
 }
 
 function normalizeChoiceTag(value, prefix) {
-  let text = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "").replace(/\s+/g, "");
-  const hadRiasecPrefix = /^[RIASEC][：:·.\-—_、]?/i.test(text);
-  text = text.replace(/^[RIASEC][：:·.\-—_、]?/i, "");
-  if (hadRiasecPrefix) {
-    if (/^动手/.test(text)) return "动手";
-    if (/^查证/.test(text)) return "查证";
-    if (/^表达/.test(text)) return "表达";
-    if (/^(沟通|安抚)/.test(text)) return "沟通";
-    if (/^(争取|拍板)/.test(text)) return "争取";
-    if (/^(流程|保底)/.test(text)) return "流程";
-  }
+  const raw = optionalCleanText(value).replace(/\s+/g, "");
+  if (/现实型?/.test(raw)) return "动手";
+  if (/研究型?/.test(raw)) return "查证";
+  if (/艺术型?/.test(raw)) return "表达";
+  if (/社会型?/.test(raw)) return "沟通";
+  if (/企业型?/.test(raw)) return "争取";
+  if (/常规型?/.test(raw)) return "稳住";
+  const text = stripChoiceTypeNoise(value, prefix);
+  if (/动手|实干|修|做|赶|补|交付/.test(text)) return "动手";
+  if (/查|证据|研究|反思|拆解|分析|逻辑/.test(text)) return "查证";
+  if (/表达|创作|金句|段子|公开|讲|实话|真话/.test(text)) return "表达";
+  if (/沟通|安抚|接人|接住|关系|情绪|陪/.test(text)) return "沟通";
+  if (/争取|抢|主动|拍板|谈判|冲/.test(text)) return "争取";
+  if (/流程|稳|保底|体面|排现实|边界|守|务实/.test(text)) return "稳住";
   if (text && text !== "A" && text !== "B") return text.slice(0, 4);
   return prefix === "A" ? "主动处理" : "稳住节奏";
 }
@@ -1218,7 +984,7 @@ function mockRelationName(parsed) {
   const explicit = optionalCleanText(parsed?.storyCast?.relationName);
   if (explicit) return explicit;
   const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
-  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "沈晚晴";
+  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "知夏";
 }
 
 function mockSceneTitle(year, outlineCard) {

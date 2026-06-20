@@ -700,7 +700,7 @@
       return /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/.test(String(value || ""));
     }
     function relationshipMentionText(value) {
-      return /(关系|暧昧|冷淡|冷战|分手|告别|对象|许青禾|沈晚晴|苏听澜|陈栀|她(?:约|等|问|回|没|不|主动|沉默|留|发|看|递|笑|说))/.test(String(value || ""));
+      return /(关系|暧昧|冷淡|冷战|分手|告别|对象|知夏|南枝|晚晴|予宁|初然|以恒|景川|星野|清越|承宇|她(?:约|等|问|回|没|不|主动|沉默|留|发|看|递|笑|说))/.test(String(value || ""));
     }
     function characterAnchorIssues(card, index) {
       const text = [card.context, card.sceneTitle, card.sceneBody || card.prompt, card.lifeTrack, card.relationshipTrack].filter(Boolean).join(" ");
@@ -708,7 +708,7 @@
       if (/林知夏/.test(text)) issues.push("出现裸名“林知夏”，应写成“林老师”或“辅导员林老师”");
       const firstHalf = text.slice(0, 140);
       if (index === 0) {
-        const knownNames = ["沈晚晴", "许青禾", "苏听澜", "陈栀", "周越", "李子奇", "程野", "陆一川"];
+        const knownNames = ["知夏", "南枝", "晚晴", "予宁", "初然", "以恒", "景川", "星野", "清越", "承宇", "浩然", "子豪", "子轩", "浩轩", "鑫磊", "欣怡", "佳怡", "婷婷", "雨欣", "雪婷"];
         const richAnchorPattern = /隔壁班|同班|实验搭档|舍友|室友|同学|辅导员|导师|任课|专业课|吃货|篮球|分工表|共享文档|笔记|截止日|上课路上|边走边吃早餐|社团八卦|小组群|靠窗位|最爱拉你组队/;
         knownNames.forEach(name => {
           let cursor = firstHalf.indexOf(name);
@@ -721,18 +721,6 @@
             cursor = firstHalf.indexOf(name, cursor + name.length);
           }
         });
-        if (/许闻笙/.test(firstHalf) && !/(隔壁班女生|同班女生|机房靠窗位女生)许闻笙/.test(firstHalf)) {
-          issues.push("许闻笙首次出现缺身份，应写“隔壁班女生许闻笙”");
-        }
-        if (/沈晚晴/.test(firstHalf) && !/(隔壁班女生|同班女生|机房靠窗位女生)沈晚晴/.test(firstHalf)) {
-          issues.push("沈晚晴首次出现缺身份，应写“隔壁班女生沈晚晴”");
-        }
-        if (/周子昂/.test(firstHalf) && !/(室友|男生室友|同寝室)周子昂/.test(firstHalf)) {
-          issues.push("周子昂首次出现缺身份，应写“男生室友周子昂”");
-        }
-        if (/周越/.test(firstHalf) && !/(室友|同学|项目搭子)周越/.test(firstHalf)) {
-          issues.push("周越首次出现缺身份，应写“室友周越”");
-        }
       }
       return issues;
     }

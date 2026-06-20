@@ -2104,7 +2104,7 @@ export function buildOpeningCard(profile = {}, totalYears = 18) {
     summary: "",
     question: "第 1 年 / " + totalYears,
     year: 1,
-    phase: "开局上桌",
+    phase: "专业入场",
     mainTrack: "life",
     lifeTrack: card.lifeTrack,
     relationshipTrack: card.relationshipTrack,

@@ -918,11 +918,6 @@
       color: #182235;
     }
 
-    .life-card.layout-reading .card-prompt {
-      font-size: 14px;
-      line-height: 1.48;
-    }
-
     .choice-preview {
       display: flex;
       gap: 12px;
@@ -2096,6 +2091,78 @@
       font-size: 13px;
       line-height: 1.55;
       color: #263043;
+    }
+
+    .process-mini {
+      display: grid;
+      gap: 8px;
+    }
+
+    .process-line {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .process-label {
+      color: #77839a;
+      font-weight: 700;
+    }
+
+    .process-value {
+      min-width: 0;
+      color: #263043;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .process-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .process-chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eaf0f8;
+      color: #526078;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .process-visual {
+      display: grid;
+      gap: 8px;
+      max-height: 420px;
+      overflow: auto;
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f5f7fb;
+    }
+
+    .process-visual .process-visual {
+      max-height: none;
+      margin: 6px 0 0;
+      padding: 8px;
+      border: 1px solid rgba(119, 134, 160, 0.12);
+      background: #ffffff;
+    }
+
+    .process-array {
+      display: grid;
+      gap: 8px;
+    }
+
+    .process-array-item {
+      padding: 8px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid rgba(119, 134, 160, 0.12);
     }
 
     .process-details {
@@ -4472,6 +4539,9 @@
         relationshipTrack: item.relationshipTrack || "",
         callbackSeeds: Array.isArray(item.callbackSeeds) ? item.callbackSeeds.slice(0, 3) : []
       };
+      if (Array.isArray(item.appearedRoles) && item.appearedRoles.length) {
+        out.appearedRoles = item.appearedRoles.slice(0, 8);
+      }
       if (includeHolland) out.holland = normalizeRiasecScores(item.holland);
       return out;
     }
@@ -4539,24 +4609,24 @@
     }
 
     const fixedQuestionSeeds = [
-      { title: "群里点名", prompt: "新生群刚安静三分钟，男生室友周子昂就把你拉进第一个小项目，辅导员林老师还在群里看着。隔壁班女生沈晚晴也在同一间机房自习，你还没认全人，开学第一波活已经开始点名。", left: "先上桌", right: "先摸路", leftHint: "上桌", rightHint: "摸路", tagA: "露脸", tagB: "稳住", consequenceA: "林老师记住你的名字，沈晚晴开始在群里接话", consequenceB: "课表先稳住了，沈晚晴记住你常坐靠窗位", deltaA: { ambition: 5, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, explore: 1 }, riasecA: { E: 4, S: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
-      { title: "文件失踪", prompt: "上一波活让你在群里有了姓名，展示前材料却突然空白，周子昂疯狂发问号。沈晚晴给你留的靠窗座还在，你的电脑先进入职场预告片：人在大学，锅已到账。", left: "先补锅", right: "先查因", leftHint: "补锅", rightHint: "查因", tagA: "救场", tagB: "求证", consequenceA: "你补出展示材料，项目群默认你能当备用电源", consequenceB: "你查到文件源头，返工少了一半但群里安静了", deltaA: { discipline: 4, pressure: -2, ambition: 2 }, deltaB: { explore: 4, discipline: 3, stability: 1 }, riasecA: { C: 3, R: 2, E: 1 }, riasecB: { I: 4, C: 1, R: 1 } },
-      { title: "合照起哄", prompt: "补锅那晚之后，活动合照被周子昂发进群，顺手艾特你和隔壁班女生沈晚晴。你想解释只是同框，她却回了一个表情，像在说：别把暧昧写成情况说明。", left: "接住梗", right: "讲清楚", leftHint: "接梗", rightHint: "讲清", tagA: "暧昧", tagB: "理清", consequenceA: "群里开始起哄，沈晚晴没否认还顺手补了个表情", consequenceB: "话是讲清了，沈晚晴把聊天气氛降到礼貌区", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { discipline: 3, stability: 3, empathy: 1 }, riasecA: { S: 4, A: 2 }, riasecB: { I: 3, C: 2, S: 1 } },
-      { title: "考研群炸", prompt: "你和沈晚晴的合照梗还没冷，考研群、绩点表、项目邀约同天冒泡。林老师说机会难得，周子昂说别卷死，手机像在开三方会，只差给你发会议纪要。", left: "闭门学", right: "冲项目", leftHint: "考研", rightHint: "项目", tagA: "深造", tagB: "机会", consequenceA: "你退掉两个项目群，复习表终于能被认真打开", consequenceB: "项目跑起来了，复习群沉底，沈晚晴留了句别熬太晚", deltaA: { discipline: 5, stability: 3, explore: 1 }, deltaB: { ambition: 5, explore: 4, pressure: -2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 4, R: 1, A: 1 } },
-      { title: "展示出圈", prompt: "你前面为了项目压过复习，那份展示被学长转给合作方，截图一路飞到对方群里。被看见很爽，下一版催更也很快，像刚出圈就被加班实名认领。", left: "做系列", right: "磨质量", leftHint: "放大", rightHint: "打磨", tagA: "出圈", tagB: "耐磨", consequenceA: "关注涨得很快，合作方开始把下一版排进日程", consequenceB: "增长慢了，但每次发布更稳，沈晚晴也少催你睡觉", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { A: 3, E: 3 }, riasecB: { C: 3, I: 2, A: 1 } },
-      { title: "约饭撞车", prompt: "合作方催更排进日程后，你和沈晚晴约好的饭被临时工作撞掉。她回你一个没事，后面没有句号也没有表情，你第一次发现两个字也能带字幕：你最好真有事。", left: "先见她", right: "先交付", leftHint: "赴约", rightHint: "交付", tagA: "接人", tagB: "保活", consequenceA: "饭终于吃上了，项目群把你记成慢回但没炸", consequenceB: "项目按时交了，沈晚晴撤回一条你没看见的消息", deltaA: { empathy: 6, stability: 1, ambition: -1 }, deltaB: { discipline: 5, pressure: -2, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, R: 1, E: 1 } },
-      { title: "两头夹击", prompt: "你刚把那顿饭补上，导师林老师又点你去学院展示，合作方项目群同时喊数据卡住。沈晚晴问你今晚还吃饭吗，你看着三个窗口，感觉自己被系统申请多开。", left: "冲展示", right: "救数据", leftHint: "体面", rightHint: "结果", tagA: "露脸", tagB: "交付", consequenceA: "林老师记住了你，项目群开始用省略号表达意见", consequenceB: "数据救回来了，展示位让给别人，沈晚晴也没再追问", deltaA: { ambition: 5, empathy: 1, pressure: -2 }, deltaB: { discipline: 5, stability: 3, pressure: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { C: 4, R: 1, I: 1 } },
-      { title: "你在躲吗", prompt: "两头夹击之后，你的聊天回复开始像月更连载。沈晚晴在机房门口问你最近是在忙，还是在躲，周子昂路过装没听见，但耳朵已经完成签到。", left: "当面说", right: "继续忙", leftHint: "回应", rightHint: "推进", tagA: "说开", tagB: "硬扛", consequenceA: "你们把话说开，周末重新空出来给这段关系", consequenceB: "任务推进了，沈晚晴把回复变短也变客气", deltaA: { empathy: 6, pressure: -2, stability: 1 }, deltaB: { ambition: 4, discipline: 3, empathy: -2 }, riasecA: { S: 4, E: 1, A: 1 }, riasecB: { E: 3, C: 2, R: 1 } },
-      { title: "群聊翻车", prompt: "你以为忙完就能补关系，项目群先把一次低级失误截图放大。周子昂私聊你说别硬扛，沈晚晴也看见了那张图，手机不烫，脸先进入高温预警。", left: "自己修", right: "拉人修", leftHint: "动手", rightHint: "协作", tagA: "补锅", tagB: "组队", consequenceA: "锅补上了，你也熬成项目群里的深夜传说", consequenceB: "队友进场一起收拾，沈晚晴说你终于会求救", deltaA: { discipline: 4, pressure: -2, explore: 2 }, deltaB: { empathy: 5, stability: 2, pressure: 1 }, riasecA: { R: 4, C: 1, I: 1 }, riasecB: { S: 4, E: 1, C: 1 } },
-      { title: "关系上桌", prompt: "群聊翻车被你们一起收住后，朋友又把你和沈晚晴的合照顶上来起哄。含糊突然不够用了，默认关系像免费试用到期，弹窗只剩两个按钮。", left: "说出来", right: "私下谈", leftHint: "公开", rightHint: "私聊", tagA: "表达", tagB: "稳谈", consequenceA: "朋友群炸了，沈晚晴却笑着没有否认", consequenceB: "你们私下谈完，群里反而安静得很懂事", deltaA: { explore: 5, empathy: 3, pressure: -1 }, deltaB: { empathy: 4, stability: 3, pressure: 1 }, riasecA: { A: 4, S: 1, E: 1 }, riasecB: { S: 3, C: 2, I: 1 } },
-      { title: "家里连环问", prompt: "关系刚被摆上桌，新平台又抛来更大的机会，家里把稳定两个字发成连环消息。沈晚晴问你想去哪里，你看着屏幕，像被拉进家庭远程股东会。", left: "换平台", right: "算清账", leftHint: "换挡", rightHint: "算账", tagA: "机会", tagB: "求证", consequenceA: "平台换了，家里每天问进度，沈晚晴开始问城市", consequenceB: "账算清了，机会窗口缩小，但家里终于少刷屏", deltaA: { ambition: 6, explore: 3, stability: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { I: 4, C: 2 } },
-      { title: "旧账翻出", prompt: "你为了新平台和家里拉扯，约会迟到十分钟，沈晚晴翻出三个月旧账。迟到本身不大，账本很厚，厚到你怀疑她给你开了关系版项目管理表。", left: "先认错", right: "先理事", leftHint: "接情绪", rightHint: "理责任", tagA: "接住", tagB: "对账", consequenceA: "情绪先落地，但你欠下了一份真正能执行的行动表", consequenceB: "责任理清了，沈晚晴沉默得更整齐", deltaA: { empathy: 6, pressure: -1, stability: 1 }, deltaB: { discipline: 4, stability: 3, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
-      { title: "家庭董事会", prompt: "旧账还没完全翻篇，家里又把你的选择开成小型董事会，亲戚都带着爱和修改意见入场。沈晚晴没有插话，只问你一句：这次剧本是谁写？", left: "先安抚", right: "自己拍", leftHint: "安抚", rightHint: "拍板", tagA: "接人", tagB: "主张", consequenceA: "家里安心了一阵，你心里却留下一个没说出口的问号", consequenceB: "家里沉默几天，后来开始看你的行动而不是口号", deltaA: { empathy: 5, stability: 2, ambition: -1 }, deltaB: { ambition: 5, explore: 3, pressure: -2 }, riasecA: { S: 4, C: 1, A: 1 }, riasecB: { E: 4, A: 1, I: 1 } },
-      { title: "没人回复", prompt: "你拍板后投出去十几份材料，却只有一位学长回你：描述太空。沈晚晴看见你盯着邮箱刷新，没安慰鸡汤，只把那句评价圈出来：先证明你做成了什么。", left: "重写证据", right: "继续海投", leftHint: "重写", rightHint: "海投", tagA: "复盘", tagB: "撞门", consequenceA: "邀约少但更准，沈晚晴说你终于不像在投许愿瓶", consequenceB: "邮箱热闹了，靠谱机会还是不多，焦虑开始排队", deltaA: { discipline: 5, explore: 2, stability: 1 }, deltaB: { ambition: 4, pressure: -2, explore: 2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 3, C: 2, R: 1 } },
-      { title: "有没有位置", prompt: "材料重写后机会慢慢回来，你的日程也重新爆满。沈晚晴不再问你忙不忙，只问这段关系有没有她的位置，你突然像在补考成年人，而且监考老师还是你喜欢的人。", left: "给行动", right: "排现实", leftHint: "行动", rightHint: "现实", tagA: "补考", tagB: "排期", consequenceA: "周末被你空出来，沈晚晴终于重新坐回日常里", consequenceB: "现实排稳了，沈晚晴也退到礼貌但疏远的位置", deltaA: { empathy: 6, pressure: -1, stability: 1 }, deltaB: { discipline: 4, stability: 3, empathy: -2 }, riasecA: { S: 4, E: 1, A: 1 }, riasecB: { C: 4, I: 1, R: 1 } },
-      { title: "别人来问路", prompt: "几年后，有个学弟拿着你的旧截图来问怎么选，说你像参考答案。周子昂在旁边笑出声，沈晚晴也看着你，你才发现自己不是答案，只是被生活批改过很多遍。", left: "讲原则", right: "讲代价", leftHint: "原则", rightHint: "代价", tagA: "拆解", tagB: "接人", consequenceA: "学弟拿走了方法，你也重新看清自己的路线", consequenceB: "学弟听懂了代价，你少说了几句漂亮话", deltaA: { explore: 4, discipline: 3, empathy: 1 }, deltaB: { empathy: 5, stability: 2, pressure: 1 }, riasecA: { I: 4, C: 1, S: 1 }, riasecB: { S: 4, A: 1, I: 1 } },
-      { title: "不能再模糊", prompt: "被学弟一问，你和沈晚晴也走到最后一层问题：关系不能再靠默认续费。你们都变忙了，也都更清楚自己要什么，沉默不是体面，是自动扣费。", left: "说出来", right: "好好告别", leftHint: "表态", rightHint: "告别", tagA: "公开", tagB: "体面", consequenceA: "话说出口，沈晚晴把你认真排进以后", consequenceB: "告别很体面，你们没有把旧账摔碎", deltaA: { ambition: 4, empathy: 4, pressure: -2 }, deltaB: { empathy: 4, stability: 3, explore: 1 }, riasecA: { E: 3, A: 2, S: 1 }, riasecB: { A: 3, S: 2, C: 1 } },
-      { title: "最后一句", prompt: "最后一张牌不是问你成没成功，而是问你愿意把哪句真话留给十八岁的自己。沈晚晴、周子昂和林老师都成了回声，你终于不用把人生讲成完美简历。", left: "讲体面", right: "讲代价", leftHint: "体面", rightHint: "真实", tagA: "收束", tagB: "真话", consequenceA: "你把路线讲顺了，也诚实藏起几处疼", consequenceB: "你把代价说透，十八岁的自己反而松了一口气", deltaA: { stability: 3, empathy: 2, discipline: 2 }, deltaB: { explore: 3, empathy: 3, pressure: 1 }, riasecA: { C: 2, S: 2, E: 1, I: 1 }, riasecB: { A: 2, S: 2, I: 1, R: 1 } }
+      { title: "群里点名", prompt: "新生群刚安静三分钟，男生室友__ROOMMATE__就把你拉进第一个小项目，辅导员__MENTOR__还在群里看着。隔壁班女生__RELATION__也在同一间机房自习，你还没认全人，开学第一波活已经开始点名。", left: "先上桌", right: "先摸路", leftHint: "上桌", rightHint: "摸路", tagA: "露脸", tagB: "稳住", consequenceA: "__MENTOR__记住你的名字，__RELATION__开始在群里接话", consequenceB: "课表先稳住了，__RELATION__记住你常坐靠窗位", deltaA: { ambition: 5, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, explore: 1 }, riasecA: { E: 4, S: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
+      { title: "文件失踪", prompt: "上一波活让你在群里有了姓名，展示前材料却突然空白，__ROOMMATE__疯狂发问号。__RELATION__给你留的靠窗座还在，你的电脑先进入职场预告片：人在大学，锅已到账。", left: "先补锅", right: "先查因", leftHint: "补锅", rightHint: "查因", tagA: "救场", tagB: "求证", consequenceA: "你补出展示材料，项目群默认你能当备用电源", consequenceB: "你查到文件源头，返工少了一半但群里安静了", deltaA: { discipline: 4, pressure: -2, ambition: 2 }, deltaB: { explore: 4, discipline: 3, stability: 1 }, riasecA: { C: 3, R: 2, E: 1 }, riasecB: { I: 4, C: 1, R: 1 } },
+      { title: "合照起哄", prompt: "补锅那晚之后，活动合照被__ROOMMATE__发进群，顺手艾特你和隔壁班女生__RELATION__。你想解释只是同框，她却回了一个表情，像在说：别把暧昧写成情况说明。", left: "接住梗", right: "讲清楚", leftHint: "接梗", rightHint: "讲清", tagA: "暧昧", tagB: "理清", consequenceA: "群里开始起哄，__RELATION__没否认还顺手补了个表情", consequenceB: "话是讲清了，__RELATION__把聊天气氛降到礼貌区", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { discipline: 3, stability: 3, empathy: 1 }, riasecA: { S: 4, A: 2 }, riasecB: { I: 3, C: 2, S: 1 } },
+      { title: "考研群炸", prompt: "你和__RELATION__的合照梗还没冷，考研群、绩点表、项目邀约同天冒泡。__MENTOR__说机会难得，__ROOMMATE__说别卷死，手机像在开三方会，只差给你发会议纪要。", left: "闭门学", right: "冲项目", leftHint: "考研", rightHint: "项目", tagA: "深造", tagB: "机会", consequenceA: "你退掉两个项目群，复习表终于能被认真打开", consequenceB: "项目跑起来了，复习群沉底，__RELATION__留了句别熬太晚", deltaA: { discipline: 5, stability: 3, explore: 1 }, deltaB: { ambition: 5, explore: 4, pressure: -2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 4, R: 1, A: 1 } },
+      { title: "展示出圈", prompt: "你前面为了项目压过复习，那份展示被学长转给合作方，截图一路飞到对方群里。被看见很爽，下一版催更也很快，像刚出圈就被加班实名认领。", left: "做系列", right: "磨质量", leftHint: "放大", rightHint: "打磨", tagA: "出圈", tagB: "耐磨", consequenceA: "关注涨得很快，合作方开始把下一版排进日程", consequenceB: "增长慢了，但每次发布更稳，__RELATION__也少催你睡觉", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { A: 3, E: 3 }, riasecB: { C: 3, I: 2, A: 1 } },
+      { title: "约饭撞车", prompt: "合作方催更排进日程后，你和__RELATION__约好的饭被临时工作撞掉。她回你一个没事，后面没有句号也没有表情，你第一次发现两个字也能带字幕：你最好真有事。", left: "先见她", right: "先交付", leftHint: "赴约", rightHint: "交付", tagA: "接人", tagB: "保活", consequenceA: "饭终于吃上了，项目群把你记成慢回但没炸", consequenceB: "项目按时交了，__RELATION__撤回一条你没看见的消息", deltaA: { empathy: 6, stability: 1, ambition: -1 }, deltaB: { discipline: 5, pressure: -2, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, R: 1, E: 1 } },
+      { title: "两头夹击", prompt: "你刚把那顿饭补上，导师__MENTOR__又点你去学院展示，合作方项目群同时喊数据卡住。__RELATION__问你今晚还吃饭吗，你看着三个窗口，感觉自己被系统申请多开。", left: "冲展示", right: "救数据", leftHint: "体面", rightHint: "结果", tagA: "露脸", tagB: "交付", consequenceA: "__MENTOR__记住了你，项目群开始用省略号表达意见", consequenceB: "数据救回来了，展示位让给别人，__RELATION__也没再追问", deltaA: { ambition: 5, empathy: 1, pressure: -2 }, deltaB: { discipline: 5, stability: 3, pressure: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { C: 4, R: 1, I: 1 } },
+      { title: "你在躲吗", prompt: "两头夹击之后，你的聊天回复开始像月更连载。__RELATION__在机房门口问你最近是在忙，还是在躲，__ROOMMATE__路过装没听见，但耳朵已经完成签到。", left: "当面说", right: "继续忙", leftHint: "回应", rightHint: "推进", tagA: "说开", tagB: "硬扛", consequenceA: "你们把话说开，周末重新空出来给这段关系", consequenceB: "任务推进了，__RELATION__把回复变短也变客气", deltaA: { empathy: 6, pressure: -2, stability: 1 }, deltaB: { ambition: 4, discipline: 3, empathy: -2 }, riasecA: { S: 4, E: 1, A: 1 }, riasecB: { E: 3, C: 2, R: 1 } },
+      { title: "群聊翻车", prompt: "你以为忙完就能补关系，项目群先把一次低级失误截图放大。__ROOMMATE__私聊你说别硬扛，__RELATION__也看见了那张图，手机不烫，脸先进入高温预警。", left: "自己修", right: "拉人修", leftHint: "动手", rightHint: "协作", tagA: "补锅", tagB: "组队", consequenceA: "锅补上了，你也熬成项目群里的深夜传说", consequenceB: "队友进场一起收拾，__RELATION__说你终于会求救", deltaA: { discipline: 4, pressure: -2, explore: 2 }, deltaB: { empathy: 5, stability: 2, pressure: 1 }, riasecA: { R: 4, C: 1, I: 1 }, riasecB: { S: 4, E: 1, C: 1 } },
+      { title: "关系上桌", prompt: "群聊翻车被你们一起收住后，朋友又把你和__RELATION__的合照顶上来起哄。含糊突然不够用了，默认关系像免费试用到期，弹窗只剩两个按钮。", left: "说出来", right: "私下谈", leftHint: "公开", rightHint: "私聊", tagA: "表达", tagB: "稳谈", consequenceA: "朋友群炸了，__RELATION__却笑着没有否认", consequenceB: "你们私下谈完，群里反而安静得很懂事", deltaA: { explore: 5, empathy: 3, pressure: -1 }, deltaB: { empathy: 4, stability: 3, pressure: 1 }, riasecA: { A: 4, S: 1, E: 1 }, riasecB: { S: 3, C: 2, I: 1 } },
+      { title: "家里连环问", prompt: "关系刚被摆上桌，新平台又抛来更大的机会，家里把稳定两个字发成连环消息。__RELATION__问你想去哪里，你看着屏幕，像被拉进家庭远程股东会。", left: "换平台", right: "算清账", leftHint: "换挡", rightHint: "算账", tagA: "机会", tagB: "求证", consequenceA: "平台换了，家里每天问进度，__RELATION__开始问城市", consequenceB: "账算清了，机会窗口缩小，但家里终于少刷屏", deltaA: { ambition: 6, explore: 3, stability: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { I: 4, C: 2 } },
+      { title: "旧账翻出", prompt: "你为了新平台和家里拉扯，约会迟到十分钟，__RELATION__翻出三个月旧账。迟到本身不大，账本很厚，厚到你怀疑她给你开了关系版项目管理表。", left: "先认错", right: "先理事", leftHint: "接情绪", rightHint: "理责任", tagA: "接住", tagB: "对账", consequenceA: "情绪先落地，但你欠下了一份真正能执行的行动表", consequenceB: "责任理清了，__RELATION__沉默得更整齐", deltaA: { empathy: 6, pressure: -1, stability: 1 }, deltaB: { discipline: 4, stability: 3, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
+      { title: "家庭董事会", prompt: "旧账还没完全翻篇，家里又把你的选择开成小型董事会，亲戚都带着爱和修改意见入场。__RELATION__没有插话，只问你一句：这次剧本是谁写？", left: "先安抚", right: "自己拍", leftHint: "安抚", rightHint: "拍板", tagA: "接人", tagB: "主张", consequenceA: "家里安心了一阵，你心里却留下一个没说出口的问号", consequenceB: "家里沉默几天，后来开始看你的行动而不是口号", deltaA: { empathy: 5, stability: 2, ambition: -1 }, deltaB: { ambition: 5, explore: 3, pressure: -2 }, riasecA: { S: 4, C: 1, A: 1 }, riasecB: { E: 4, A: 1, I: 1 } },
+      { title: "没人回复", prompt: "你拍板后投出去十几份材料，却只有一位学长回你：描述太空。__RELATION__看见你盯着邮箱刷新，没安慰鸡汤，只把那句评价圈出来：先证明你做成了什么。", left: "重写证据", right: "继续海投", leftHint: "重写", rightHint: "海投", tagA: "复盘", tagB: "撞门", consequenceA: "邀约少但更准，__RELATION__说你终于不像在投许愿瓶", consequenceB: "邮箱热闹了，靠谱机会还是不多，焦虑开始排队", deltaA: { discipline: 5, explore: 2, stability: 1 }, deltaB: { ambition: 4, pressure: -2, explore: 2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 3, C: 2, R: 1 } },
+      { title: "有没有位置", prompt: "材料重写后机会慢慢回来，你的日程也重新爆满。__RELATION__不再问你忙不忙，只问这段关系有没有她的位置，你突然像在补考成年人，而且监考老师还是你喜欢的人。", left: "给行动", right: "排现实", leftHint: "行动", rightHint: "现实", tagA: "补考", tagB: "排期", consequenceA: "周末被你空出来，__RELATION__终于重新坐回日常里", consequenceB: "现实排稳了，__RELATION__也退到礼貌但疏远的位置", deltaA: { empathy: 6, pressure: -1, stability: 1 }, deltaB: { discipline: 4, stability: 3, empathy: -2 }, riasecA: { S: 4, E: 1, A: 1 }, riasecB: { C: 4, I: 1, R: 1 } },
+      { title: "别人来问路", prompt: "几年后，有个学弟拿着你的旧截图来问怎么选，说你像参考答案。__ROOMMATE__在旁边笑出声，__RELATION__也看着你，你才发现自己不是答案，只是被生活批改过很多遍。", left: "讲原则", right: "讲代价", leftHint: "原则", rightHint: "代价", tagA: "拆解", tagB: "接人", consequenceA: "学弟拿走了方法，你也重新看清自己的路线", consequenceB: "学弟听懂了代价，你少说了几句漂亮话", deltaA: { explore: 4, discipline: 3, empathy: 1 }, deltaB: { empathy: 5, stability: 2, pressure: 1 }, riasecA: { I: 4, C: 1, S: 1 }, riasecB: { S: 4, A: 1, I: 1 } },
+      { title: "不能再模糊", prompt: "被学弟一问，你和__RELATION__也走到最后一层问题：关系不能再靠默认续费。你们都变忙了，也都更清楚自己要什么，沉默不是体面，是自动扣费。", left: "说出来", right: "好好告别", leftHint: "表态", rightHint: "告别", tagA: "公开", tagB: "体面", consequenceA: "话说出口，__RELATION__把你认真排进以后", consequenceB: "告别很体面，你们没有把旧账摔碎", deltaA: { ambition: 4, empathy: 4, pressure: -2 }, deltaB: { empathy: 4, stability: 3, explore: 1 }, riasecA: { E: 3, A: 2, S: 1 }, riasecB: { A: 3, S: 2, C: 1 } },
+      { title: "最后一句", prompt: "最后一张牌不是问你成没成功，而是问你愿意把哪句真话留给十八岁的自己。__RELATION__、__ROOMMATE__和__MENTOR__都成了回声，你终于不用把人生讲成完美简历。", left: "讲体面", right: "讲代价", leftHint: "体面", rightHint: "真实", tagA: "收束", tagB: "真话", consequenceA: "你把路线讲顺了，也诚实藏起几处疼", consequenceB: "你把代价说透，十八岁的自己反而松了一口气", deltaA: { stability: 3, empathy: 2, discipline: 2 }, deltaB: { explore: 3, empathy: 3, pressure: 1 }, riasecA: { C: 2, S: 2, E: 1, I: 1 }, riasecB: { A: 2, S: 2, I: 1, R: 1 } }
     ];
 
     function hashString(text) {
@@ -4595,37 +4665,100 @@
       return pool[hash % pool.length];
     }
 
-    const relationPool = [
-      { name: "沈晚晴", intro: "总坐第一排靠窗位、笔记写得像小型攻略的同班女生沈晚晴" },
-      { name: "许青禾", intro: "经常把课堂提问整理成共享文档的隔壁班女生许青禾" },
-      { name: "苏听澜", intro: "说话很轻但每次都问到重点的实验搭档苏听澜" },
-      { name: "陈栀", intro: "总在截止日前把小组群从沉默里捞起来的同学陈栀" }
+    const femaleRelationPool = [
+      { name: "知夏", intro: "总坐第一排靠窗位、笔记写得像小型攻略的同班女生知夏" },
+      { name: "南枝", intro: "经常把课堂提问整理成共享文档的隔壁班女生南枝" },
+      { name: "晚晴", intro: "说话很轻但每次都问到重点的实验搭档晚晴" },
+      { name: "予宁", intro: "常在截止日前替人留一盏灯的同学予宁" },
+      { name: "初然", intro: "人缘很好、说话直接的同班女生初然" }
     ];
-    const roommatePool = [
-      { name: "周越", intro: "总在上课路上边走边吃早餐的吃货舍友周越" },
-      { name: "李子奇", intro: "消息回得飞快、社团八卦也最灵的同班同学李子奇" },
-      { name: "程野", intro: "刚开学就把小组分工表建好的舍友程野" },
-      { name: "陆一川", intro: "篮球场和自习室两头跑、体力像外挂的舍友陆一川" }
+    const maleRelationPool = [
+      { name: "以恒", intro: "总把课堂重点整理成共享文档的隔壁班男生以恒" },
+      { name: "景川", intro: "说话直接但每次都能看见关键细节的同学景川" },
+      { name: "星野", intro: "常在截止日前替人留一盏灯的实验搭档星野" },
+      { name: "清越", intro: "人缘很好、说话干净利落的同班男生清越" },
+      { name: "承宇", intro: "遇事不绕弯、行动很快的同班男生承宇" }
     ];
-    const mentorPool = [
-      { name: "林老师", intro: "辅导员兼专业导师林老师，常在班群里用一句话把人点上台" },
-      { name: "赵老师", intro: "说话很慢但要求很细的专业课赵老师" },
-      { name: "陈老师", intro: "总把课堂作业改成真实项目的任课陈老师" }
+    const maleSupportPool = [
+      { name: "浩然" },
+      { name: "子豪" },
+      { name: "子轩" },
+      { name: "浩轩" },
+      { name: "鑫磊" }
+    ];
+    const femaleSupportPool = [
+      { name: "欣怡" },
+      { name: "佳怡" },
+      { name: "婷婷" },
+      { name: "雨欣" },
+      { name: "雪婷" }
     ];
 
     function getStoryCast() {
-      const relation = pickFromPool(relationPool, 11);
-      const roommate = pickFromPool(roommatePool, 23);
-      const mentor = pickFromPool(mentorPool, 37);
+      const profile = state.profile || readProfile();
+      const relationPool = /女/.test(profile.gender || "") ? maleRelationPool : femaleRelationPool;
+      const fallbackRelation = pickFromPool(relationPool, 11);
+      const legalRelationNames = new Set([...femaleRelationPool, ...maleRelationPool].map(item => item.name));
+      const relation = profile.relationName
+        && legalRelationNames.has(profile.relationName)
+        ? {
+            name: profile.relationName,
+            intro: profile.relationIntro || `开局第一张牌里已经替你搭过手的${profile.relationGender || ""}${profile.relationName}`
+          }
+        : fallbackRelation;
+      const supportPool = /女/.test(profile.gender || "") ? femaleSupportPool : maleSupportPool;
+      const roommate = pickFromPool(supportPool, 23);
+      const mentor = pickFromPool(supportPool.filter(item => item.name !== roommate.name), 37);
+      const external = pickFromPool(supportPool.filter(item => item.name !== roommate.name && item.name !== mentor.name), 53);
       return {
         relationName: relation.name,
-        relationGender: "女生",
+        relationGender: profile.relationGender || (/女/.test(profile.gender || "") ? "男生" : "女生"),
         relationIntro: relation.intro,
         roommateName: roommate.name,
-        roommateIntro: roommate.intro,
+        roommateIntro: `总在上课路上边走边吃早餐的吃货舍友${roommate.name}`,
         mentorName: mentor.name,
-        mentorIntro: mentor.intro
+        mentorIntro: `常在班群里用一句话把人点上台的专业课老师${mentor.name}`,
+        externalName: external.name,
+        externalIntro: `合作方负责人${external.name}，说话不多但每次都带来新截止时间`
       };
+    }
+
+    function storyCastRoleNames(cast = getStoryCast()) {
+      return [...new Set([
+        cast.relationName,
+        cast.roommateName,
+        cast.mentorName,
+        cast.externalName,
+        ...femaleRelationPool.map(item => item.name),
+        ...maleRelationPool.map(item => item.name),
+        ...maleSupportPool.map(item => item.name),
+        ...femaleSupportPool.map(item => item.name),
+        "妈妈和二姨"
+      ].filter(Boolean))];
+    }
+
+    function appearedRolesFromText(text, cast = getStoryCast()) {
+      const value = String(text || "");
+      return storyCastRoleNames(cast).filter(name => value.includes(name));
+    }
+
+    function appearedRolesForHistoryItem(item = {}, card = {}) {
+      const text = [
+        item.scene,
+        item.sceneTitle,
+        item.summary,
+        item.lifeTrack,
+        item.relationshipTrack,
+        item.choiceText,
+        item.consequence,
+        card.scene,
+        card.eventTitle,
+        card.prompt,
+        card.context,
+        card.lifeTrack,
+        card.relationshipTrack
+      ].filter(Boolean).join(" ");
+      return appearedRolesFromText(text);
     }
 
     const openingFrames = [
@@ -4646,9 +4779,9 @@
 
     function applyCastToTemplateText(value, cast = getStoryCast()) {
       return String(value || "")
-        .replaceAll("沈晚晴", cast.relationName)
-        .replaceAll("周子昂", cast.roommateName)
-        .replaceAll("林老师", cast.mentorName);
+        .replaceAll("__RELATION__", cast.relationName)
+        .replaceAll("__ROOMMATE__", cast.roommateName)
+        .replaceAll("__MENTOR__", cast.mentorName);
     }
 
     function fixedMainTrack(template) {
@@ -4663,7 +4796,7 @@
       const scoreBands = ["前25%", "前20%", "前15%", "前12%"];
       const lifeTemplates = [
         `专业主线没掉，成绩稳在${scoreBands[yearNumber % scoreBands.length]}`,
-        `林老师记住了你的名字，开始把细活交给你`,
+        `${cast.mentorName}记住了你的名字，开始把细活交给你`,
         `你把课表重新排过，作息终于没再一路失控`
       ];
       const relationshipTemplates = [
@@ -5363,12 +5496,16 @@
       if (ready !== null) {
         if (ready) el.style.backgroundImage = `url('${ready}')`;
         el.classList.add("is-img-ready");
+        const article = el.closest(".life-card");
+        if (article) fitCardContent(article);
         return;
       }
       resolveFirstArt(urls, url => {
         if (!el.isConnected) return;
         if (url) el.style.backgroundImage = `url('${url}')`;
         el.classList.add("is-img-ready");
+        const article = el.closest(".life-card");
+        if (article) fitCardContent(article);
       });
     }
 
@@ -5975,7 +6112,7 @@
 
     function buildHistoryItem(card, direction, index = state.index) {
       const chosen = card[direction];
-      return {
+      const item = {
         index,
         year: card.yearNumber || Number(String(card.year || "").match(/\d+/)?.[0] || index + 1),
         yearLabel: card.year,
@@ -5997,6 +6134,8 @@
         tag: chosen.tag,
         holland: normalizeRiasecScores(chosen.riasec) || inferChoiceHolland(chosen, direction)
       };
+      item.appearedRoles = appearedRolesForHistoryItem(item, card);
+      return item;
     }
 
     function buildChoiceFeedback(card, chosen) {
@@ -6859,33 +6998,28 @@
     function fitCardContent(article) {
       window.requestAnimationFrame(() => {
         const illustration = article.querySelector(".card-illustration");
-        const title = article.querySelector(".card-title");
-        const prompt = article.querySelector(".card-prompt");
-        const choiceTitles = [...article.querySelectorAll(".choice-pill b")];
-        const choiceTexts = [...article.querySelectorAll(".choice-pill span, .choice-pill strong")];
-        let guard = 0;
-        while (article.scrollHeight > article.clientHeight + 1 && guard < 24) {
-          const imageHeight = illustration?.getBoundingClientRect().height || 0;
-          if (illustration && imageHeight > 4) {
-            illustration.style.minHeight = "0px";
-            illustration.style.flexBasis = `${Math.max(0, imageHeight - 12)}px`;
-          } else {
-            const promptSize = parseFloat(getComputedStyle(prompt).fontSize) || 16;
-            const titleSize = parseFloat(getComputedStyle(title).fontSize) || 38;
-            if (prompt && promptSize > 12) prompt.style.fontSize = `${promptSize - 0.5}px`;
-            if (title && titleSize > 30) title.style.fontSize = `${titleSize - 1}px`;
-            choiceTitles.forEach(el => {
-              const size = parseFloat(getComputedStyle(el).fontSize) || 15;
-              if (size > 12) el.style.fontSize = `${size - 0.5}px`;
-            });
-            choiceTexts.forEach(el => {
-              const size = parseFloat(getComputedStyle(el).fontSize) || 11;
-              if (size > 9) el.style.fontSize = `${size - 0.5}px`;
-            });
-          }
-          guard += 1;
-        }
+        if (!illustration) return;
+        illustration.style.minHeight = "0px";
+        illustration.style.flexBasis = "";
+        const articleStyle = getComputedStyle(article);
+        const paddingY = parseFloat(articleStyle.paddingTop) + parseFloat(articleStyle.paddingBottom);
+        const rowGap = parseFloat(articleStyle.rowGap || articleStyle.gap) || 0;
+        const flowChildren = [...article.children].filter(child => {
+          const childStyle = getComputedStyle(child);
+          return childStyle.display !== "none" && childStyle.position !== "absolute";
+        });
+        const fixedHeight = flowChildren
+          .filter(child => child !== illustration)
+          .reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
+        const gapHeight = Math.max(0, flowChildren.length - 1) * rowGap;
+        const targetHeight = Math.max(0, Math.floor(article.clientHeight - paddingY - gapHeight - fixedHeight));
+        illustration.style.flexBasis = `${targetHeight}px`;
       });
+    }
+
+    function fitActiveCardContent() {
+      const article = document.querySelector(".life-card:not(.behind-one):not(.behind-two)");
+      if (article) fitCardContent(article);
     }
 
     function choiceCardHTML(direction, choice, hint) {
@@ -8389,6 +8523,10 @@
         },
         cards: state.deck.filter(Boolean).map(card => ({
           yearNumber: card.yearNumber,
+          phase: card.phase,
+          mainTrack: card.mainTrack,
+          sceneTitle: card.eventTitle || card.scene,
+          sceneBody: card.prompt,
           scene: {
             title: card.eventTitle || card.scene,
             body: card.prompt
@@ -8438,10 +8576,20 @@
     function debugCardTraceKey(card) {
       return [
         Number(card.yearNumber || card.question?.match?.(/\d+/)?.[0] || 0),
-        String(card.sceneTitle || card.eventTitle || card.scene || "").trim(),
-        String(card.left?.label || card.a?.label || card.left?.title || card.a?.title || "").trim(),
-        String(card.right?.label || card.b?.label || card.right?.title || card.b?.title || "").trim()
+        debugCardSceneTitle(card),
+        debugChoiceTraceLabel(card.left || card.a),
+        debugChoiceTraceLabel(card.right || card.b)
       ].join("|");
+    }
+
+    function debugCardSceneTitle(card = {}) {
+      const scene = card.scene;
+      if (scene && typeof scene === "object") return String(scene.title || "").trim();
+      return String(card.sceneTitle || card.eventTitle || scene || "").trim();
+    }
+
+    function debugChoiceTraceLabel(choice = {}) {
+      return String(choice.label || [choice.title, choice.desc].filter(Boolean).join("，") || choice.title || "").trim();
     }
 
     function debugHistoryItemMatches(inputItem, chosenItem) {
@@ -8504,6 +8652,154 @@
       }
     }
 
+    function debugLineHTML(label, value) {
+      if (value == null || value === "" || (Array.isArray(value) && !value.length)) return "";
+      const body = Array.isArray(value)
+        ? `<div class="process-chip-list">${value.map(item => `<span class="process-chip">${escapeHTML(item)}</span>`).join("")}</div>`
+        : `<span class="process-value">${escapeHTML(value)}</span>`;
+      return `
+        <div class="process-line">
+          <span class="process-label">${escapeHTML(label)}</span>
+          ${body}
+        </div>
+      `;
+    }
+
+    function debugMiniHTML(rows) {
+      const html = rows.map(([label, value]) => debugLineHTML(label, value)).filter(Boolean).join("");
+      return html ? `<div class="process-mini">${html}</div>` : "";
+    }
+
+    function debugChoiceText(choice = {}) {
+      return choice.label || [choice.title, choice.desc].filter(Boolean).join("，") || choice.title || "";
+    }
+
+    function debugStoryCastText(storyCast = {}) {
+      return [
+        storyCast.relationName && `关系：${storyCast.relationName}`,
+        storyCast.friendName && `朋友：${storyCast.friendName}`,
+        storyCast.roommateName && `同伴：${storyCast.roommateName}`,
+        storyCast.mentorName && `老师：${storyCast.mentorName}`,
+        storyCast.externalName && `合作：${storyCast.externalName}`,
+        storyCast.familyName && `家庭：${storyCast.familyName}`
+      ].filter(Boolean);
+    }
+
+    const debugFieldLabels = {
+      generatedAt: "生成时间",
+      profile: "用户档案",
+      selectedMajor: "所选专业",
+      cards: "卡片记录",
+      chosenHistory: "已选历史",
+      result: "结果页",
+      apiTrace: "接口过程",
+      path: "接口",
+      input: "接口入参",
+      output: "接口返回",
+      modelRequest: "模型请求",
+      modelRawOutput: "模型原始输出",
+      messages: "消息",
+      role: "角色",
+      content: "内容",
+      model: "模型",
+      stream: "流式",
+      temperature: "温度",
+      response_format: "响应格式",
+      profile: "用户档案",
+      hope: "期待",
+      gender: "性别",
+      major: "专业",
+      storyCast: "角色表",
+      relationName: "关系角色",
+      relationIntro: "关系描述",
+      friendName: "朋友",
+      roommateName: "同伴",
+      roommateIntro: "同伴描述",
+      mentorName: "老师/前辈",
+      mentorIntro: "老师/前辈描述",
+      externalName: "合作角色",
+      externalIntro: "合作角色描述",
+      familyName: "家庭角色",
+      familyIntro: "家庭角色描述",
+      gameMeta: "局内信息",
+      totalYears: "总年数",
+      currentYear: "当前年份",
+      outlineCard: "本年题纲",
+      phase: "阶段",
+      mainTrack: "主拍内容",
+      comedyDevice: "喜剧装置",
+      riasecAxis: "选项轴",
+      conflict: "冲突",
+      hook: "钩子",
+      twist: "反转",
+      choiceContrast: "选项对照",
+      sideBeat: "旁线推进",
+      abType: "选项类型",
+      callbacks: "回响种子",
+      history: "历史摘要",
+      stateHints: "状态提示",
+      recentCallbacks: "近期回响",
+      recentSceneTitles: "近期标题",
+      repeatGuard: "已发生",
+      stageGuard: "阶段承接",
+      lastYear: "上一年摘要",
+      storySoFar: "过往摘要",
+      appearedRoles: "已出场角色",
+      majorAnchor: "专业锚点",
+      currentIncident: "本年事故",
+      recentIncidents: "近两年事故",
+      timeFrame: "时间",
+      lifeStage: "人生/关系阶段",
+      relationshipStatus: "关系状态",
+      lifeStatus: "现实状态",
+      educationState: "考研选择",
+      openingFrame: "开场预设",
+      summary: "便签",
+      lifeTrack: "现实状态",
+      relationshipTrack: "关系状态",
+      scene: "场景",
+      title: "标题",
+      body: "正文",
+      a: "选项 A",
+      b: "选项 B",
+      left: "左选项",
+      right: "右选项",
+      desc: "描述",
+      tag: "标签",
+      consequence: "后果",
+      riasec: "计分",
+      year: "年份",
+      yearNumber: "年份",
+      sceneTitle: "场景标题",
+      sceneBody: "场景正文",
+      choiceText: "选择文案",
+      choiceTag: "选择标签"
+    };
+
+    function debugFieldLabel(key) {
+      return debugFieldLabels[key] || key;
+    }
+
+    function debugVisualValue(value, key = "") {
+      if (value == null || value === "") return `<span class="process-value">空</span>`;
+      if (typeof value !== "object") return `<span class="process-value">${escapeHTML(value)}</span>`;
+      if (Array.isArray(value)) {
+        if (!value.length) return `<span class="process-value">空数组</span>`;
+        return `<div class="process-array">${value.map((item, index) => `
+          <div class="process-array-item">
+            <div class="process-label">${escapeHTML(`${debugFieldLabel(key)} ${index + 1}`)}</div>
+            ${debugVisualValue(item)}
+          </div>
+        `).join("")}</div>`;
+      }
+      return `<div class="process-visual">${Object.entries(value).map(([childKey, childValue]) => `
+        <div class="process-line">
+          <span class="process-label">${escapeHTML(debugFieldLabel(childKey))}</span>
+          <div class="process-value">${debugVisualValue(childValue, childKey)}</div>
+        </div>
+      `).join("")}</div>`;
+    }
+
     function debugTraceTitle(item = {}, index = 0) {
       if (item.path === "/api/game/result") return "结果页";
       const year = Number(item.input?.year || item.input?.gameMeta?.currentYear || item.output?.card?.yearNumber || 0);
@@ -8520,17 +8816,25 @@
       const stateHints = modelInput.stateHints || {};
       const outline = modelInput.outlineCard || {};
       const profile = modelInput.profile || input.profile || {};
-      const facts = [
+      return debugMiniHTML([
         ["接口", item.path],
         ["模型", debugModelName(item)],
         ["专业", profile.major],
+        ["年份", modelInput.gameMeta?.currentYear || input.year],
         ["历史", `${modelHistory.length || history.length} 条模型摘要 / ${history.length} 条接口记录`],
         ["时间", stateHints.timeFrame],
-        ["考研", stateHints.educationState],
-        ["阶段", outline.phase],
-        ["上一选项", last?.choiceText || last?.choiceTag]
-      ].filter(([, value]) => value);
-      return facts.map(([label, value]) => `<p><b>${escapeHTML(label)}：</b>${escapeHTML(value)}</p>`).join("");
+        ["考研选择", stateHints.educationState],
+        ["阶段", stateHints.lifeStage || outline.phase],
+        ["本年事故", stateHints.currentIncident],
+        ["近两年事故", stateHints.recentIncidents],
+        ["上一年", stateHints.lastYear],
+        ["过往", stateHints.storySoFar],
+        ["本年冲突", outline.conflict],
+        ["近期回响", stateHints.recentCallbacks],
+        ["角色", debugStoryCastText(modelInput.storyCast)],
+        ["上一选项", last?.choiceText || last?.choiceTag],
+        ["上一后果", last?.consequence]
+      ]);
     }
 
     function debugOutputHTML(item = {}) {
@@ -8538,36 +8842,42 @@
       const card = output.card || output.normalizedCard;
       const result = output.result;
       if (result) {
-        return [
+        return debugMiniHTML([
           ["标题", result.title],
           ["状态", result.status42],
           ["职业出口", Array.isArray(result.careerPossibilities) ? result.careerPossibilities.map(item => item.label).filter(Boolean).join(" / ") : ""]
-        ].filter(([, value]) => value).map(([label, value]) => `<p><b>${escapeHTML(label)}：</b>${escapeHTML(value)}</p>`).join("");
+        ]);
       }
       if (card) {
-        return [
+        return debugMiniHTML([
           ["标题", card.sceneTitle || card.eventTitle || card.scene?.title],
           ["正文", card.sceneBody || card.prompt || card.scene?.body],
-          ["A", card.left?.label || card.a?.label || card.left?.title || card.a?.title],
-          ["B", card.right?.label || card.b?.label || card.right?.title || card.b?.title]
-        ].filter(([, value]) => value).map(([label, value]) => `<p><b>${escapeHTML(label)}：</b>${escapeHTML(value)}</p>`).join("");
+          ["便签", card.summary || card.context],
+          ["现实", card.lifeTrack],
+          ["关系", card.relationshipTrack],
+          ["A", debugChoiceText(card.left || card.a)],
+          ["B", debugChoiceText(card.right || card.b)]
+        ]);
       }
       return `<p>${escapeHTML(Object.keys(output).join(" / ") || "无输出摘要")}</p>`;
     }
 
     function debugDetailsHTML(item = {}) {
+      const systemPromptText = item.modelRequest?.messages?.find(message => message.role === "system")?.content;
+      const userPromptText = item.modelRequest?.messages?.find(message => message.role === "user")?.content;
       return [
-        ["模型请求（真正进模型）", item.modelRequest],
+        ["系统提示词", systemPromptText],
+        ["用户提示词", userPromptText],
+        ["输入数据（解析后）", debugModelInput(item)],
         ["模型原始输出", item.modelRawOutput],
         ["接口 payload（前端到后端）", item.input],
         ["接口输出（后端到前端）", item.output]
       ].map(([label, value]) => {
-        const text = debugJsonText(value);
-        if (!text) return "";
+        if (value == null || value === "") return "";
         return `
           <details>
             <summary>${escapeHTML(label)}</summary>
-            <pre>${escapeHTML(text)}</pre>
+            ${debugVisualValue(value)}
           </details>
         `;
       }).join("");
@@ -8776,6 +9086,7 @@
         if (els.majorGrid?.children.length) layoutMajorCoverflow(coverflowCenter, false);
         if (els.avatarGrid?.children.length) layoutAvatarCoverflow(avatarCenter, false);
         fitEntryTitle();
+        fitActiveCardContent();
       });
     });
 

@@ -483,8 +483,9 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 {{CAST_INTRO_PROMPT}}
 - summary 写上一年余波；scene.body 写本年事故。
 - 承接 stateHints.lastYear / storySoFar / repeatGuard / stageGuard，不原地复读。
+- relationshipTrack 换具体信号。
 - 不复用 stateHints.recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
-- 换核心道具，不复用 stateHints.recentSceneObjects。
+- 不写 stateHints.recentSceneObjects 里的道具。
 - A 的行为对应 outlineCard.riasecAxis[0]，B 的行为对应 outlineCard.riasecAxis[1]；两个选项打法和 consequence 必须明显不同。
 
 输入数据：
@@ -532,8 +533,9 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
 - 阶段约束：{{PHASE_PROMPT}}
+- relationshipTrack 换具体信号。
 - 不复用 recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
-- 换核心道具，不复用 recentSceneObjects；已出场角色只用名字。
+- 不写 recentSceneObjects 里的道具；已出场角色只用名字。
 {{CAST_INTRO_PROMPT}}
 - 每张卡使用对应 outlineCard；A/B 对应 riasecAxis[0]/[1]，不要输出 riasec。
 - summary 写上一年余波；scene.body 写本年事故；选项短；consequence 写选择后的直接后果。
@@ -1461,7 +1463,7 @@ function recentSceneObjectsHint(history = [], limit = 6) {
       if (out.length < limit && !out.includes(label) && pattern.test(text)) out.push(label);
     });
   });
-  return out.length ? `已用道具：${out.join("、")}` : "";
+  return out.length ? `禁用道具：${out.join("、")}` : "";
 }
 
 const allowedRelationshipStages = ["暧昧升温", "确定关系", "冷战后撤", "分手收束", "体面告别", "新恋情萌芽", "订婚结婚", "生儿育女"];

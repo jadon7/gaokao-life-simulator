@@ -592,8 +592,11 @@ function phasePromptForYear(year = 1, history = []) {
   if (currentYear === 6) {
     return educationState === "继续读研" ? "毕业后两年：读研和实习落地。" : "毕业后两年：学生身份转向工作身份。";
   }
+  if (currentYear === 7 && educationState === "继续读研") {
+    return "读研收尾：论文、实习转正和城市落点。";
+  }
   if (currentYear <= 9) {
-    return educationState === "继续读研" ? "读研/实习：课题、实习和关系拉扯。" : "初入职场：工作、客户和城市落地。";
+    return "初入职场：工作、客户和城市落地。";
   }
   if (currentYear <= 12) {
     return "城市平台：换平台、晋升、确定关系或体面告别。";
@@ -1171,8 +1174,9 @@ function repeatGuard(history = []) {
   if (!last) return "";
   const choice = shortText(last.choiceText || last.tag || last.choice, 24);
   const consequence = shortText(last.consequence, 28);
+  const relation = shortText(last.relationshipTrack, 24);
   if (!choice && !consequence) return "";
-  return `勿重复：${choice}${consequence ? `；已发生：${consequence}` : ""}`;
+  return `勿重复：${choice}${consequence ? `；已发生：${consequence}` : ""}${relation ? `；关系别复写：${relation}` : ""}`;
 }
 
 function stageGuard(history = []) {
@@ -1592,7 +1596,7 @@ function visibleEducationStateHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   if (!state) return "";
   if (currentYear <= 6) return state;
-  if (state === "继续读研" && currentYear <= 9) return state;
+  if (state === "继续读研" && currentYear <= 7) return state;
   return "";
 }
 
@@ -1640,7 +1644,8 @@ function lifeStatusHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   if (educationState === "已放弃考研" && currentYear >= 7) return "初入职场，现实压力转向工作和收入";
   if (educationState === "已放弃考研" && currentYear >= 5) return "已退出考研线，项目/实习成为主路";
-  if (educationState === "继续读研" && currentYear >= 7 && currentYear <= 9) return "读研/实习并行推进";
+  if (educationState === "继续读研" && currentYear === 7) return "读研收尾，实习转向正式工作";
+  if (educationState === "继续读研" && currentYear >= 8) return "读研已收束，现实压力转向工作和城市";
   return describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳");
 }
 
@@ -1648,7 +1653,7 @@ function storySoFarText(history = [], year = 1) {
   if (!history.length) return "";
   const roles = appearedRoleNames(history).slice(0, 5).join("、");
   const life = lifeStatusHint(history, year);
-  const relationship = describeTrack(history, "relationshipTrack", "");
+  const relationship = relationshipStageHint(history, year);
   return `过去${history.length}年：${roles ? `已出场${roles}；` : ""}现实=${life || "继续推进"}；关系=${relationship || "继续推进"}`;
 }
 
@@ -1661,7 +1666,8 @@ function timeFrameHint(year = 1, history = []) {
   else if (currentYear === 4) stage = "大四分流";
   else if (currentYear === 5) stage = educationState === "继续读研" ? "读研/实习起步" : "毕业后一年";
   else if (currentYear === 6) stage = educationState === "继续读研" ? "读研/实习落地" : "毕业后两年";
-  else if (currentYear <= 9) stage = educationState === "继续读研" ? "读研/实习" : "初入职场";
+  else if (currentYear === 7 && educationState === "继续读研") stage = "读研收尾/实习转正";
+  else if (currentYear <= 9) stage = "初入职场";
   else if (currentYear <= 12) stage = "城市平台";
   else if (currentYear <= 15) stage = "成年压力";
   else stage = "前辈收束";
@@ -1729,7 +1735,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     lifeStage: lifeStageHint(year, history),
     relationshipStage,
     relationshipBeat,
-    relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
+    relationshipStatus: relationshipStage,
     lifeStatus: lifeStatusHint(history, year)
   };
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
@@ -1788,7 +1794,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     lifeStage: lifeStageHint(startYear, history),
     relationshipStage,
     relationshipBeat,
-    relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
+    relationshipStatus: relationshipStage,
     lifeStatus: lifeStatusHint(history, startYear),
     batchMode: "prefetch"
   };

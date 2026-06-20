@@ -475,8 +475,8 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 按 stateHints.timeFrame 写年龄/阶段；有 stateHints.educationState 就承接。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 按 stateHints.relationshipBeat 推进关系事实。
-- relationshipTrack 阶段使用 stateHints.relationshipStage。
-- 新恋情使用 stateHints.newRelation。
+- relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的事实。
+- 新恋情阶段只写 stateHints.newRelation。
 - 阶段约束：{{PHASE_PROMPT}}
 - scene.body 自然包含上一年余波、人物、事故和轻喜剧细节；只拍一个冲突。
 - 已出场角色只用名字；未出场才用身份短语。
@@ -527,8 +527,8 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 每张卡按 stateHints.timeFrame 推进；有 stateHints.educationState 就承接。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 每张卡按 stateHints.relationshipBeat 推进关系事实。
-- relationshipTrack 阶段使用 stateHints.relationshipStage。
-- 新恋情使用 stateHints.newRelation。
+- relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的事实。
+- 新恋情阶段只写 stateHints.newRelation。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
@@ -1522,11 +1522,11 @@ function relationshipBeatHint(history = [], year = 1) {
   if (currentYear <= 4) return "关系事实：确定关系、明确错过或第一次冷战";
   if (currentYear <= 7) {
     if (["冷战后撤", "分手收束"].includes(stage)) return "关系事实：分手、异地或认真修复";
-    return "关系事实：同居、见家长、订婚结婚";
+    return "关系事实：同居、见家长或婚礼准备";
   }
   if (currentYear <= 10) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：体面告别或新关系起点";
-    return "关系事实：婚后磨合、生儿育女或共同换城市";
+    return "关系事实：婚后磨合、买房、生育准备或共同换城市";
   }
   if (currentYear <= 14) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：旧爱偶遇、新伴侣稳定或独自生活成型";
@@ -1537,7 +1537,7 @@ function relationshipBeatHint(history = [], year = 1) {
 
 function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {
   if (relationshipStage !== "新恋情萌芽") return "";
-  return `新恋情对象：${storyCast.secondaryRelationIntro || storyCast.secondaryRelationName}`;
+  return `新恋情对象：${storyCast.secondaryRelationIntro || storyCast.secondaryRelationName}；旧伴侣只作旧事`;
 }
 
 function careerArcHint(year = 1) {

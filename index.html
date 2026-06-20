@@ -6535,6 +6535,14 @@
 
     function scheduleBranchPrefetchForCurrentCard() {
       clearBranchPrefetch();
+      const card = state.deck[state.index];
+      if (!card || state.isLoading || state.isAnimating || state.loadError) return;
+      const nextYear = Number(card.yearNumber || state.index + 1) + 1;
+      if (nextYear > state.totalYears) return;
+      const signature = branchPrefetchSignature(card);
+      state.branchPrefetchTimer = window.setTimeout(() => {
+        startBranchPrefetchForCurrentCard(card, signature);
+      }, 700);
     }
 
     function startBranchPrefetchForCurrentCard(card, signature) {
@@ -6578,8 +6586,14 @@
     }
 
     function takeBranchPrefetch(direction, card) {
-      clearBranchPrefetch();
-      return null;
+      const prefetch = state.branchPrefetch;
+      const branch = prefetch?.branches?.[direction] || null;
+      if (!prefetch || prefetch.signature !== branchPrefetchSignature(card)) {
+        clearBranchPrefetch();
+        return null;
+      }
+      clearBranchPrefetch(branch);
+      return branch;
     }
 
     async function loadAnnualCardAfterChoice(yearNumber, prefetchedBranch) {
@@ -8163,6 +8177,9 @@
             <b>${escapeHTML(mentalPrep.title)}</b>
             <p>${escapeHTML(mentalPrep.body)}</p>
           </article>
+        </div>
+        <div class="glass-section">
+          <h3>最后回头看</h3>
           <article class="result-guide-card">
             <b>${escapeHTML(letter18.title)}</b>
             <p>${escapeHTML(letter18.body)}</p>

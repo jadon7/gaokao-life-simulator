@@ -654,6 +654,7 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
 - 数组数量必须完整：careerPossibilities 3 条，famousScenes 3 条，timelineBlocks 3 条，shareHooks 2 条；每个 title/body/label 都不能为空。
 - famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence。
 - timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价。
+- letter18 做回顾收尾：回收 18 年里最关键的收获/代价，再给 18 岁自己一句话。
 - 不要排名、贬损、疾病化判断、性别/专业刻板标签；禁用旧示例词：嘴硬心软/存款能打/账本漂亮。
 
 输入数据：

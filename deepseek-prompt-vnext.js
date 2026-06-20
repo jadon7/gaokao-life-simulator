@@ -772,7 +772,7 @@ const roommateTraitPool = [
   { trait: "吃货舍友", intro: name => `总在上课路上边走边吃早餐的吃货舍友${name}` },
   { trait: "消息雷达", intro: name => `消息回得飞快、社团八卦也最灵的消息雷达同学${name}` },
   { trait: "表格控舍友", intro: name => `刚开学就把小组分工表建好的表格控舍友${name}` },
-  { trait: "运动挂舍友", intro: name => `篮球场和自习室两头跑、体力像外挂的运动挂舍友${name}` }
+  { trait: "行动派舍友", intro: name => `打印店和教室两头跑、执行力很强的行动派舍友${name}` }
 ];
 
 const externalTraitPool = [
@@ -1149,10 +1149,8 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
   const matureCast = {
     relationName: cast.relationName,
     relationIntro: shortText(`与你关系反复推进的${cast.relationName}`, 34),
-    secondaryRelationName: cast.secondaryRelationName,
-    secondaryRelationIntro: shortText(cast.secondaryRelationIntro, 34),
     friendName: cast.roommateName,
-    friendIntro: shortText(`从大学项目一路熟到现在的朋友${cast.roommateName}`, 34),
+    friendIntro: shortText(`从大学项目熟到现在的同行朋友${cast.roommateName}`, 34),
     externalName: cast.externalName,
     externalIntro: shortText(`持续带来项目机会的${cast.externalName}`, 34)
   };
@@ -1515,24 +1513,42 @@ function relationshipArcHint(history = [], year = 1) {
   return `关系阶段：${relationshipStageHint(history, year)}`;
 }
 
+function pickFreshFact(options = [], history = [], year = 1) {
+  const recentText = [...history].slice(-4).map(item => [
+    item?.sceneTitle,
+    item?.summary,
+    item?.lifeTrack,
+    item?.relationshipTrack,
+    item?.consequence
+  ].filter(Boolean).join(" ")).join(" ");
+  const start = Number(year || 1) % Math.max(1, options.length);
+  for (let index = 0; index < options.length; index += 1) {
+    const option = options[(start + index) % options.length];
+    const keyword = option.split(/[、，或]/)[0];
+    if (!recentText.includes(keyword)) return option;
+  }
+  return options[start] || "";
+}
+
 function relationshipBeatHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   const stage = relationshipStageHint(history, year);
   if (currentYear <= 2) return "关系事实：认识、靠近或第一次帮忙";
   if (currentYear <= 4) return "关系事实：确定关系、明确错过或第一次冷战";
   if (currentYear <= 7) {
-    if (["冷战后撤", "分手收束"].includes(stage)) return "关系事实：分手、异地或认真修复";
-    return "关系事实：同居、见家长或婚礼准备";
+    if (["冷战后撤", "分手收束"].includes(stage)) return `关系事实：${pickFreshFact(["异地分开", "分手摊牌", "认真修复"], history, year)}`;
+    return `关系事实：${pickFreshFact(["同居家务分工", "双方父母见面", "婚礼预算争执"], history, year)}`;
   }
   if (currentYear <= 10) {
-    if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：体面告别或新关系起点";
-    return "关系事实：婚后磨合、买房、生育准备或共同换城市";
+    if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系事实：${pickFreshFact(["体面告别", "新关系起点", "旧爱偶遇"], history, year)}`;
+    return `关系事实：${pickFreshFact(["婚房首付取舍", "共同换城市", "生育计划提前"], history, year)}`;
   }
   if (currentYear <= 14) {
-    if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：旧爱偶遇、新伴侣稳定或独自生活成型";
-    return "关系事实：生育、育儿、买房或家庭照护";
+    if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系事实：${pickFreshFact(["旧爱偶遇", "新伴侣稳定", "独自生活成型"], history, year)}`;
+    return `关系事实：${pickFreshFact(["产检请假冲突", "孩子夜醒分工", "学区房取舍", "父母照护撞项目"], history, year)}`;
   }
-  return "关系事实：家庭结果、分开结果或第二段关系落地";
+  if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系事实：${pickFreshFact(["分开结果", "第二段关系落地", "独自生活稳定"], history, year)}`;
+  return `关系事实：${pickFreshFact(["家庭分工定型", "孩子教育取舍", "伴侣共同创业", "长期婚姻倦怠"], history, year)}`;
 }
 
 function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {

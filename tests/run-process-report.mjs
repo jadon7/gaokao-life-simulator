@@ -1,12 +1,6 @@
 import fs from "node:fs";
 import { execSync } from "node:child_process";
 
-const defaultChoices = [
-  "left", "left", "left", "right", "right", "left",
-  "left", "left", "right", "left", "left", "right",
-  "right", "right", "left", "left", "left", "left"
-];
-
 const args = Object.fromEntries(process.argv.slice(2).map(arg => {
   const [key, ...rest] = arg.replace(/^--/, "").split("=");
   return [key, rest.join("=") || "1"];
@@ -14,7 +8,8 @@ const args = Object.fromEntries(process.argv.slice(2).map(arg => {
 
 const baseUrl = args.base || "https://gaokao.dsxzai.com";
 const model = args.model || "deepseek-v4-flash";
-const choices = (args.choices ? args.choices.split(",") : defaultChoices).map(item => item.trim()).filter(Boolean);
+const choiceSeed = Number(args.seed || Date.now());
+const choices = (args.choices ? args.choices.split(",") : randomChoices(choiceSeed)).map(item => item.trim()).filter(Boolean);
 const commit = safeCommand("git rev-parse --short HEAD") || "";
 const profile = {
   name: args.name || "测试员",
@@ -39,6 +34,19 @@ function safeCommand(command) {
   } catch {
     return "";
   }
+}
+
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = Math.imul(1664525, state) + 1013904223;
+    return (state >>> 0) / 4294967296;
+  };
+}
+
+function randomChoices(seed) {
+  const random = seededRandom(seed);
+  return Array.from({ length: 18 }, () => random() < 0.5 ? "left" : "right");
 }
 
 function clone(value) {
@@ -386,6 +394,7 @@ function buildHtml(report) {
     <div class="stat"><b>${escapeHtml(report.profile.major)}</b><span>专业</span></div>
     <div class="stat"><b>${report.cards.length}</b><span>卡片</span></div>
     <div class="stat"><b>${report.trace.length}</b><span>请求</span></div>
+    <div class="stat"><b>${escapeHtml(report.choiceSeed || "-")}</b><span>选择 seed</span></div>
   </div>
   <nav class="nav">
     <a href="#timeline">单线剧情</a>
@@ -449,6 +458,7 @@ const report = {
   baseUrl,
   commit,
   model,
+  choiceSeed,
   profile: apiProfile,
   choices,
   cards,

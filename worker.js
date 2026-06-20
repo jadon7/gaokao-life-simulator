@@ -585,9 +585,11 @@ function balanceInlineQuote(value) {
   const cornerCloseCount = (text.match(/」/g) || []).length;
   const singleOpenCount = (text.match(/‘/g) || []).length;
   const singleCloseCount = (text.match(/’/g) || []).length;
+  const asciiSingleCount = (text.match(/'/g) || []).length;
   if (openCount > closeCount) return `${text}”`;
   if (cornerOpenCount > cornerCloseCount) return `${text}」`;
   if (singleOpenCount > singleCloseCount) return `${text}’`;
+  if (asciiSingleCount % 2 === 1) return `${text}'`;
   return text;
 }
 

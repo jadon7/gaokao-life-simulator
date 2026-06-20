@@ -474,13 +474,17 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 {{OPENING_PROMPT}}
 - 按 stateHints.timeFrame 写年龄/阶段；有 stateHints.educationState 就承接。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
+- 按 stateHints.relationshipBeat 推进关系事实。
 - relationshipTrack 阶段使用 stateHints.relationshipStage。
+- 新恋情使用 stateHints.newRelation。
 - 阶段约束：{{PHASE_PROMPT}}
 - scene.body 自然包含上一年余波、人物、事故和轻喜剧细节；只拍一个冲突。
+- 已出场角色只用名字；未出场才用身份短语。
 {{CAST_INTRO_PROMPT}}
 - summary 写上一年余波；scene.body 写本年事故。
 - 承接 stateHints.lastYear / storySoFar / repeatGuard / stageGuard，不原地复读。
 - 不复用 stateHints.recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
+- 换核心道具，不复用 stateHints.recentSceneObjects。
 - A 的行为对应 outlineCard.riasecAxis[0]，B 的行为对应 outlineCard.riasecAxis[1]；两个选项打法和 consequence 必须明显不同。
 
 输入数据：
@@ -521,12 +525,15 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 特别规则：
 - 每张卡按 stateHints.timeFrame 推进；有 stateHints.educationState 就承接。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
+- 每张卡按 stateHints.relationshipBeat 推进关系事实。
 - relationshipTrack 阶段使用 stateHints.relationshipStage。
+- 新恋情使用 stateHints.newRelation。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
 - 阶段约束：{{PHASE_PROMPT}}
 - 不复用 recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
+- 换核心道具，不复用 recentSceneObjects；已出场角色只用名字。
 {{CAST_INTRO_PROMPT}}
 - 每张卡使用对应 outlineCard；A/B 对应 riasecAxis[0]/[1]，不要输出 riasec。
 - summary 写上一年余波；scene.body 写本年事故；选项短；consequence 写选择后的直接后果。
@@ -706,6 +713,8 @@ const defaultStoryCast = {
   relationName: "知夏",
   relationGender: "女生",
   relationIntro: "总坐靠窗位、笔记写得像攻略的同班女生知夏",
+  secondaryRelationName: "南枝",
+  secondaryRelationIntro: "后来在行业项目里认识的同事南枝",
   roommateName: "浩然",
   roommateIntro: "总在上课路上边走边吃早餐的吃货舍友浩然",
   mentorIntro: "专业课老师按“姓+老师”格式自然出场",
@@ -937,13 +946,17 @@ function buildStoryCast(profile = {}) {
   const externalName = pickNameByHash(supportPool, seed, 53, usedNames);
   const roommateTrait = pickByHash(roommateTraitPool, seed, 29);
   const externalTrait = pickByHash(externalTraitPool, seed, 59);
+  const secondaryTrait = pickByHash(relationTraitPool, seed, 73);
   if (relationName) {
+    const secondaryRelationName = pickNameByHash(castNamePools[relationGenderKey], seed, 71, usedNames);
     const relationIntro = String(profile.relationIntro || "").trim() || `开局第一张牌里已经替你搭过手的${relationGender}${relationName}`;
     return {
       ...defaultStoryCast,
       relationName,
       relationGender,
       relationIntro,
+      secondaryRelationName,
+      secondaryRelationIntro: secondaryTrait.intro(secondaryRelationName),
       roommateName,
       roommateIntro: roommateTrait.intro(roommateName),
       mentorIntro: defaultStoryCast.mentorIntro,
@@ -952,12 +965,16 @@ function buildStoryCast(profile = {}) {
     };
   }
   const fallbackRelationName = pickNameByHash(castNamePools[relationGenderKey], seed, 11, usedNames);
+  usedNames.add(fallbackRelationName);
+  const secondaryRelationName = pickNameByHash(castNamePools[relationGenderKey], seed, 71, usedNames);
   const relationTrait = pickByHash(relationTraitPool, seed, 17);
   return {
     ...defaultStoryCast,
     relationName: fallbackRelationName,
     relationGender,
     relationIntro: relationTrait.intro(fallbackRelationName),
+    secondaryRelationName,
+    secondaryRelationIntro: secondaryTrait.intro(secondaryRelationName),
     roommateName,
     roommateIntro: roommateTrait.intro(roommateName),
     mentorIntro: defaultStoryCast.mentorIntro,
@@ -1091,6 +1108,8 @@ function compactStoryCast(profile = {}, existingCast = null) {
   const out = {
     relationName: cast.relationName,
     relationIntro: shortText(cast.relationIntro, 34),
+    secondaryRelationName: cast.secondaryRelationName,
+    secondaryRelationIntro: shortText(cast.secondaryRelationIntro, 34),
     roommateName: cast.roommateName,
     roommateIntro: shortText(cast.roommateIntro, 34),
     mentorIntro: shortText(cast.mentorIntro, 34),
@@ -1128,6 +1147,8 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
   const matureCast = {
     relationName: cast.relationName,
     relationIntro: shortText(`与你关系反复推进的${cast.relationName}`, 34),
+    secondaryRelationName: cast.secondaryRelationName,
+    secondaryRelationIntro: shortText(cast.secondaryRelationIntro, 34),
     friendName: cast.roommateName,
     friendIntro: shortText(`从大学项目一路熟到现在的朋友${cast.roommateName}`, 34),
     externalName: cast.externalName,
@@ -1405,6 +1426,44 @@ function usedIncidentsHint(profile = {}, history = []) {
   return labels.length ? `已用事故：${labels.slice(-6).join("、")}` : "";
 }
 
+const sceneObjectRules = [
+  ["展板", /展板/],
+  ["清单", /清单|表格/],
+  ["合照", /合照|照片/],
+  ["聊天框", /聊天框|已读|消息|微信/],
+  ["约饭", /约饭|吃饭|餐厅/],
+  ["戒指", /戒指/],
+  ["合同", /合同|版权/],
+  ["作品集", /作品集|简历/],
+  ["客户群截图", /截图|客户群/],
+  ["家庭会议", /家庭|家里|妈妈|二姨/],
+  ["城市", /城市|平台/],
+  ["展览", /展览|巡展|个展/],
+  ["账号", /账号|出圈/],
+  ["团队", /团队|招募/]
+];
+
+function recentSceneObjectsHint(history = [], limit = 6) {
+  const out = [];
+  [...history].reverse().forEach(item => {
+    const text = [
+      item?.scene,
+      item?.sceneBody,
+      item?.sceneTitle,
+      item?.summary,
+      item?.choiceText,
+      item?.consequence,
+      item?.lifeTrack,
+      item?.relationshipTrack,
+      Array.isArray(item?.callbackSeeds) ? item.callbackSeeds.join(" ") : ""
+    ].filter(Boolean).join(" ");
+    sceneObjectRules.forEach(([label, pattern]) => {
+      if (out.length < limit && !out.includes(label) && pattern.test(text)) out.push(label);
+    });
+  });
+  return out.length ? `已用道具：${out.join("、")}` : "";
+}
+
 const allowedRelationshipStages = ["暧昧升温", "确定关系", "冷战后撤", "分手收束", "体面告别", "新恋情萌芽", "订婚结婚", "生儿育女"];
 
 function extractRelationshipStage(text = "") {
@@ -1423,7 +1482,8 @@ function relationshipStageHint(history = [], year = 1) {
   const cold = (text.match(/冷战|沉默|没再联系|分手|告别|疏远|你忙吧|删/g) || []).length;
   const ended = /体面告别|分手收束|分手|告别|缘分已尽|到此为止|不再联系/.test(recentText);
   const repaired = /当面说清|说清|说出来|承诺|给行动|拿出行动|回暖|认真聊|公开|确定|排进/.test(lastResultText);
-  if (lastStage === "体面告别") return "体面告别";
+  if (lastStage === "体面告别") return currentYear >= 16 ? "新恋情萌芽" : "体面告别";
+  if (lastStage === "新恋情萌芽") return currentYear >= 16 ? "确定关系" : "新恋情萌芽";
   if (lastStage === "分手收束" && !repaired) return "分手收束";
   if (lastStage === "分手收束" && repaired) return "冷战后撤";
   if (lastStage === "冷战后撤" && !repaired) return currentYear >= 14 ? "体面告别" : currentYear >= 10 ? "分手收束" : "冷战后撤";
@@ -1452,6 +1512,32 @@ function relationshipStageHint(history = [], year = 1) {
 
 function relationshipArcHint(history = [], year = 1) {
   return `关系阶段：${relationshipStageHint(history, year)}`;
+}
+
+function relationshipBeatHint(history = [], year = 1) {
+  const currentYear = Number(year || 1);
+  const stage = relationshipStageHint(history, year);
+  if (currentYear <= 2) return "关系事实：认识、靠近或第一次帮忙";
+  if (currentYear <= 4) return "关系事实：确定关系、明确错过或第一次冷战";
+  if (currentYear <= 6) return "关系事实：热恋磨合、异地压力或第一次大冲突";
+  if (currentYear <= 9) {
+    if (["冷战后撤", "分手收束"].includes(stage)) return "关系事实：分手、异地或认真修复";
+    return "关系事实：同居、见朋友或见家人";
+  }
+  if (currentYear <= 12) {
+    if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：体面告别或新关系起点";
+    return "关系事实：谈婚论嫁、订婚结婚或共同换城市";
+  }
+  if (currentYear <= 15) {
+    if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：旧爱偶遇、新伴侣稳定或独自生活成型";
+    return "关系事实：婚后磨合、生儿育女、买房或家庭照护";
+  }
+  return "关系事实：最终状态落地，不只写情绪";
+}
+
+function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {
+  if (relationshipStage !== "新恋情萌芽") return "";
+  return `新恋情对象：${storyCast.secondaryRelationIntro || storyCast.secondaryRelationName}`;
 }
 
 function careerArcHint(year = 1) {
@@ -1505,6 +1591,23 @@ function appearedRoleNames(history = []) {
     }
   });
   return [...names];
+}
+
+function introducedRolesHint(storyCast = defaultStoryCast, history = []) {
+  if (!history.length) return "";
+  const text = recentIncidentText(history, history.length);
+  const roles = new Set(appearedRoleNames(history));
+  [
+    storyCast.relationName,
+    storyCast.secondaryRelationName,
+    storyCast.roommateName,
+    storyCast.friendName,
+    storyCast.externalName,
+    storyCast.familyName
+  ].filter(Boolean).forEach(name => {
+    if (text.includes(name)) roles.add(name);
+  });
+  return roles.size ? `已出场角色：${[...roles].slice(0, 8).join("、")}` : "";
 }
 
 function lastYearText(history = []) {
@@ -1597,6 +1700,8 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const currentIncident = currentIncidentHint(profile, year, history, outlineCard);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
   const relationshipStage = relationshipStageHint(history, year);
+  const relationshipBeat = relationshipBeatHint(history, year);
+  const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
   const stateHints = {
@@ -1607,6 +1712,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     timeFrame: timeFrameHint(year, history),
     lifeStage: lifeStageHint(year, history),
     relationshipStage,
+    relationshipBeat,
     relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：还在试探和靠近之间"),
     lifeStatus: lifeStatusHint(history, year)
   };
@@ -1617,9 +1723,14 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, year);
   const usedIncidents = usedIncidentsHint(profile, history);
+  const recentSceneObjects = recentSceneObjectsHint(history);
+  const introducedRoles = introducedRolesHint(storyCast, history);
   if (currentIncident) stateHints.currentIncident = currentIncident;
   if (recentIncidents) stateHints.recentIncidents = recentIncidents;
   if (usedIncidents) stateHints.usedIncidents = usedIncidents;
+  if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
+  if (introducedRoles) stateHints.introducedRoles = introducedRoles;
+  if (newRelation) stateHints.newRelation = newRelation;
   if (Number(year) === 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(year || 1) <= 5) {
@@ -1648,6 +1759,8 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
   const relationshipStage = relationshipStageHint(history, startYear);
+  const relationshipBeat = relationshipBeatHint(history, startYear);
+  const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
   const stateHints = {
@@ -1658,6 +1771,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     timeFrame: timeFrameHint(startYear, history),
     lifeStage: lifeStageHint(startYear, history),
     relationshipStage,
+    relationshipBeat,
     relationshipStatus: describeTrack(history, "relationshipTrack", "暧昧升温：亲密关系在背景里持续推进"),
     lifeStatus: lifeStatusHint(history, startYear),
     batchMode: "prefetch"
@@ -1669,9 +1783,14 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, startYear);
   const usedIncidents = usedIncidentsHint(profile, history);
+  const recentSceneObjects = recentSceneObjectsHint(history);
+  const introducedRoles = introducedRolesHint(storyCast, history);
   if (currentIncident) stateHints.currentIncident = currentIncident;
   if (recentIncidents) stateHints.recentIncidents = recentIncidents;
   if (usedIncidents) stateHints.usedIncidents = usedIncidents;
+  if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
+  if (introducedRoles) stateHints.introducedRoles = introducedRoles;
+  if (newRelation) stateHints.newRelation = newRelation;
   if (Number(startYear) <= 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(startYear || 1) <= 5) {

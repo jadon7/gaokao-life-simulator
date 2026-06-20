@@ -1501,7 +1501,7 @@ function relationshipStageHint(history = [], year = 1) {
   if (currentYear <= 10) {
     if (cold > good + 2) return "分手收束";
     if (cold > good) return "冷战后撤";
-    return good > cold + 2 ? "生儿育女" : "订婚结婚";
+    return "订婚结婚";
   }
   if (currentYear <= 14) {
     if (cold > good + 2) return "体面告别";
@@ -1530,9 +1530,9 @@ function relationshipBeatHint(history = [], year = 1) {
   }
   if (currentYear <= 14) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：旧爱偶遇、新伴侣稳定或独自生活成型";
-    return "关系事实：婚后磨合、生儿育女、买房或家庭照护";
+    return "关系事实：生育、育儿、买房或家庭照护";
   }
-  return "关系事实：最终状态落地，不只写情绪";
+  return "关系事实：家庭结果、分开结果或第二段关系落地";
 }
 
 function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {

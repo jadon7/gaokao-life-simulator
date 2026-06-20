@@ -121,9 +121,9 @@ function normalizeProfile(profile = {}) {
     keywords: clean(profile.keywords, "观察中"),
     major: clean(profile.major, "未选专业"),
     majorLabel: clean(profile.majorLabel, clean(profile.major, "未选专业")),
-    relationName: clean(profile.relationName, ""),
-    relationGender: clean(profile.relationGender, ""),
-    relationIntro: clean(profile.relationIntro, "")
+    relationName: clean(profile.relationName, clean(profile.openingRelationName, "")),
+    relationGender: clean(profile.relationGender, clean(profile.openingRelationGender, "")),
+    relationIntro: clean(profile.relationIntro, clean(profile.openingRelationIntro, ""))
   };
 }
 

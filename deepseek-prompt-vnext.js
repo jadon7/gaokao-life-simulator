@@ -1484,30 +1484,29 @@ function relationshipStageHint(history = [], year = 1) {
   const cold = (text.match(/冷战|沉默|没再联系|分手|告别|疏远|你忙吧|删/g) || []).length;
   const ended = /体面告别|分手收束|分手|告别|缘分已尽|到此为止|不再联系/.test(recentText);
   const repaired = /当面说清|说清|说出来|承诺|给行动|拿出行动|回暖|认真聊|公开|确定|排进/.test(lastResultText);
-  if (lastStage === "体面告别") return currentYear >= 16 ? "新恋情萌芽" : "体面告别";
-  if (lastStage === "新恋情萌芽") return currentYear >= 16 ? "确定关系" : "新恋情萌芽";
-  if (lastStage === "分手收束" && !repaired) return "分手收束";
+  if (lastStage === "体面告别") return currentYear >= 10 ? "新恋情萌芽" : "体面告别";
+  if (lastStage === "新恋情萌芽") return currentYear >= 11 ? "确定关系" : "新恋情萌芽";
+  if (lastStage === "分手收束" && !repaired) return currentYear >= 9 ? "体面告别" : "分手收束";
   if (lastStage === "分手收束" && repaired) return "冷战后撤";
-  if (lastStage === "冷战后撤" && !repaired) return currentYear >= 14 ? "体面告别" : currentYear >= 10 ? "分手收束" : "冷战后撤";
+  if (lastStage === "冷战后撤" && !repaired) return currentYear >= 7 ? "分手收束" : "冷战后撤";
   if (lastStage === "冷战后撤" && repaired) return "确定关系";
-  if (ended && !repaired) return currentYear >= 14 ? "体面告别" : "分手收束";
+  if (ended && !repaired) return currentYear >= 9 ? "体面告别" : "分手收束";
   if (currentYear <= 2) return "暧昧升温";
   if (currentYear <= 4) return cold > good ? "冷战后撤" : "确定关系";
-  if (currentYear <= 6) return cold > good + 1 ? "冷战后撤" : "确定关系";
-  if (currentYear <= 9) {
-    if (cold > good + 2) return "分手收束";
-    if (cold > good) return "冷战后撤";
-    return "确定关系";
-  }
-  if (currentYear <= 12) {
-    if (cold > good + 2) return "分手收束";
+  if (currentYear <= 7) {
+    if (cold > good + 1) return "分手收束";
     if (cold > good) return "冷战后撤";
     return "订婚结婚";
   }
-  if (currentYear <= 15) {
+  if (currentYear <= 10) {
+    if (cold > good + 2) return "分手收束";
+    if (cold > good) return "冷战后撤";
+    return good > cold + 2 ? "生儿育女" : "订婚结婚";
+  }
+  if (currentYear <= 14) {
     if (cold > good + 2) return "体面告别";
     if (cold > good) return "冷战后撤";
-    return "订婚结婚";
+    return "生儿育女";
   }
   return cold > good ? "体面告别" : "生儿育女";
 }
@@ -1521,16 +1520,15 @@ function relationshipBeatHint(history = [], year = 1) {
   const stage = relationshipStageHint(history, year);
   if (currentYear <= 2) return "关系事实：认识、靠近或第一次帮忙";
   if (currentYear <= 4) return "关系事实：确定关系、明确错过或第一次冷战";
-  if (currentYear <= 6) return "关系事实：热恋磨合、异地压力或第一次大冲突";
-  if (currentYear <= 9) {
+  if (currentYear <= 7) {
     if (["冷战后撤", "分手收束"].includes(stage)) return "关系事实：分手、异地或认真修复";
-    return "关系事实：同居、见朋友或见家人";
+    return "关系事实：同居、见家长、订婚结婚";
   }
-  if (currentYear <= 12) {
+  if (currentYear <= 10) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：体面告别或新关系起点";
-    return "关系事实：谈婚论嫁、订婚结婚或共同换城市";
+    return "关系事实：婚后磨合、生儿育女或共同换城市";
   }
-  if (currentYear <= 15) {
+  if (currentYear <= 14) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return "关系事实：旧爱偶遇、新伴侣稳定或独自生活成型";
     return "关系事实：婚后磨合、生儿育女、买房或家庭照护";
   }

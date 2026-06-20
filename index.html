@@ -4708,16 +4708,14 @@
         : fallbackRelation;
       const supportPool = /女/.test(profile.gender || "") ? femaleSupportPool : maleSupportPool;
       const roommate = pickFromPool(supportPool, 23);
-      const mentor = pickFromPool(supportPool.filter(item => item.name !== roommate.name), 37);
-      const external = pickFromPool(supportPool.filter(item => item.name !== roommate.name && item.name !== mentor.name), 53);
+      const external = pickFromPool(supportPool.filter(item => item.name !== roommate.name), 53);
       return {
         relationName: relation.name,
         relationGender: profile.relationGender || (/女/.test(profile.gender || "") ? "男生" : "女生"),
         relationIntro: relation.intro,
         roommateName: roommate.name,
         roommateIntro: `总在上课路上边走边吃早餐的吃货舍友${roommate.name}`,
-        mentorName: mentor.name,
-        mentorIntro: `常在班群里用一句话把人点上台的专业课老师${mentor.name}`,
+        mentorIntro: "专业课老师按“姓+老师”格式自然出场",
         externalName: external.name,
         externalIntro: `合作方负责人${external.name}，说话不多但每次都带来新截止时间`
       };
@@ -4727,7 +4725,6 @@
       return [...new Set([
         cast.relationName,
         cast.roommateName,
-        cast.mentorName,
         cast.externalName,
         ...femaleRelationPool.map(item => item.name),
         ...maleRelationPool.map(item => item.name),
@@ -4781,7 +4778,7 @@
       return String(value || "")
         .replaceAll("__RELATION__", cast.relationName)
         .replaceAll("__ROOMMATE__", cast.roommateName)
-        .replaceAll("__MENTOR__", cast.mentorName);
+        .replaceAll("__MENTOR__", "老师");
     }
 
     function fixedMainTrack(template) {
@@ -4796,7 +4793,7 @@
       const scoreBands = ["前25%", "前20%", "前15%", "前12%"];
       const lifeTemplates = [
         `专业主线没掉，成绩稳在${scoreBands[yearNumber % scoreBands.length]}`,
-        `${cast.mentorName}记住了你的名字，开始把细活交给你`,
+        "专业课老师记住了你的名字，开始把细活交给你",
         `你把课表重新排过，作息终于没再一路失控`
       ];
       const relationshipTemplates = [
@@ -4951,7 +4948,7 @@
           title: frame.left,
           desc: frame.leftDesc,
           tag: frame.leftTag,
-          consequence: `${cast.mentorName}记住你，${cast.relationName}开始在群里接你的话`,
+          consequence: `老师记住你，${cast.relationName}开始在群里接你的话`,
           riasec: frame.riasecA
         },
         b: {
@@ -4966,7 +4963,7 @@
           tag: frame.leftTag,
           riasec: frame.riasecA,
           delta: frame.deltaA,
-          feedback: `你接下了第一波活，${cast.roommateName}和${cast.mentorName}都记住你这个开学就敢上桌的人。${cast.relationIntro}也开始在群里顺手接你的话。`
+          feedback: `你接下了第一波活，${cast.roommateName}和老师都记住你这个开学就敢上桌的人。${cast.relationIntro}也开始在群里顺手接你的话。`
         },
         right: {
           label: frame.rightDesc,
@@ -8679,7 +8676,7 @@
         storyCast.relationName && `关系：${storyCast.relationName}`,
         storyCast.friendName && `朋友：${storyCast.friendName}`,
         storyCast.roommateName && `同伴：${storyCast.roommateName}`,
-        storyCast.mentorName && `老师：${storyCast.mentorName}`,
+        storyCast.mentorIntro && `老师：${storyCast.mentorIntro}`,
         storyCast.externalName && `合作：${storyCast.externalName}`,
         storyCast.familyName && `家庭：${storyCast.familyName}`
       ].filter(Boolean);

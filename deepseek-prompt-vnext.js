@@ -54,19 +54,19 @@ const outlineData = {
         {
           "year": 3,
           "mainTrack": "relationship",
-          "phase": "开局上桌",
+          "phase": "关系定调",
           "comedyDevice": "关系错位",
           "riasecAxis": [
             "S",
             "I"
           ],
-          "conflict": "对方发来合照和一句调侃，你想讲清逻辑，她像是在等态度。你要决定接住人，还是先把话说准确。",
+          "conflict": "对方发来合照和一句调侃，这不是玩笑，是第一次要你承认靠近。你要接住关系，还是退回讲逻辑。",
           "sideBeat": "现实线里老师或同学默认你能继续干活",
           "characters": [
             "关系线核心角色",
             "室友/同伴"
           ],
-          "abType": "顾人情 / 讲逻辑",
+          "abType": "承认靠近 / 退回讲逻辑",
           "summaryTask": "现实线同步推进，但不要抢走当前关系主线",
           "callbacks": [
             "合照",
@@ -232,23 +232,23 @@ const outlineData = {
         {
           "year": 10,
           "mainTrack": "relationship",
-          "phase": "双线翻面",
+          "phase": "长期承诺",
           "comedyDevice": "态度上桌",
           "riasecAxis": [
             "A",
             "C"
           ],
-          "conflict": "一张合照被朋友起哄，含糊突然不够用了。你要决定公开表达，还是私下把话说稳。",
+          "conflict": "朋友和家人开始问你们下一步，默认维持已经不够用了。你要给长期承诺，还是私下把边界说清。",
           "sideBeat": "现实线传来新的平台或城市压力",
           "characters": [
             "关系线核心角色",
             "朋友群像"
           ],
-          "abType": "做个梗图大方公开 / 私下按规矩处理",
+          "abType": "给长期承诺 / 私下定边界",
           "summaryTask": "现实线同步给一个具体外部压力",
           "callbacks": [
-            "合照起哄",
-            "公开还是私下",
+            "下一步",
+            "长期承诺",
             "关系上桌"
           ]
         },
@@ -583,7 +583,7 @@ function phasePromptForYear(year = 1, history = []) {
     return educationState === "继续读研" ? "读研/实习：课题、实习和关系拉扯。" : "初入职场：工作、客户和城市落地。";
   }
   if (currentYear <= 12) {
-    return "城市平台：换平台、晋升、确定关系或分开。";
+    return "城市平台：换平台、晋升、确定关系或体面告别。";
   }
   if (currentYear <= 15) {
     return "成年压力：收入、家庭、长期伴侣和职级。";
@@ -676,14 +676,14 @@ const outlineCards = outlineData.acts.flatMap(act => act.cards.map(card => ({
 const yearBeats = {
   1: "专业入场",
   2: "第一次救场",
-  3: "关系试探",
+  3: "关系定调",
   4: "毕业分流",
   5: "作品出圈",
   6: "承诺撞车",
   7: "职场点名",
   8: "关系摊牌",
   9: "口碑补救",
-  10: "关系定型",
+  10: "长期承诺",
   11: "平台换挡",
   12: "旧账清算",
   13: "家庭上桌",
@@ -704,8 +704,7 @@ const defaultStoryCast = {
   relationIntro: "总坐靠窗位、笔记写得像攻略的同班女生知夏",
   roommateName: "浩然",
   roommateIntro: "总在上课路上边走边吃早餐的吃货舍友浩然",
-  mentorName: "子豪",
-  mentorIntro: "常在班群里用一句话把人点上台的专业课老师子豪",
+  mentorIntro: "专业课老师按“姓+老师”格式自然出场",
   externalName: "子轩",
   externalIntro: "合作方负责人子轩，说话不多但每次都带来新截止时间",
   familyName: "妈妈和二姨",
@@ -759,12 +758,6 @@ const roommateTraitPool = [
   { trait: "消息雷达", intro: name => `消息回得飞快、社团八卦也最灵的消息雷达同学${name}` },
   { trait: "表格控舍友", intro: name => `刚开学就把小组分工表建好的表格控舍友${name}` },
   { trait: "运动挂舍友", intro: name => `篮球场和自习室两头跑、体力像外挂的运动挂舍友${name}` }
-];
-
-const mentorTraitPool = [
-  { intro: name => `常在班群里用一句话把人点上台的专业导师${name}` },
-  { intro: name => `说话很慢但要求很细的专业课${name}` },
-  { intro: name => `总把课堂作业改成真实项目的任课${name}` }
 ];
 
 const externalTraitPool = [
@@ -937,11 +930,8 @@ function buildStoryCast(profile = {}) {
   const supportPool = supportPoolForProfile(profile);
   const roommateName = pickNameByHash(supportPool, seed, 23, usedNames);
   usedNames.add(roommateName);
-  const mentorName = pickNameByHash(supportPool, seed, 37, usedNames);
-  usedNames.add(mentorName);
   const externalName = pickNameByHash(supportPool, seed, 53, usedNames);
   const roommateTrait = pickByHash(roommateTraitPool, seed, 29);
-  const mentorTrait = pickByHash(mentorTraitPool, seed, 41);
   const externalTrait = pickByHash(externalTraitPool, seed, 59);
   if (relationName) {
     const relationIntro = String(profile.relationIntro || "").trim() || `开局第一张牌里已经替你搭过手的${relationGender}${relationName}`;
@@ -952,8 +942,7 @@ function buildStoryCast(profile = {}) {
       relationIntro,
       roommateName,
       roommateIntro: roommateTrait.intro(roommateName),
-      mentorName,
-      mentorIntro: mentorTrait.intro(mentorName),
+      mentorIntro: defaultStoryCast.mentorIntro,
       externalName,
       externalIntro: externalTrait.intro(externalName)
     };
@@ -967,8 +956,7 @@ function buildStoryCast(profile = {}) {
     relationIntro: relationTrait.intro(fallbackRelationName),
     roommateName,
     roommateIntro: roommateTrait.intro(roommateName),
-    mentorName,
-    mentorIntro: mentorTrait.intro(mentorName),
+    mentorIntro: defaultStoryCast.mentorIntro,
     externalName,
     externalIntro: externalTrait.intro(externalName)
   };
@@ -1096,18 +1084,18 @@ function compactProfile(profile = {}) {
 
 function compactStoryCast(profile = {}, existingCast = null) {
   const cast = existingCast || buildStoryCast(profile);
-  return {
+  const out = {
     relationName: cast.relationName,
     relationIntro: shortText(cast.relationIntro, 34),
     roommateName: cast.roommateName,
     roommateIntro: shortText(cast.roommateIntro, 34),
-    mentorName: cast.mentorName,
     mentorIntro: shortText(cast.mentorIntro, 34),
     externalName: cast.externalName,
     externalIntro: shortText(cast.externalIntro, 34),
     familyName: cast.familyName,
     familyIntro: shortText(cast.familyIntro, 34)
   };
+  return out;
 }
 
 function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
@@ -1119,7 +1107,6 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
       relationIntro: cast.relationIntro,
       roommateName: cast.roommateName,
       roommateIntro: cast.roommateIntro,
-      mentorName: cast.mentorName,
       mentorIntro: cast.mentorIntro
     };
   }
@@ -1129,7 +1116,6 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1) {
       relationIntro: cast.relationIntro,
       roommateName: cast.roommateName,
       roommateIntro: cast.roommateIntro,
-      mentorName: cast.mentorName,
       mentorIntro: cast.mentorIntro,
       externalName: cast.externalName,
       externalIntro: cast.externalIntro
@@ -1176,13 +1162,13 @@ function stageGuard(history = []) {
     last.relationshipTrack
   ].map(item => shortText(item, 42)).join("，");
   if (/告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text)) {
-    return "关系阶段=体面告别/分手收束";
+    return "关系阶段=体面告别或分手收束";
   }
   if (/愿意配合|说好|接过|回暖|主动来找|主动联系|打破僵局|还有缝|认真聊|当面说清|约法|确定|点赞评论/.test(consequence)) {
-    return "关系已补救：推进到确定关系或体面告别";
+    return "关系已补救：推进到确定关系或订婚结婚";
   }
   if (/冷战|沉默|已读不回|没回|不再联系|疏远|礼貌区/.test(text)) {
-    return "关系冷淡中：推进到分开、复合或明确表态";
+    return "关系冷淡中：推进到分手收束、体面告别或新恋情萌芽";
   }
   return "";
 }
@@ -1401,11 +1387,13 @@ function relationshipArcHint(history = [], year = 1) {
   const text = history.map(item => `${item?.relationshipTrack || ""} ${item?.consequence || ""} ${item?.choiceText || ""}`).join(" ");
   const good = (text.match(/确定|公开|回暖|主动来找|认真聊|肯定|一起|见家长|结婚|孩子/g) || []).length;
   const cold = (text.match(/冷战|沉默|没再联系|分手|告别|疏远|你忙吧|删/g) || []).length;
-  if (year <= 6) return "关系阶段：暧昧、确定或首次后撤";
-  if (year <= 9) return cold > good ? "关系阶段：分开或复合苗头" : "关系阶段：确定关系或异地磨合";
-  if (year <= 12) return cold > good ? "关系阶段：新恋情、复合或体面告别" : "关系阶段：同居、异地或见朋友";
-  if (year <= 15) return cold > good ? "关系阶段：第二段关系、复合或体面告别" : "关系阶段：见家长、订婚或谈婚育";
-  return cold > good ? "关系阶段：体面收束、新恋情稳定或独身选择" : "关系阶段：结婚、育儿或共同生活";
+  if (year <= 2) return "关系阶段：暧昧升温";
+  if (year <= 4) return cold > good ? "关系阶段：冷战后撤或分手收束" : "关系阶段：确定关系或冷战后撤";
+  if (year <= 6) return cold > good ? "关系阶段：分手收束或新恋情萌芽" : "关系阶段：确定关系";
+  if (year <= 9) return cold > good ? "关系阶段：分手收束或新恋情萌芽" : "关系阶段：确定关系或订婚结婚";
+  if (year <= 12) return cold > good ? "关系阶段：体面告别或新恋情萌芽" : "关系阶段：订婚结婚";
+  if (year <= 15) return cold > good ? "关系阶段：体面告别或新恋情萌芽" : "关系阶段：订婚结婚或生儿育女";
+  return cold > good ? "关系阶段：体面告别或新恋情萌芽" : "关系阶段：生儿育女或订婚结婚";
 }
 
 function careerArcHint(year = 1) {
@@ -1509,7 +1497,6 @@ function castIntroHint(storyCast = defaultStoryCast, history = []) {
     [storyCast.relationName, storyCast.relationIntro],
     [storyCast.roommateName, storyCast.roommateIntro],
     [storyCast.friendName, storyCast.friendIntro],
-    [storyCast.mentorName, storyCast.mentorIntro],
     [storyCast.externalName, storyCast.externalIntro],
     [storyCast.familyName, storyCast.familyIntro]
   ]
@@ -1549,7 +1536,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, year);
   const currentIncident = currentIncidentHint(profile, year, history, outlineCard);
-  const majorAnchor = currentIncident ? "" : majorAnchorHint(profile, year, history);
+  const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
   const stateHints = {
@@ -1596,7 +1583,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const visibleEducationState = visibleEducationStateHint(history, startYear);
   const firstOutlineCard = compactOutlineCard(getOutlineCard(startYear), storyCast);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
-  const majorAnchor = currentIncident ? "" : majorAnchorHint(profile, startYear, history);
+  const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
   const stateHints = {

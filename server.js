@@ -876,14 +876,15 @@ function normalizeCareerPossibility(item) {
 
 function annualCardFromData(data) {
   const yearNumber = Number(data.question.match(/\d+/)?.[0] || data.year || 1);
-  const sceneText = `事件：${data.scene.title}\n情境：${data.scene.body}`;
+  const sceneData = normalizeSceneData(data.scene || { title: data.sceneTitle, body: data.sceneBody || data.prompt });
+  const sceneText = `事件：${sceneData.title}\n情境：${sceneData.body}`;
   return {
     ...data,
     yearNumber,
     year: data.question,
     scene: sceneText,
-    sceneTitle: data.scene.title,
-    sceneBody: data.scene.body,
+    sceneTitle: sceneData.title,
+    sceneBody: sceneData.body,
     prompt: sceneText,
     context: data.summary,
     leftHint: "A",

@@ -655,7 +655,7 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
 风格：面向 18 岁用户，大白话，轻松具体，不像职业建议报告；所有结论必须来自输入 historyDigest/evidence/hollandSummary。
 
 规则：
-- title 是“三段式人生标签”：精神/关系状态 + 现实处境 + 职业出口。14-24 字，用中文逗号分 3 段；第三段必须与 careerPossibilities[0].label 完全一致。
+- title 是“两段式人生标签”：精神/关系状态 + 现实处境。8-14 字，用中文逗号分 2 段。
 - status42 24-36 字，写 18 年后的状态，含一个高光/代价/关系余味，不重复 title 职业。
 - majorCareerNote 解释“初始专业 + 关键选择 + RIASEC”如何导向职业。
 - careerPossibilities 给 3 个差异明显的出口；同专业下也要区分稳定组织、市场化岗位、表达/产品/研究等路线。

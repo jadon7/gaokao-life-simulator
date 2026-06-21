@@ -1477,7 +1477,7 @@
       font-weight: 900;
       line-height: 14.38px;
       color: #4d5a70;
-      white-space: normal;
+      white-space: nowrap;
     }
 
     .career-card:nth-child(1) {
@@ -8159,6 +8159,7 @@
           ${careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities)}
         </div>
       `;
+      fitCareerCardLabels();
       els.resultInsights.innerHTML = buildAbilityPortraitHTML();
       els.resultHighlights.innerHTML = `
         <div class="glass-section">
@@ -8320,10 +8321,9 @@
       return `这 6 张更像一部节奏很快的校园试播集：你从「${first}」被硬推上场，中段在「${bridge}」第一次意识到，故事里不只有项目和成绩，后面又在「${last}」发现，晚一步真的会让人和机会一起后撤。最后长出来的，是 ${code} 这组三字母代表的那种做事路数：既有你本来的习惯，也有这一路被现实逼出来的新反应。`;
     }
 
-    function buildShareableLifeTitle(hollandSummary = getHollandSummaryData(), possibilities = []) {
+    function buildShareableLifeTitle(hollandSummary = getHollandSummaryData()) {
       const code = hollandSummary.code || "";
       const primary = hollandSummary.primary || code[0] || "I";
-      const topCareer = normalizeCareerLabel(possibilities[0]?.label || getHollandDirections(code).split("、")[0] || "专业路上的靠谱大人");
       const emotionalMap = {
         R: "动手嘴硬",
         I: "脑忙心稳",
@@ -8340,13 +8340,9 @@
         E: "资源上桌",
         C: "账本漂亮"
       };
-      const career = /师|员|人|主理人|经理|工程|研究|顾问|策划|开发|分析|运营|产品|教师/.test(topCareer)
-        ? topCareer
-        : `${topCareer}方向的人`;
       return [
         emotionalMap[primary] || "情绪稳定但会嘴硬",
-        realityMap[code[1]] || "现实账本还算漂亮",
-        career
+        realityMap[code[1]] || "现实账本还算漂亮"
       ].join("，");
     }
 
@@ -8437,24 +8433,21 @@
         .split(/[，,、｜|/]+/)
         .map(part => part.trim())
         .filter(Boolean);
-      const looksOldSummary = parts.length >= 3 && !/(但|且|靠|财富|贫|稳|自由|焦虑|内卷|专业|师|员|人|主理人|经理|工程|研究|顾问|策划|开发|分析|运营|产品|教师)/.test(parts.join(""));
-      if (parts.length < 3 || looksOldSummary) {
+      const looksOldSummary = parts.length >= 2 && !/(但|且|靠|财富|贫|稳|自由|焦虑|内卷|专业|家庭|事业|关系|现实|资源|作品|账本|分析|动手|口碑)/.test(parts.join(""));
+      if (parts.length < 2 || looksOldSummary) {
         const hollandSummary = getHollandSummaryData();
         const generated = buildShareableLifeTitle(hollandSummary, result?.careerPossibilities || []);
         parts = generated.split(/[，,、｜|/]+/).map(part => part.trim()).filter(Boolean);
       }
-      if (parts.length < 3) {
+      if (parts.length < 2) {
         const compact = raw.replace(/\s+/g, "");
         const first = compact.match(/[^，]{0,8}但[^，]{2,8}/)?.[0] || "稳定嘴硬";
         const second = compact.match(/靠[^，]{2,12}|[^，]{0,8}但[^，]{2,8}/)?.[0] || "账本漂亮";
-        const third = result?.famousScenes?.[0]?.title
-          ? `${String(result.famousScenes[0].title).replace(/[，。！？!?；;]/g, "").slice(0, 8)}相关人`
-          : "靠谱大人";
-        parts = [first, second, third];
+        parts = [first, second];
       }
-      return parts.slice(0, 3).map((part, index) => {
+      return parts.slice(0, 2).map((part, index) => {
         const clean = compactResultTitleSegment(part, index);
-        const fallback = ["稳定嘴硬", "账本漂亮", "靠谱大人"][index];
+        const fallback = ["稳定嘴硬", "账本漂亮"][index];
         return (clean || fallback).slice(0, 5);
       });
     }
@@ -8478,22 +8471,25 @@
           .replace("现实账本还算漂亮", "账本漂亮")
           .replace("靠稳字把账本做漂亮", "账本漂亮");
       }
-      if (index === 2) {
-        const rules = [
-          [/生物|医药|制药|药企/, "生物PM"],
-          [/心理|咨询/, "咨询师"],
-          [/架构|算法|计算机|代码|工程师/, "工程师"],
-          [/教师|教育|老师/, "明星教师"],
-          [/新闻|传媒|内容/, "内容主理人"],
-          [/法学|法律|律师/, "法律人"],
-          [/医学|医生|临床/, "医生"],
-          [/金融|财务|会计/, "财务人"],
-          [/设计|艺术|创意/, "设计师"]
-        ];
-        const hit = rules.find(([pattern]) => pattern.test(clean));
-        if (hit) clean = hit[1];
-      }
       return clean;
+    }
+
+    function fitCareerCardLabels() {
+      window.requestAnimationFrame(() => {
+        document.querySelectorAll(".career-card span").forEach(label => {
+          label.style.fontSize = "";
+          const card = label.closest(".career-card");
+          if (!card) return;
+          const style = getComputedStyle(card);
+          const available = card.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+          if (available <= 0) return;
+          const currentSize = parseFloat(getComputedStyle(label).fontSize) || 11.5;
+          const needed = label.scrollWidth;
+          if (needed <= available) return;
+          const nextSize = Math.max(8, Math.floor((currentSize * available / needed) * 10) / 10);
+          label.style.fontSize = `${nextSize}px`;
+        });
+      });
     }
 
     function normalizeResultStatus(status, scenes = []) {
@@ -9127,6 +9123,7 @@
         if (els.avatarGrid?.children.length) layoutAvatarCoverflow(avatarCenter, false);
         fitEntryTitle();
         fitActiveCardContent();
+        fitCareerCardLabels();
       });
     });
 

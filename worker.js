@@ -697,14 +697,6 @@ function validateResult(data) {
   ) {
     throw new Error("Invalid result JSON: insufficient list items");
   }
-  // title 第三段强制与 careerPossibilities[0] 对齐，杜绝“资深工程师”兜底化
-  const topCareer = String(normalized.careerPossibilities[0]?.label || "").trim();
-  if (topCareer && topCareer.length <= 10) {
-    const parts = normalized.title.split(/[，,]/).map(part => part.trim()).filter(Boolean);
-    if (parts.length === 3 && parts[2] !== topCareer) {
-      normalized.title = `${parts[0]}，${parts[1]}，${topCareer}`;
-    }
-  }
   return normalized;
 }
 
@@ -753,13 +745,13 @@ function normalizeResultTitle(value) {
     .replace(/[：:][^，,。！？!?；;]+的人/g, "")
     .replace(/[：:]/g, "，");
   const parts = raw.split(/[，,、｜|/]+/).map(item => item.trim()).filter(Boolean);
-  if (parts.length >= 3) return parts.slice(0, 3).map((item, index) => cleanTitleSegment(item, index)).join("，").slice(0, 24);
-  if (/但|且|的/.test(raw) && raw.length >= 10) return raw.slice(0, 21);
-  return ["硬扛成事", "现实拉扯", "靠谱大人"].join("，");
+  if (parts.length >= 2) return parts.slice(0, 2).map((item, index) => cleanTitleSegment(item, index)).join("，").slice(0, 15);
+  if (/但|且|的/.test(raw) && raw.length >= 8) return raw.slice(0, 12);
+  return ["硬扛成事", "现实拉扯"].join("，");
 }
 
 function cleanTitleSegment(value, index = 0) {
-  const fallback = ["硬扛成事", "现实拉扯", "靠谱大人"][index] || "靠谱大人";
+  const fallback = ["硬扛成事", "现实拉扯"][index] || "现实拉扯";
   let text = optionalCleanText(value)
     .replace(/^(你是|一个|一种)/, "")
     .replace(/方向[:：]?$/, "")
@@ -775,27 +767,7 @@ function cleanTitleSegment(value, index = 0) {
       .replace("靠分析把坑绕过去", "分析避坑")
       .replace("现实账本还算漂亮", "现实拉扯");
   }
-  if (index === 2) {
-    text = normalizeCareerTitleSegment(text);
-  }
   return text.slice(0, 7) || fallback;
-}
-
-function normalizeCareerTitleSegment(value) {
-  const text = optionalCleanText(value);
-  const rules = [
-    [/心理|咨询/, "心理咨询师"],
-    [/架构|算法|计算机|代码|工程师/, "资深工程师"],
-    [/教师|教育|老师/, "明星教师"],
-    [/新闻|传媒|内容/, "内容主理人"],
-    [/法学|法律|律师/, "硬核法律人"],
-    [/医学|医生|临床/, "靠谱医生"],
-    [/生物|医药|制药|药企/, "生物PM"],
-    [/金融|财务|会计/, "清醒财务人"],
-    [/设计|艺术|创意/, "创意主理人"]
-  ];
-  const hit = rules.find(([pattern]) => pattern.test(text));
-  return hit ? hit[1] : text;
 }
 
 function normalizeResultStatus(value) {

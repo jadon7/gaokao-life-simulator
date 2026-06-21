@@ -480,6 +480,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 按 stateHints.relationshipBeat 推进关系事实。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的事实。
 - 新恋情阶段只写 stateHints.newRelation。
+- 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事故。
 - 阶段约束：{{PHASE_PROMPT}}
 - 每年是一年后的新大事，不写上一年同一事故续集。
 - scene.body 自然包含上一年余波、人物、事故和轻喜剧细节；只拍一个冲突。
@@ -578,6 +579,14 @@ function openingPromptForYear(year = 1) {
   return Number(year || 1) === 1
     ? "- 使用 stateHints.openingFrame，和 profile.major 明确联动。"
     : "";
+}
+
+function closingFrameHint(history = []) {
+  const first = history.find(item => Number(item?.year) === 1) || history[0];
+  const last = history.at(-1);
+  const firstTitle = shortText(first?.sceneTitle || first?.scene, 12);
+  const lastTitle = shortText(last?.sceneTitle || last?.scene, 12);
+  return `回看${firstTitle || "开局"}、关系走向和职业代价；给18岁一句话，再排未来五年。${lastTitle ? `接住上一年${lastTitle}` : ""}`;
 }
 
 function phasePromptForYear(year = 1, history = []) {
@@ -1985,6 +1994,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
+  if (Number(year) === 18) stateHints.closingFrame = closingFrameHint(history);
   if (Number(year) === 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(year || 1) <= 5) {
@@ -2053,6 +2063,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
+  if (Number(startYear) === 18) stateHints.closingFrame = closingFrameHint(history);
   if (Number(startYear) <= 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(startYear || 1) <= 5) {

@@ -1082,6 +1082,35 @@ function compactOutlineCard(card, storyCast = defaultStoryCast) {
   };
 }
 
+function axisActionText(axis = "") {
+  return {
+    R: "动手补救",
+    I: "查证判断",
+    A: "表达产出",
+    S: "沟通协作",
+    E: "争取拍板",
+    C: "流程保底"
+  }[axis] || "当场处理";
+}
+
+function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, incidentHint = "") {
+  const compact = compactOutlineCard(card, storyCast);
+  const incident = String(incidentHint || "").replace(/^本年事故：/, "").trim();
+  if (!compact || !incident) return compact;
+  const choiceContrast = Array.isArray(compact.riasecAxis)
+    ? `${axisActionText(compact.riasecAxis[0])} / ${axisActionText(compact.riasecAxis[1])}`
+    : compact.choiceContrast;
+  return {
+    ...compact,
+    comedyDevice: incident,
+    conflict: `${incident}提前压到桌面，你必须当场选一种处理方式。`,
+    hook: `${incident}不是背景，是本年事故`,
+    choiceContrast,
+    abType: choiceContrast,
+    callbacks: [incident]
+  };
+}
+
 function shortText(value, limit = 80) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
 }
@@ -1913,10 +1942,12 @@ export function getOutlineCard(year) {
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
-  const outlineCard = compactOutlineCard(getOutlineCard(year), storyCast);
+  const rawOutlineCard = getOutlineCard(year);
+  const compactBaseOutlineCard = compactOutlineCard(rawOutlineCard, storyCast);
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, year);
-  const currentIncident = currentIncidentHint(profile, year, history, outlineCard);
+  const currentIncident = currentIncidentHint(profile, year, history, compactBaseOutlineCard);
+  const outlineCard = compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
   const relationshipStage = relationshipStageHint(history, year);
   const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage);
@@ -1974,8 +2005,16 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const storyCast = buildStoryCast(profile);
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, startYear);
-  const firstOutlineCard = compactOutlineCard(getOutlineCard(startYear), storyCast);
+  const firstRawOutlineCard = getOutlineCard(startYear);
+  const firstOutlineCard = compactOutlineCard(firstRawOutlineCard, storyCast);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
+  const outlineCardsForBatch = outlineCards
+    .filter(card => card.year >= startYear && card.year < startYear + count)
+    .map(card => {
+      const compactCard = compactOutlineCard(card, storyCast);
+      const incident = currentIncidentHint(profile, card.year, history, compactCard);
+      return compactOutlineCardWithIncident(card, storyCast, incident);
+    });
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
   const relationshipStage = relationshipStageHint(history, startYear);
   const compactCast = compactStoryCastForYear(profile, storyCast, startYear, history, relationshipStage);
@@ -2025,9 +2064,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
       startYear,
       batchCount: count
     },
-    outlineCards: outlineCards
-      .filter(card => card.year >= startYear && card.year < startYear + count)
-      .map(card => compactOutlineCard(card, storyCast)),
+    outlineCards: outlineCardsForBatch,
     history: compactAnnualHistory(history),
     stateHints
   };

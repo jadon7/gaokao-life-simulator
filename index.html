@@ -1257,7 +1257,7 @@
       font-size: 33px;
       font-weight: 700;
       line-height: 1.1;
-      color: #ffffff;
+      color: #111827;
     }
 
     .result-title span {
@@ -1905,10 +1905,10 @@
     }
 
     .result-actions #saveResult {
-      background: #ffffff;
-      color: #2a8cff;
+      background: linear-gradient(180deg, var(--blue-hi) 0%, var(--blue-lo) 100%);
+      color: #ffffff;
       box-shadow:
-        0 18px 18px rgba(0, 0, 0, 0.07),
+        0 18px 18px rgba(22, 119, 255, 0.24),
         inset 0 1px 0 rgba(255, 255, 255, 0.32);
     }
 
@@ -1921,10 +1921,10 @@
     }
 
     .result-actions #restartResult {
-      background: linear-gradient(180deg, var(--blue-hi) 0%, var(--blue-lo) 100%);
-      color: #ffffff;
+      background: #ffffff;
+      color: #2a8cff;
       box-shadow:
-        0 18px 18px rgba(22, 119, 255, 0.24),
+        0 18px 18px rgba(0, 0, 0, 0.07),
         inset 0 1px 0 rgba(255, 255, 255, 0.32);
     }
 
@@ -2369,7 +2369,7 @@
       <div class="result-actions">
         <button id="saveResult" type="button">分享结果</button>
         <button id="copyDebugFlow" type="button">查看过程</button>
-        <button id="restartResult" class="primary" type="button">开始验牌</button>
+        <button id="restartResult" class="primary" type="button">重新测试</button>
       </div>
     </div>
   </section>
@@ -8405,7 +8405,7 @@
       return parts.slice(0, 3).map((part, index) => {
         const clean = compactResultTitleSegment(part, index);
         const fallback = ["稳定嘴硬", "账本漂亮", "靠谱大人"][index];
-        return (clean || fallback).slice(0, 7);
+        return (clean || fallback).slice(0, 5);
       });
     }
 

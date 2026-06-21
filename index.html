@@ -952,10 +952,12 @@
     }
 
     .choice-pill b {
+      display: block;
+      max-width: 100%;
       font-size: 16px;
       font-weight: 600;
       line-height: 1.35;
-      overflow-wrap: anywhere;
+      white-space: nowrap;
     }
 
     .choice-pill span,
@@ -6987,6 +6989,7 @@
 
     function fitCardContent(article) {
       window.requestAnimationFrame(() => {
+        fitChoiceText(article);
         const illustration = article.querySelector(".card-illustration");
         if (!illustration) return;
         illustration.style.minHeight = "0px";
@@ -7004,6 +7007,23 @@
         const gapHeight = Math.max(0, flowChildren.length - 1) * rowGap;
         const targetHeight = Math.max(0, Math.floor(article.clientHeight - paddingY - gapHeight - fixedHeight));
         illustration.style.flexBasis = `${targetHeight}px`;
+      });
+    }
+
+    function fitChoiceText(article) {
+      article.querySelectorAll(".choice-pill").forEach(button => {
+        const title = button.querySelector(".choice-title");
+        if (!title) return;
+        title.style.fontSize = "";
+        const style = getComputedStyle(button);
+        const available = button.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        if (available <= 0) return;
+        const currentSize = parseFloat(getComputedStyle(title).fontSize) || 16;
+        const needed = title.scrollWidth;
+        const nextSize = needed > available
+          ? Math.max(9, Math.floor((currentSize * available / needed) * 10) / 10)
+          : currentSize;
+        title.style.fontSize = `${nextSize}px`;
       });
     }
 

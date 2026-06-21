@@ -477,7 +477,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 剧情：
 - 使用 outlineCard 的 conflict/hook/twist/choiceContrast/sideBeat/comedyDevice/riasecAxis。
 {{OPENING_PROMPT}}
-- 按 stateHints.timeFrame 写年龄/阶段；有 stateHints.educationState 就承接。
+- 按 stateHints.timeFrame / careerRoute 写年龄和人生阶段；有 stateHints.educationState 就承接。
 - 按 stateHints.routeState 承接选择惯性。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 有 stateHints.currentIncident 时，scene.title/body 以它为本年事故。
@@ -535,7 +535,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 后续年份逐年递增
 
 特别规则：
-- 每张卡按 stateHints.timeFrame 推进；有 stateHints.educationState 就承接。
+- 每张卡按 stateHints.timeFrame / careerRoute 推进；有 stateHints.educationState 就承接。
 - 每张卡按 stateHints.routeState 承接选择惯性。
 - lifeTrack 写本年新状态。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
@@ -1399,7 +1399,7 @@ const majorAnchorRules = [
   [/动物|农学|农业/, ["田间试验", "动物查房", "检疫记录", "育种数据", "基地实习", "乡镇项目", "科研站机会"]]
 ];
 
-const schoolContextPattern = /考研|保研|复习|课程|作业|课堂|班级|学院|导师|社团|绩点|选题会|专业课/;
+const schoolContextPattern = /考研|保研|复习|课程|作业|课堂|班级|学院|导师|社团|绩点|选题会|专业课|校园|新生|宿舍|班群|同学|室友|学校|见习|实习班级/;
 
 function incidentItem(label, aliases = []) {
   return { label, aliases: [label, ...aliases] };
@@ -1624,6 +1624,7 @@ const professionalIncidentRules = [
 function stageBucketForYear(year = 1, educationState = "") {
   const currentYear = Number(year || 1);
   if (educationState === "继续读研" && currentYear <= 7) return "early";
+  if (educationState === "已放弃考研" && currentYear >= 5) return currentYear <= 12 ? "work" : "mature";
   if (currentYear <= 6) return "early";
   if (currentYear <= 12) return "work";
   return "mature";
@@ -1926,6 +1927,15 @@ function visibleEducationStateHint(history = [], year = 1) {
   return "";
 }
 
+function careerRouteHint(history = [], year = 1) {
+  const state = educationStateHint(history);
+  const currentYear = Number(year || 1);
+  if (state === "已放弃考研" && currentYear >= 5) return "已毕业工作";
+  if (state === "继续读研" && currentYear >= 5 && currentYear <= 7) return "继续读研";
+  if (state === "继续读研" && currentYear >= 8) return "研究生毕业";
+  return "";
+}
+
 function appearedRoleNames(history = []) {
   const names = new Set();
   history.forEach(item => {
@@ -2071,6 +2081,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const relationshipStage = relationshipStageHint(history, year);
   const relationshipBeat = relationshipBeatHint(history, year);
   const relationshipPressure = relationshipPressureHint(history, year);
+  const careerRoute = careerRouteHint(history, year);
   const choiceBalance = choiceBalanceHint(compactBaseOutlineCard, relationshipBeat, currentIncident);
   const outlineCard = closingFrame
     ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
@@ -2095,6 +2106,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history);
   const storySoFar = storySoFarText(history, year);
+  if (careerRoute) stateHints.careerRoute = careerRoute;
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, year);
@@ -2136,6 +2148,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const relationshipStage = relationshipStageHint(history, startYear);
   const relationshipBeat = relationshipBeatHint(history, startYear);
   const relationshipPressure = relationshipPressureHint(history, startYear);
+  const careerRoute = careerRouteHint(history, startYear);
   const firstRawOutlineCard = getOutlineCard(startYear);
   const firstOutlineCard = compactOutlineCardWithEducation(firstRawOutlineCard, storyCast, educationState, startYear);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
@@ -2172,6 +2185,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history);
   const storySoFar = storySoFarText(history, startYear);
+  if (careerRoute) stateHints.careerRoute = careerRoute;
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, startYear);

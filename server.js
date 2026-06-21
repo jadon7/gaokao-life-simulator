@@ -599,6 +599,7 @@ function cleanSceneBody(value) {
 
 function normalizeChoiceLabel(value, prefix) {
   const text = stripChoiceTypeNoise(value, prefix)
+    .replace(/^(动手补救|查证判断|表达产出|沟通协作|争取拍板|流程保底)[，,、：:\s]*/g, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
   return balanceInlineQuote(clampTextBySentence(text, 18, 1)) || (prefix === "A" ? "当场接下这步" : "先稳住再判断");

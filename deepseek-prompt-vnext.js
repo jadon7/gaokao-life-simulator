@@ -1087,6 +1087,36 @@ function compactOutlineCard(card, storyCast = defaultStoryCast) {
   };
 }
 
+function compactOutlineCardWithEducation(card, storyCast = defaultStoryCast, educationState = "", year = 1) {
+  const compact = compactOutlineCard(card, storyCast);
+  const currentYear = Number(year || compact?.year || 1);
+  if (!compact || educationState !== "继续读研") return compact;
+  const gradFrames = {
+    5: {
+      comedyDevice: "研一开题",
+      conflict: "研一开题、导师课题和同门分工一起落桌，你要先扎进课题，还是先守住关系承诺。",
+      hook: "研一不是延迟现实，是换一种现实",
+      sideBeat: "亲密关系第一次把同城或异地说出口",
+      callbacks: ["研一开题", "导师课题", "同门分工"]
+    },
+    6: {
+      comedyDevice: "论文和承诺撞车",
+      conflict: "研二论文、实验/作品和实习预备同天挤压，约好的承诺也要兑现。你要先说清关系，还是先把课题推进稳。",
+      hook: "研二最挤的不是课表，是承诺",
+      sideBeat: "导师课题和同门分工开始压过日常节奏",
+      callbacks: ["研二论文", "实习预备", "关系承诺"]
+    },
+    7: {
+      comedyDevice: "研三分流",
+      conflict: "研三毕业论文、校招/读博和城市落点一起拍板。你要继续深造，还是带着关系去新城市。",
+      hook: "研三不是缓冲区，是下一站入口",
+      sideBeat: "毕业去向开始影响亲密关系",
+      callbacks: ["毕业论文", "校招读博", "城市落点"]
+    }
+  };
+  return gradFrames[currentYear] ? { ...compact, ...gradFrames[currentYear] } : compact;
+}
+
 function axisActionText(axis = "") {
   return {
     R: "动手补救",
@@ -1098,8 +1128,8 @@ function axisActionText(axis = "") {
   }[axis] || "当场处理";
 }
 
-function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, incidentHint = "") {
-  const compact = compactOutlineCard(card, storyCast);
+function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, incidentHint = "", baseCard = null) {
+  const compact = baseCard || compactOutlineCard(card, storyCast);
   const incident = String(incidentHint || "").replace(/^本年事故：/, "").trim();
   if (!compact || !incident) return compact;
   const choiceContrast = Array.isArray(compact.riasecAxis)
@@ -1113,6 +1143,20 @@ function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, inci
     choiceContrast,
     abType: choiceContrast,
     callbacks: [incident]
+  };
+}
+
+function compactOutlineCardWithClosing(card, storyCast = defaultStoryCast, closingFrame = "") {
+  const compact = compactOutlineCard(card, storyCast);
+  if (!compact || !closingFrame) return compact;
+  return {
+    ...compact,
+    comedyDevice: "最后一句话",
+    conflict: `${closingFrame}。最后一张牌不是新事故，而是你怎么解释这18年。`,
+    hook: "最后不是问成功，而是问你敢不敢说真话",
+    choiceContrast: "讲真实代价 / 体面收住",
+    abType: "讲真实代价 / 体面收住",
+    callbacks: ["开局回声", "关系收束", "最后一句话"]
   };
 }
 
@@ -1776,17 +1820,21 @@ function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {
   return `新恋情对象：${storyCast.secondaryRelationIntro || storyCast.secondaryRelationName}；旧伴侣只作旧事`;
 }
 
-function careerArcHint(year = 1) {
-  if (year <= 3) return "人生阶段：大学早期";
-  if (year <= 6) return "人生阶段：毕业分岔";
-  if (year <= 9) return "人生阶段：初入现实";
-  if (year <= 12) return "人生阶段：城市平台";
-  if (year <= 15) return "人生阶段：成年压力";
+function careerArcHint(year = 1, history = []) {
+  const currentYear = Number(year || 1);
+  const educationState = educationStateHint(history);
+  if (educationState === "继续读研" && currentYear >= 5 && currentYear <= 7) return "人生阶段：研究生阶段";
+  if (educationState === "继续读研" && currentYear === 8) return "人生阶段：研究生毕业";
+  if (currentYear <= 3) return "人生阶段：大学早期";
+  if (currentYear <= 6) return "人生阶段：毕业分岔";
+  if (currentYear <= 9) return "人生阶段：初入现实";
+  if (currentYear <= 12) return "人生阶段：城市平台";
+  if (currentYear <= 15) return "人生阶段：成年压力";
   return "人生阶段：前辈收束";
 }
 
 function lifeStageHint(year = 1, history = []) {
-  return `${careerArcHint(year)}；${relationshipArcHint(history, year)}`;
+  return `${careerArcHint(year, history)}；${relationshipArcHint(history, year)}`;
 }
 
 function educationStateHint(history = []) {
@@ -1955,11 +2003,14 @@ export function getOutlineCard(year) {
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
   const rawOutlineCard = getOutlineCard(year);
-  const compactBaseOutlineCard = compactOutlineCard(rawOutlineCard, storyCast);
   const educationState = educationStateHint(history);
+  const compactBaseOutlineCard = compactOutlineCardWithEducation(rawOutlineCard, storyCast, educationState, year);
   const visibleEducationState = visibleEducationStateHint(history, year);
   const currentIncident = currentIncidentHint(profile, year, history, compactBaseOutlineCard);
-  const outlineCard = compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident);
+  const closingFrame = Number(year) === 18 ? closingFrameHint(history) : "";
+  const outlineCard = closingFrame
+    ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
+    : compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident, compactBaseOutlineCard);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
   const relationshipStage = relationshipStageHint(history, year);
   const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage);
@@ -1988,13 +2039,13 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const usedIncidents = usedIncidentsHint(profile, history);
   const recentSceneObjects = recentSceneObjectsHint(history);
   const introducedRoles = introducedRolesHint(storyCast, history);
-  if (currentIncident) stateHints.currentIncident = currentIncident;
-  if (recentIncidents) stateHints.recentIncidents = recentIncidents;
-  if (usedIncidents) stateHints.usedIncidents = usedIncidents;
+  if (!closingFrame && currentIncident) stateHints.currentIncident = currentIncident;
+  if (!closingFrame && recentIncidents) stateHints.recentIncidents = recentIncidents;
+  if (!closingFrame && usedIncidents) stateHints.usedIncidents = usedIncidents;
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
-  if (Number(year) === 18) stateHints.closingFrame = closingFrameHint(history);
+  if (closingFrame) stateHints.closingFrame = closingFrame;
   if (Number(year) === 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(year || 1) <= 5) {
@@ -2019,14 +2070,17 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, startYear);
   const firstRawOutlineCard = getOutlineCard(startYear);
-  const firstOutlineCard = compactOutlineCard(firstRawOutlineCard, storyCast);
+  const firstOutlineCard = compactOutlineCardWithEducation(firstRawOutlineCard, storyCast, educationState, startYear);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
+  const closingFrame = Number(startYear) === 18 ? closingFrameHint(history) : "";
   const outlineCardsForBatch = outlineCards
     .filter(card => card.year >= startYear && card.year < startYear + count)
     .map(card => {
-      const compactCard = compactOutlineCard(card, storyCast);
+      const compactCard = compactOutlineCardWithEducation(card, storyCast, educationState, card.year);
+      const cardClosingFrame = Number(card.year) === 18 ? closingFrameHint(history) : "";
+      if (cardClosingFrame) return compactOutlineCardWithClosing(card, storyCast, cardClosingFrame);
       const incident = currentIncidentHint(profile, card.year, history, compactCard);
-      return compactOutlineCardWithIncident(card, storyCast, incident);
+      return compactOutlineCardWithIncident(card, storyCast, incident, compactCard);
     });
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
   const relationshipStage = relationshipStageHint(history, startYear);
@@ -2057,13 +2111,13 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const usedIncidents = usedIncidentsHint(profile, history);
   const recentSceneObjects = recentSceneObjectsHint(history);
   const introducedRoles = introducedRolesHint(storyCast, history);
-  if (currentIncident) stateHints.currentIncident = currentIncident;
-  if (recentIncidents) stateHints.recentIncidents = recentIncidents;
-  if (usedIncidents) stateHints.usedIncidents = usedIncidents;
+  if (!closingFrame && currentIncident) stateHints.currentIncident = currentIncident;
+  if (!closingFrame && recentIncidents) stateHints.recentIncidents = recentIncidents;
+  if (!closingFrame && usedIncidents) stateHints.usedIncidents = usedIncidents;
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
-  if (Number(startYear) === 18) stateHints.closingFrame = closingFrameHint(history);
+  if (closingFrame) stateHints.closingFrame = closingFrame;
   if (Number(startYear) <= 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
   if (Number(startYear || 1) <= 5) {

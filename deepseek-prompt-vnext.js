@@ -588,10 +588,10 @@ function phasePromptForYear(year = 1, history = []) {
     2: "公开评审：第一次被更多人看见。",
     3: "去留表态：实习/城市让关系第一次分岔。",
     4: "毕业分流：考研、项目、实习二选一。",
-    5: educationState === "继续读研" ? "毕业落点：读研/实习起步，城市落点出现。" : "毕业落点：第一份工作或项目落地。",
-    6: educationState === "继续读研" ? "共同生活：读研和实习挤压承诺。" : "共同生活：学生身份转向工作身份。",
-    7: educationState === "继续读研" ? "职场入口：读研收尾、实习转正和城市落点。" : "职场入口：转正、客户和收入第一次压身。",
-    8: "婚期分岔：承诺、分手或异地续约必须拍板。",
+    5: educationState === "继续读研" ? "研一开局：导师、课题和同门关系成为主压力。" : "毕业落点：第一份工作或项目落地。",
+    6: educationState === "继续读研" ? "研二拉扯：论文、实验/作品和实习预备挤压承诺。" : "共同生活：学生身份转向工作身份。",
+    7: educationState === "继续读研" ? "研三分流：毕业论文、校招/读博和城市落点一起拍板。" : "职场入口：转正、客户和收入第一次压身。",
+    8: educationState === "继续读研" ? "研究生毕业第一站：入职、读博或规培落点定下来。" : "婚期分岔：承诺、分手或异地续约必须拍板。",
     9: "口碑危机：一次职业失误影响后续机会。",
     10: "首付换城：钱、城市和长期关系一起落地。",
     11: "平台换挡：跳槽、创业或稳定路线分叉。",
@@ -601,7 +601,7 @@ function phasePromptForYear(year = 1, history = []) {
     15: "分居抉择：修复、分开或新关系稳定。",
     16: "合伙摊牌：团队、股权或城市迁移要签字。",
     17: "责任结算：教育、养老或共同事业给出答案。",
-    18: "落点拍板：未来五年的职业和家庭排序。"
+    18: "回顾收尾：回收开局、关键关系和职业代价；用一次回望/表态收束，不开新坑。"
   };
   return prompts[currentYear] || "年度推进：一年后的新大事。";
 }
@@ -1527,8 +1527,9 @@ const professionalIncidentRules = [
   }]
 ];
 
-function stageBucketForYear(year = 1) {
+function stageBucketForYear(year = 1, educationState = "") {
   const currentYear = Number(year || 1);
+  if (educationState === "继续读研" && currentYear <= 7) return "early";
   if (currentYear <= 6) return "early";
   if (currentYear <= 12) return "work";
   return "mature";
@@ -1536,6 +1537,7 @@ function stageBucketForYear(year = 1) {
 
 function filterAnchorsForStage(anchors = [], year = 1, educationState = "") {
   const currentYear = Number(year || 1);
+  if (educationState === "继续读研" && currentYear <= 7) return anchors;
   if (currentYear >= 7 || (currentYear >= 5 && educationState === "已放弃考研")) {
     const filtered = anchors.filter(anchor => !schoolContextPattern.test(anchor));
     return filtered.length ? filtered : anchors;
@@ -1547,10 +1549,12 @@ function majorAnchorHint(profile = {}, year = 1, history = []) {
   const major = profile.majorLabel || profile.major || "所学专业";
   const text = major;
   const currentYear = Number(year || 1);
+  if (currentYear === 18) return "";
   const matched = majorAnchorRules.find(([pattern]) => pattern.test(text));
-  const stagedItems = professionalIncidentItems(profile, year).map(item => item.label);
+  const educationState = educationStateHint(history);
+  const stagedItems = professionalIncidentItems(profile, year, educationState).map(item => item.label);
   const anchors = stagedItems.length ? stagedItems : (matched?.[1] || ["专业课程", "实习现场", "作品/项目证据", "导师评审", "行业机会", "岗位选择"]);
-  const pool = filterAnchorsForStage(anchors, year, educationStateHint(history));
+  const pool = filterAnchorsForStage(anchors, year, educationState);
   const start = (hashString(`${text}:${year}`) || 0) % pool.length;
   const recentText = recentIncidentText(history, 2);
   const previousIncident = currentIncidentHint(profile, currentYear - 1, history.slice(0, -1), getOutlineCard(currentYear - 1)).replace(/^本年事故：/, "");
@@ -1560,13 +1564,13 @@ function majorAnchorHint(profile = {}, year = 1, history = []) {
   return currentYear >= 4 ? `专业锚点：${major}；本年落到${anchor}` : "";
 }
 
-function professionalIncidentItems(profile = {}, year = 1) {
+function professionalIncidentItems(profile = {}, year = 1, educationState = "") {
   const currentYear = Number(year || 1);
   const major = profile.majorLabel || profile.major || "";
   const matched = professionalIncidentRules.find(([pattern]) => pattern.test(major));
   if (!matched) return [];
   const buckets = matched[1];
-  return buckets[stageBucketForYear(currentYear)] || [];
+  return buckets[stageBucketForYear(currentYear, educationState)] || [];
 }
 
 function allProfessionalIncidentItems(profile = {}) {
@@ -1598,7 +1602,7 @@ function currentIncidentHint(profile = {}, year = 1, history = [], outlineCard =
   const currentYear = Number(year || 1);
   if (!professionalIncidentYears.has(currentYear)) return "";
   if (outlineCard?.mainTrack && outlineCard.mainTrack !== "life") return "";
-  const items = professionalIncidentItems(profile, currentYear);
+  const items = professionalIncidentItems(profile, currentYear, educationStateHint(history));
   if (!items.length) return "";
   const recentText = recentIncidentText(history, 2);
   const usedText = recentIncidentText(history, Math.max(2, history.length));
@@ -1788,7 +1792,7 @@ function educationStateHint(history = []) {
   if (/放弃考研|退出考研|搁置考研|推掉考研|不考研|复习群沉底|项目压过复习|抢项目机会/.test(text)) {
     return "已放弃考研";
   }
-  if (/继续读研|继续考研|锁定考研|考研上岸|保研成功|读研|研究生|复试|录取|深造/.test(text)) {
+  if (/继续读研|继续考研|锁定考研|锁定备考|备考窗口|完整备考|考研上岸|保研成功|读研|研究生|复试|录取|深造/.test(text)) {
     return "继续读研";
   }
   return "";
@@ -1799,7 +1803,7 @@ function visibleEducationStateHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   if (!state) return "";
   if (currentYear <= 6) return state;
-  if (state === "继续读研" && currentYear <= 7) return state;
+  if (state === "继续读研" && currentYear <= 8) return state;
   return "";
 }
 
@@ -1847,8 +1851,10 @@ function lifeStatusHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   if (educationState === "已放弃考研" && currentYear >= 7) return "初入职场，现实压力转向工作和收入";
   if (educationState === "已放弃考研" && currentYear >= 5) return "已退出考研线，项目/实习成为主路";
-  if (educationState === "继续读研" && currentYear === 7) return "读研收尾，实习转向正式工作";
-  if (educationState === "继续读研" && currentYear >= 8) return "读研已收束，现实压力转向工作和城市";
+  if (educationState === "继续读研" && currentYear === 5) return "研一开局，课题和导师成为主压力";
+  if (educationState === "继续读研" && currentYear === 6) return "研二推进，论文和实习预备开始挤压";
+  if (educationState === "继续读研" && currentYear === 7) return "研三分流，毕业论文和校招/读博一起落地";
+  if (educationState === "继续读研" && currentYear === 8) return "研究生毕业第一站，现实压力转向工作和城市";
   return describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳");
 }
 
@@ -1887,9 +1893,10 @@ function timeFrameHint(year = 1, history = []) {
   let stage = "大学早期";
   if (currentYear <= 3) stage = "大学早期";
   else if (currentYear === 4) stage = "大四分流";
-  else if (currentYear === 5) stage = educationState === "继续读研" ? "读研/实习起步" : "毕业后一年";
-  else if (currentYear === 6) stage = educationState === "继续读研" ? "读研/实习落地" : "毕业后两年";
-  else if (currentYear === 7 && educationState === "继续读研") stage = "读研收尾/实习转正";
+  else if (currentYear === 5) stage = educationState === "继续读研" ? "研一" : "毕业后一年";
+  else if (currentYear === 6) stage = educationState === "继续读研" ? "研二" : "毕业后两年";
+  else if (currentYear === 7 && educationState === "继续读研") stage = "研三/毕业分流";
+  else if (currentYear === 8 && educationState === "继续读研") stage = "研究生毕业第一年";
   else if (currentYear <= 9) stage = "初入职场";
   else if (currentYear <= 12) stage = "城市平台";
   else if (currentYear <= 15) stage = "成年压力";

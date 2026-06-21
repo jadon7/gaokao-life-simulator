@@ -863,10 +863,15 @@ function normalizeCareerPossibility(item) {
 
 function annualCardFromData(data) {
   const yearNumber = Number(data.question.match(/\d+/)?.[0] || data.year || 1);
-  const sceneData = normalizeSceneData(data.scene || { title: data.sceneTitle, body: data.sceneBody || data.prompt });
+  const sceneData = data.openingPreset && data.scene && typeof data.scene === "object"
+    ? {
+        title: optionalCleanText(data.scene.title) || "第一年开局",
+        body: optionalCleanText(data.scene.body) || "这一年的故事正在生成。"
+      }
+    : normalizeSceneData(data.scene || { title: data.sceneTitle, body: data.sceneBody || data.prompt });
   const sceneText = `事件：${sceneData.title}\n情境：${sceneData.body}`;
-  const leftChoice = normalizeChoiceData(data.a || data.left, "A");
-  const rightChoice = normalizeChoiceData(data.b || data.right, "B");
+  const leftChoice = data.openingPreset ? normalizeOpeningChoiceData(data.a || data.left, "A") : normalizeChoiceData(data.a || data.left, "A");
+  const rightChoice = data.openingPreset ? normalizeOpeningChoiceData(data.b || data.right, "B") : normalizeChoiceData(data.b || data.right, "B");
   return {
     ...data,
     yearNumber,
@@ -880,6 +885,21 @@ function annualCardFromData(data) {
     rightHint: "B",
     left: { label: leftChoice.label, title: leftChoice.title, desc: leftChoice.desc, tag: leftChoice.tag, consequence: leftChoice.consequence || "", riasec: leftChoice.riasec || null, delta: { stability: 3, discipline: 2, explore: -1 } },
     right: { label: rightChoice.label, title: rightChoice.title, desc: rightChoice.desc, tag: rightChoice.tag, consequence: rightChoice.consequence || "", riasec: rightChoice.riasec || null, delta: { explore: 3, ambition: 2, stability: -1 } }
+  };
+}
+
+function normalizeOpeningChoiceData(value, prefix) {
+  const normalized = normalizeChoiceData(value, prefix);
+  if (!value || typeof value !== "object" || Array.isArray(value)) return normalized;
+  const title = optionalCleanText(value.title) || normalized.title;
+  const desc = optionalCleanText(value.desc || value.description);
+  return {
+    ...normalized,
+    title,
+    desc,
+    label: desc ? `${title}，${desc}` : title,
+    tag: optionalCleanText(value.tag) || normalized.tag,
+    consequence: optionalCleanText(value.consequence) || normalized.consequence
   };
 }
 

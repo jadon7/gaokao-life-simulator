@@ -761,33 +761,7 @@ function normalizeInnerYearning(item) {
 }
 
 function normalizeResultTitle(value) {
-  const raw = optionalCleanText(value)
-    .replace(/[：:][^，,。！？!?；;]+的人/g, "")
-    .replace(/[：:]/g, "，");
-  const parts = raw.split(/[，,、｜|/]+/).map(item => item.trim()).filter(Boolean);
-  if (parts.length >= 2) return parts.slice(0, 2).map((item, index) => cleanTitleSegment(item, index)).join("，").slice(0, 15);
-  if (/但|且|的/.test(raw) && raw.length >= 8) return raw.slice(0, 12);
-  return ["硬扛成事", "现实拉扯"].join("，");
-}
-
-function cleanTitleSegment(value, index = 0) {
-  const fallback = ["硬扛成事", "现实拉扯"][index] || "现实拉扯";
-  let text = optionalCleanText(value)
-    .replace(/^(你是|一个|一种)/, "")
-    .replace(/方向[:：]?$/, "")
-    .replace(/的人$/, "");
-  if (index === 0) {
-    text = text
-      .replace("秩序感强但心里加班", "秩序心累")
-      .replace("情绪稳定但会嘴硬", "硬扛成事");
-  }
-  if (index === 1) {
-    text = text
-      .replace("靠资源把局面做大", "资源上桌")
-      .replace("靠分析把坑绕过去", "分析避坑")
-      .replace("现实账本还算漂亮", "现实拉扯");
-  }
-  return text.slice(0, 7) || fallback;
+  return optionalCleanText(value) || "这一路终于有了答案";
 }
 
 function normalizeResultStatus(value) {

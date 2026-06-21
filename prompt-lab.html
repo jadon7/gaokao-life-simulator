@@ -1052,9 +1052,9 @@
       const r = run?.result;
       if (!r) { box.textContent = "该局跑完后自动生成。"; return; }
       const parts = String(r.title || "").split(/[，,]/).filter(Boolean);
-      const titleCheck = parts.length === 2 && String(r.title).length <= 15
-        ? `<span class="badge ok">两段式合规</span>`
-        : `<span class="badge warn">title 不合规（${parts.length} 段 / ${String(r.title).length} 字）</span>`;
+      const titleCheck = parts.length >= 3
+        ? `<span class="badge ok">三段式</span>`
+        : `<span class="badge warn">title 少于三段（${parts.length} 段）</span>`;
       const yearning = r.innerYearning || {};
       box.innerHTML = `
         <div class="rt">${esc(r.title)}</div>${titleCheck}

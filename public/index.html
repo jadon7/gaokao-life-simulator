@@ -1687,21 +1687,22 @@
 
     .yearning-section {
       position: relative;
-      display: grid;
-      grid-template-columns: 82px minmax(0, 1fr);
-      gap: 14px;
-      align-items: start;
-      margin: 2px 5px 4px;
-      padding: 18px 2px 18px 0;
-      border-top: 1px solid rgba(34, 48, 74, 0.13);
-      border-bottom: 1px solid rgba(34, 48, 74, 0.13);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 2px 0 4px;
+      padding: 18px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 250, 255, 0.84));
+      border: 1px solid rgba(84, 100, 130, 0.12);
+      box-shadow: 0 16px 26px rgba(52, 68, 98, 0.1);
     }
 
     .yearning-section::before {
       content: "";
       position: absolute;
-      top: 18px;
-      left: 73px;
+      top: 17px;
+      right: 18px;
       width: 7px;
       height: 7px;
       border-radius: 999px;
@@ -1723,7 +1724,6 @@
       flex-direction: column;
       gap: 10px;
       min-width: 0;
-      padding-left: 12px;
     }
 
     .yearning-body b {
@@ -2322,19 +2322,6 @@
 
       .card-title {
         font-size: 32px;
-      }
-
-      .yearning-section {
-        grid-template-columns: 1fr;
-        gap: 8px;
-      }
-
-      .yearning-section::before {
-        display: none;
-      }
-
-      .yearning-body {
-        padding-left: 0;
       }
     }
 
@@ -8567,56 +8554,9 @@
     }
 
     function resultTitleHTML(title, result = {}) {
-      return normalizeResultTitleParts(title, result)
-        .map(part => `<span>${escapeHTML(part)}</span>`)
-        .join("");
-    }
-
-    function normalizeResultTitleParts(title, result = {}) {
-      const raw = String(title || "").replace(/[。！？!?；;]/g, "，").trim();
-      let parts = raw
-        .split(/[，,、｜|/]+/)
-        .map(part => part.trim())
-        .filter(Boolean);
-      const looksOldSummary = parts.length >= 2 && !/(但|且|靠|财富|贫|稳|自由|焦虑|内卷|专业|家庭|事业|关系|现实|资源|作品|账本|分析|动手|口碑)/.test(parts.join(""));
-      if (parts.length < 2 || looksOldSummary) {
-        const hollandSummary = getHollandSummaryData();
-        const generated = buildShareableLifeTitle(hollandSummary, result?.careerPossibilities || []);
-        parts = generated.split(/[，,、｜|/]+/).map(part => part.trim()).filter(Boolean);
-      }
-      if (parts.length < 2) {
-        const compact = raw.replace(/\s+/g, "");
-        const first = compact.match(/[^，]{0,8}但[^，]{2,8}/)?.[0] || "稳定嘴硬";
-        const second = compact.match(/靠[^，]{2,12}|[^，]{0,8}但[^，]{2,8}/)?.[0] || "账本漂亮";
-        parts = [first, second];
-      }
-      return parts.slice(0, 2).map((part, index) => {
-        const clean = compactResultTitleSegment(part, index);
-        const fallback = ["稳定嘴硬", "账本漂亮"][index];
-        return (clean || fallback).slice(0, 5);
-      });
-    }
-
-    function compactResultTitleSegment(part, index = 0) {
-      let clean = String(part || "")
-        .replace(/^(一个|你是|你像|一种)/, "")
-        .replace(/的人$/, "")
-        .trim();
-      if (index === 0) {
-        clean = clean
-          .replace("秩序感强但心里加班", "秩序心累")
-          .replace("情绪稳定但会嘴硬", "稳定嘴硬")
-          .replace("脑子很忙但情绪稳", "脑忙心稳")
-          .replace("动手很快但嘴硬", "动手嘴硬");
-      }
-      if (index === 1) {
-        clean = clean
-          .replace("靠资源把局面做大", "资源上桌")
-          .replace("靠分析把坑绕过去", "分析避坑")
-          .replace("现实账本还算漂亮", "账本漂亮")
-          .replace("靠稳字把账本做漂亮", "账本漂亮");
-      }
-      return clean;
+      const raw = String(title || "").trim();
+      const fallback = buildShareableLifeTitle(getHollandSummaryData(), result?.careerPossibilities || []);
+      return escapeHTML(raw || fallback);
     }
 
     function fitCareerCardLabels() {

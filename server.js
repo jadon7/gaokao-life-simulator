@@ -898,6 +898,8 @@ function annualCardFromData(data) {
   const yearNumber = Number(data.question.match(/\d+/)?.[0] || data.year || 1);
   const sceneData = normalizeSceneData(data.scene || { title: data.sceneTitle, body: data.sceneBody || data.prompt });
   const sceneText = `事件：${sceneData.title}\n情境：${sceneData.body}`;
+  const leftChoice = normalizeChoiceData(data.a || data.left, "A");
+  const rightChoice = normalizeChoiceData(data.b || data.right, "B");
   return {
     ...data,
     yearNumber,
@@ -909,8 +911,8 @@ function annualCardFromData(data) {
     context: data.summary,
     leftHint: "A",
     rightHint: "B",
-    left: { label: data.a.label, title: data.a.title, desc: data.a.desc, tag: data.a.tag, consequence: data.a.consequence || "", riasec: data.a.riasec || null, delta: { stability: 3, discipline: 2, explore: -1 } },
-    right: { label: data.b.label, title: data.b.title, desc: data.b.desc, tag: data.b.tag, consequence: data.b.consequence || "", riasec: data.b.riasec || null, delta: { explore: 3, ambition: 2, stability: -1 } }
+    left: { label: leftChoice.label, title: leftChoice.title, desc: leftChoice.desc, tag: leftChoice.tag, consequence: leftChoice.consequence || "", riasec: leftChoice.riasec || null, delta: { stability: 3, discipline: 2, explore: -1 } },
+    right: { label: rightChoice.label, title: rightChoice.title, desc: rightChoice.desc, tag: rightChoice.tag, consequence: rightChoice.consequence || "", riasec: rightChoice.riasec || null, delta: { explore: 3, ambition: 2, stability: -1 } }
   };
 }
 

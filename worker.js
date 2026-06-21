@@ -412,15 +412,15 @@ function parseJsonContent(content) {
 function validateAnnual(data, history = [], repeatHistory = history, expectedYear = null) {
   const normalized = {};
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
-  normalized.summary = clampTextBySentence(data.summary, 52, 2);
+  normalized.summary = clampTextBySentence(data.summary, 42, 2);
   const fallbackYear = Math.min(Math.max(Number(expectedYear || (Array.isArray(history) ? history.length + 1 : 1)) || 1, 1), totalGameYears);
   normalized.year = fallbackYear;
   normalized.question = `第 ${fallbackYear} 年 / ${totalGameYears}`;
   const outline = getOutlineCard(normalized.year);
   normalized.phase = optionalCleanText(data.phase) || optionalCleanText(outline?.phase);
   normalized.mainTrack = outline?.mainTrack || (/relationship/i.test(String(data.mainTrack || "").trim()) ? "relationship" : "life");
-  normalized.lifeTrack = optionalCleanText(data.lifeTrack);
-  normalized.relationshipTrack = optionalCleanText(data.relationshipTrack);
+  normalized.lifeTrack = clampTextBySentence(data.lifeTrack, 22, 1);
+  normalized.relationshipTrack = clampTextBySentence(data.relationshipTrack, 30, 1);
   const modelCallbacks = Array.isArray(data.callbackSeeds || data.callbacks)
     ? (data.callbackSeeds || data.callbacks).map(item => optionalCleanText(item)).filter(Boolean).slice(0, 3)
     : [];
@@ -430,7 +430,7 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   normalized.b = normalizeChoiceData(data.b, "B");
   applyOutlineRiasec(normalized);
   const yearNumber = normalized.year;
-  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 52, 2);
+  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 42, 2);
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
@@ -460,7 +460,7 @@ function mergeFeedbackParts(consequence, offstage) {
   const left = optionalCleanText(consequence).replace(/[，。！？!?；;]+$/g, "");
   const right = optionalCleanText(offstage).replace(/^(上一年|上一年的决定|这一年)[，,]*/g, "").replace(/[，。！？!?；;]+$/g, "");
   const merged = [left, right].filter(Boolean).join("，");
-  return clampTextBySentence(merged, 52, 2);
+  return clampTextBySentence(merged, 42, 2);
 }
 
 function optionalCleanText(value) {
@@ -492,7 +492,7 @@ function clampTextBySentence(value, maxLength, maxSentences = 1) {
 function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
-      title: clampTextBySentence(value.title, 10, 1),
+      title: clampTextBySentence(value.title, 8, 1),
       body: cleanSceneBody(value.body)
     };
   }
@@ -501,19 +501,19 @@ function normalizeSceneData(value) {
   const contextMatch = raw.match(/(?:^|\n)\s*情境[:：]\s*([\s\S]+)/);
   if (eventMatch || contextMatch) {
     return {
-      title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 10, 1),
+      title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 8, 1),
       body: cleanSceneBody(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""))
     };
   }
   const sentenceMatch = raw.match(/^(.{8,28}?[。！？!?])([\s\S]*)$/);
   return {
-    title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 10, 1),
+    title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 8, 1),
     body: cleanSceneBody(sentenceMatch?.[2] || raw)
   };
 }
 
 function cleanSceneBody(value) {
-  return optionalCleanText(value).replace(/\s+/g, "");
+  return clampTextBySentence(value, 82, 2);
 }
 
 function normalizeChoiceData(value, prefix) {
@@ -532,7 +532,7 @@ function normalizeChoiceData(value, prefix) {
 }
 
 function normalizeChoiceConsequence(value) {
-  return balanceInlineQuote(clampTextBySentence(value, 36, 1));
+  return balanceInlineQuote(clampTextBySentence(value, 28, 1));
 }
 
 function normalizeRiasecPayload(value) {
@@ -579,7 +579,7 @@ function normalizeChoiceDesc(value, title, prefix) {
     .replace(title, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
-  if (text.length >= 8) return balanceInlineQuote(clampTextBySentence(text, 22, 1));
+  if (text.length >= 8) return balanceInlineQuote(clampTextBySentence(text, 18, 1));
   return prefix === "A" ? "把问题摊开当场处理" : "留出余地再判断";
 }
 
@@ -734,11 +734,11 @@ function normalizeResultTitle(value) {
   const parts = raw.split(/[，,、｜|/]+/).map(item => item.trim()).filter(Boolean);
   if (parts.length >= 3) return parts.slice(0, 3).map((item, index) => cleanTitleSegment(item, index)).join("，").slice(0, 24);
   if (/但|且|的/.test(raw) && raw.length >= 10) return raw.slice(0, 21);
-  return ["稳定嘴硬", "账本漂亮", "靠谱大人"].join("，");
+  return ["硬扛成事", "现实拉扯", "靠谱大人"].join("，");
 }
 
 function cleanTitleSegment(value, index = 0) {
-  const fallback = ["稳定嘴硬", "账本漂亮", "靠谱大人"][index] || "靠谱大人";
+  const fallback = ["硬扛成事", "现实拉扯", "靠谱大人"][index] || "靠谱大人";
   let text = optionalCleanText(value)
     .replace(/^(你是|一个|一种)/, "")
     .replace(/方向[:：]?$/, "")
@@ -746,13 +746,13 @@ function cleanTitleSegment(value, index = 0) {
   if (index === 0) {
     text = text
       .replace("秩序感强但心里加班", "秩序心累")
-      .replace("情绪稳定但会嘴硬", "稳定嘴硬");
+      .replace("情绪稳定但会嘴硬", "硬扛成事");
   }
   if (index === 1) {
     text = text
       .replace("靠资源把局面做大", "资源上桌")
       .replace("靠分析把坑绕过去", "分析避坑")
-      .replace("现实账本还算漂亮", "账本漂亮");
+      .replace("现实账本还算漂亮", "现实拉扯");
   }
   if (index === 2) {
     text = normalizeCareerTitleSegment(text);
@@ -838,8 +838,8 @@ function mockResponse(messages) {
   const content = messages.at(-1).content;
   if (content.includes("\"title\": \"\"") && content.includes("\"timelineBlocks\"")) {
     return {
-      title: "稳定嘴硬，账本漂亮，项目统筹",
-      status42: "靠几次救场混成靠谱大人，手机静音也会心虚。",
+      title: "硬扛成事，现实拉扯，项目统筹",
+      status42: "靠几次救场站稳脚跟，也留下关系旧账。",
       majorCareerNote: "这只是故事内估计，不是现实建议。你的专业提供了第一套工具，但后面每次选择都会改写路标。专业决定起点，不决定你一辈子的工牌。",
       careerPossibilities: [
         { percent: 28, label: "专业骨干" },
@@ -951,28 +951,28 @@ function mockIncidentText(parsed, outlineCard) {
 
 function mockLifeTrack(parsed, year, incident) {
   const timeFrame = optionalCleanText(parsed?.stateHints?.timeFrame) || `${Math.min(35, 17 + year)}岁左右`;
-  return shortText(`${timeFrame}，${incident}压到台面`, 26);
+  return shortText(`${timeFrame}，${incident}压到台面`, 22);
 }
 
 function mockRelationshipTrack(parsed, year, relationName) {
   const stage = optionalCleanText(parsed?.stateHints?.relationshipStage) || (year <= 2 ? "暧昧升温" : "订婚结婚");
   const fact = optionalCleanText(parsed?.stateHints?.relationshipBeat).replace(/^关系事实：/, "");
-  return shortText(`${stage}：${relationName}${fact ? `面对${fact}` : "关系继续推进"}`, 34);
+  return shortText(`${stage}：${relationName}${fact || "主动问你下一步"}`, 30);
 }
 
 function mockSceneBody(parsed, outlineCard, relationName, incident) {
   const last = optionalCleanText(parsed?.stateHints?.lastYear).replace(/^上一年：/, "");
   const conflict = outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`;
-  return shortText(`${last ? `${last}。` : ""}${conflict}${relationName}在旁边等你给一句准话，场面尴尬得像会议室空调突然失灵。`, 110);
+  return shortText(`${last ? `${last}。` : ""}${conflict}${relationName}在旁边等你给一句准话。`, 82);
 }
 
 function mockChoice(source, desc, tag, consequence, mainType) {
   const title = shortText(String(source || "先处理").replace(/[，。！？!?；;：:].*$/g, ""), 5) || "先处理";
   return {
     title,
-    desc: shortText(desc, 22),
+    desc: shortText(desc, 18),
     tag: shortText(tag || title, 4),
-    consequence: shortText(consequence, 36),
+    consequence: shortText(consequence, 28),
     riasec: mockRiasec(mainType)
   };
 }

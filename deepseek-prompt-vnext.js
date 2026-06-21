@@ -53,24 +53,24 @@ const outlineData = {
         },
         {
           "year": 3,
-          "mainTrack": "life",
+          "mainTrack": "relationship",
           "phase": "关系定调",
           "comedyDevice": "去留表态",
           "riasecAxis": [
             "S",
             "I"
           ],
-          "conflict": "暑期实习名单出来，远方平台和本地机会第一次同时招手。你要争取更大的城市窗口，还是先把本地基本盘稳住。",
-          "sideBeat": "生活圈第一次被城市和机会拉开距离",
+          "conflict": "暑期实习名单出来，远方平台和本地机会第一次同时招手，你们也第一次要认真谈异地。你要把异地规则说清，还是先把城市窗口拿下。",
+          "sideBeat": "现实状态里第一次出现城市和机会的分岔",
           "characters": [
-            "学长/前辈",
+            "关系线核心角色",
             "室友/同伴"
           ],
-          "abType": "争取远方 / 稳住本地",
-          "summaryTask": "只写上一年余波和本年城市选择",
+          "abType": "说清异地 / 拿下窗口",
+          "summaryTask": "现实线同步推进，但不要把伴侣写成事业阻碍",
           "callbacks": [
             "暑期实习",
-            "城市窗口",
+            "异地规则",
             "第一次去留"
           ]
         }
@@ -181,23 +181,23 @@ const outlineData = {
         },
         {
           "year": 8,
-          "mainTrack": "life",
+          "mainTrack": "relationship",
           "phase": "第一次付代价",
           "comedyDevice": "转正和城市撞车",
           "riasecAxis": [
             "S",
             "R"
           ],
-          "conflict": "转正答辩、城市续约和项目关键节点撞在同一周，不能再靠临时补锅。你要当面拍板下一站，还是先把项目交完。",
-          "sideBeat": "收入和城市落点开始影响你的生活节奏",
+          "conflict": "转正答辩结束，城市续约和同居计划摆到桌面上。你要一起拍板下一站，还是先把各自节奏讲清。",
+          "sideBeat": "收入和城市落点开始影响长期关系",
           "characters": [
-            "主管/客户",
+            "关系线核心角色",
             "朋友群像"
           ],
-          "abType": "拍板下一站 / 先交项目",
-          "summaryTask": "现实线只写一个具体压力，不要泛泛说项目继续推进",
+          "abType": "一起拍板 / 讲清节奏",
+          "summaryTask": "现实线只写一个具体落点，不写伴侣妨碍事业",
           "callbacks": [
-            "转正答辩",
+            "同居计划",
             "城市续约",
             "第一次拍板"
           ]
@@ -233,16 +233,17 @@ const outlineData = {
       "cards": [
         {
           "year": 10,
-          "mainTrack": "life",
+          "mainTrack": "relationship",
           "phase": "长期承诺",
           "comedyDevice": "首付和城市二选一",
           "riasecAxis": [
             "A",
             "C"
           ],
-          "conflict": "首付预算、换城市机会和家里意见同时压来。你要把未来落到钱和城市上，还是先把边界说清。",
+          "conflict": "首付预算、换城市机会和双方家里意见同时压来。你要把未来落到钱和城市上，还是先把生活边界说清。",
           "sideBeat": "生活选择开始和职业选择绑定",
           "characters": [
+            "关系线核心角色",
             "家庭型角色",
             "朋友群像"
           ],
@@ -354,16 +355,17 @@ const outlineData = {
         },
         {
           "year": 15,
-          "mainTrack": "life",
+          "mainTrack": "relationship",
           "phase": "压力做实，能力成型",
           "comedyDevice": "成年责任上桌",
           "riasecAxis": [
             "R",
             "C"
           ],
-          "conflict": "父母照护、孩子择校或房贷重排摆到桌面上，不能再拖。你要拿出具体行动，还是先把现实排稳。",
+          "conflict": "父母照护、孩子择校或房贷重排摆到桌面上，不能再拖。你要和伴侣拿出具体行动，还是先把现实排稳。",
           "sideBeat": "现实状态里你已经有真正的成年责任",
           "characters": [
+            "关系线核心角色",
             "家庭型角色"
           ],
           "abType": "给行动 / 排现实",
@@ -480,6 +482,8 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 有 stateHints.currentIncident 时，scene.title/body 以它为本年事故。
 - lifeTrack 写本年新状态。
 - relationshipTrack 只写背景信号；除 mainTrack=relationship 外，不把伴侣写成冲突中心。
+- mainTrack=relationship 时写共同生活选择，不写男女对立或伴侣拖事业后腿。
+- 有 stateHints.relationshipPressure 时，只作为一句家庭投入提醒，不改变本年主决策。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只写 stateHints.newRelation。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事故。
@@ -536,6 +540,8 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 有 stateHints.currentIncident 时，scene.title/body 以它为本年事故。
 - relationshipTrack 只写背景信号；除 mainTrack=relationship 外，不把伴侣写成冲突中心。
+- mainTrack=relationship 时写共同生活选择，不写男女对立或伴侣拖事业后腿。
+- 有 stateHints.relationshipPressure 时，只作为一句家庭投入提醒，不改变本年主决策。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只写 stateHints.newRelation。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
@@ -589,7 +595,13 @@ function closingFrameHint(history = []) {
   const last = history.at(-1);
   const firstTitle = shortText(first?.sceneTitle || first?.scene, 12);
   const lastTitle = shortText(last?.sceneTitle || last?.scene, 12);
-  return `回看${firstTitle || "开局"}、个人选择和职业代价；给18岁一句话，再排未来五年。${lastTitle ? `接住上一年${lastTitle}` : ""}`;
+  const keyChoices = history
+    .filter(item => item?.choiceText || item?.consequence)
+    .slice(-3)
+    .map(item => shortText(item.choiceText || item.consequence, 10))
+    .filter(Boolean)
+    .join("、");
+  return `第18年收尾：回看${firstTitle || "开局"}、${lastTitle || "最后一年"}和这一路的关键选择${keyChoices ? `（${keyChoices}）` : ""}；给18岁一句真话，再决定未来五年活法`;
 }
 
 function phasePromptForYear(year = 1, history = []) {
@@ -598,22 +610,22 @@ function phasePromptForYear(year = 1, history = []) {
   const prompts = {
     1: "开学入场：专业第一件事和关键角色入场。",
     2: "公开评审：第一次被更多人看见。",
-    3: "去留表态：实习和城市机会第一次分岔。",
+    3: "异地表态：实习和城市机会第一次分岔。",
     4: "毕业分流：考研、项目、实习二选一。",
     5: educationState === "继续读研" ? "研一开局：导师、课题和同门分工成为主压力。" : "毕业落点：第一份工作或项目落地。",
     6: educationState === "继续读研" ? "研二拉扯：论文、实验/作品和实习预备同时挤压。" : "生活落地：学生身份转向工作身份。",
     7: educationState === "继续读研" ? "研三分流：毕业论文、校招/读博和城市落点一起拍板。" : "职场入口：转正、客户和收入第一次压身。",
-    8: educationState === "继续读研" ? "研究生毕业第一站：入职、读博或规培落点定下来。" : "转正换城：工作身份和城市落点必须拍板。",
+    8: educationState === "继续读研" ? "研究生毕业第一站：入职、读博或规培落点定下来。" : "关系定调：转正、城市落点和共同生活必须拍板。",
     9: "口碑危机：一次职业失误影响后续机会。",
-    10: "首付换城：钱、城市和长期责任一起落地。",
+    10: "首付换城：钱、城市和长期关系一起落地。",
     11: "平台换挡：跳槽、创业或稳定路线分叉。",
     12: "搬家截稿：家庭任务和工作节点撞上。",
     13: "照护落桌：孩子、老人或房贷开始派活。",
     14: "低谷验账：升职落空、项目被砍或客户撤单。",
-    15: "责任重排：照护、择校或房贷重新排位。",
+    15: "家庭责任：照护、择校或房贷重新排位。",
     16: "合伙摊牌：团队、股权或城市迁移要签字。",
     17: "责任结算：教育、养老或共同事业给出答案。",
-    18: "回顾收尾：回收开局、关键选择和职业代价；用一次回望/表态收束，不开新坑。"
+    18: "回顾收尾：回收开局、关键选择、职业代价和关系结果；像最后一张牌，不开新坑。"
   };
   return prompts[currentYear] || "年度推进：一年后的新大事。";
 }
@@ -1167,11 +1179,11 @@ function compactOutlineCardWithClosing(card, storyCast = defaultStoryCast, closi
   return {
     ...compact,
     comedyDevice: "最后一句话",
-    conflict: `${closingFrame}。最后一张牌不是新事故，而是你怎么解释这18年。`,
+    conflict: `${closingFrame}。最后一张牌只做回顾收束：把开局、一次关键代价和现在的落点讲清楚。`,
     hook: "最后不是问成功，而是问你敢不敢说真话",
     choiceContrast: "讲真实代价 / 体面收住",
     abType: "讲真实代价 / 体面收住",
-    callbacks: ["开局回声", "关系收束", "最后一句话"]
+    callbacks: ["开局回声", "关键代价", "未来五年"]
   };
 }
 
@@ -1832,6 +1844,27 @@ function relationshipBeatHint(history = [], year = 1) {
   return `关系背景：${pickFreshFact(["家庭分工定型", "孩子教育取舍", "长期关系稳定", "各自空间清楚"], history, year)}`;
 }
 
+function relationshipPressureHint(history = [], year = 1) {
+  const currentYear = Number(year || 1);
+  if (currentYear < 7 || currentYear > 16) return "";
+  const recentText = [...history].slice(-5).map(item => [
+    item?.sceneTitle,
+    item?.choiceTag,
+    item?.choiceText,
+    item?.consequence,
+    item?.lifeTrack
+  ].filter(Boolean).join(" ")).join(" ");
+  if (!recentText || /家庭投入|只给工作留时间|投入不足|你忙|抱怨/.test(recentText)) return "";
+  const careerCount = (recentText.match(/工作|项目|客户|平台|团队|交付|方案|加班|创业|跳槽|转正|实习|校招|论文|课题|作品|机会|岗位|升职|合伙|招募|品牌/g) || []).length;
+  const careCount = (recentText.match(/家庭|孩子|父母|老人|照护|买房|房贷|结婚|同居|见家长|异地|陪|沟通|一起/g) || []).length;
+  if (careerCount < 4 || careCount > 1) return "";
+  const stage = relationshipStageHint(history, year);
+  if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) {
+    return "家庭投入提醒：家人觉得你最近只给工作留时间；一句带过。";
+  }
+  return "家庭投入提醒：伴侣或家人觉得你最近只给工作留时间；一句带过。";
+}
+
 function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {
   if (relationshipStage !== "新恋情萌芽") return "";
   return `新关系对象：${storyCast.secondaryRelationIntro || storyCast.secondaryRelationName}；旧关系只作背景`;
@@ -2027,12 +2060,13 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const closingFrame = Number(year) === 18 ? closingFrameHint(history) : "";
   const relationshipStage = relationshipStageHint(history, year);
   const relationshipBeat = relationshipBeatHint(history, year);
+  const relationshipPressure = relationshipPressureHint(history, year);
   const choiceBalance = choiceBalanceHint(compactBaseOutlineCard, relationshipBeat, currentIncident);
   const outlineCard = closingFrame
     ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
     : compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident, compactBaseOutlineCard, choiceBalance);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
-  const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage, outlineCard?.mainTrack === "relationship");
+  const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage, outlineCard?.mainTrack === "relationship" || /伴侣/.test(relationshipPressure));
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
@@ -2064,6 +2098,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
+  if (relationshipPressure) stateHints.relationshipPressure = relationshipPressure;
   if (closingFrame) stateHints.closingFrame = closingFrame;
   if (Number(year) === 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;
@@ -2090,6 +2125,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const visibleEducationState = visibleEducationStateHint(history, startYear);
   const relationshipStage = relationshipStageHint(history, startYear);
   const relationshipBeat = relationshipBeatHint(history, startYear);
+  const relationshipPressure = relationshipPressureHint(history, startYear);
   const firstRawOutlineCard = getOutlineCard(startYear);
   const firstOutlineCard = compactOutlineCardWithEducation(firstRawOutlineCard, storyCast, educationState, startYear);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
@@ -2106,7 +2142,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
       return compactOutlineCardWithIncident(card, storyCast, incident, compactCard, cardChoiceBalance);
     });
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
-  const compactCast = compactStoryCastForYear(profile, storyCast, startYear, history, relationshipStage, firstOutlineCard?.mainTrack === "relationship");
+  const compactCast = compactStoryCastForYear(profile, storyCast, startYear, history, relationshipStage, firstOutlineCard?.mainTrack === "relationship" || /伴侣/.test(relationshipPressure));
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
@@ -2139,6 +2175,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
+  if (relationshipPressure) stateHints.relationshipPressure = relationshipPressure;
   if (closingFrame) stateHints.closingFrame = closingFrame;
   if (Number(startYear) <= 1) stateHints.openingFrame = buildOpeningFrame(profile);
   if (visibleEducationState) stateHints.educationState = visibleEducationState;

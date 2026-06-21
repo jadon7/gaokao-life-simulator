@@ -8221,7 +8221,15 @@
         </div>
       `;
       fitCareerCardLabels();
-      els.resultInsights.innerHTML = buildAbilityPortraitHTML();
+      els.resultInsights.innerHTML = `
+        ${buildAbilityPortraitHTML()}
+        <div class="glass-section">
+          <article class="result-guide-card">
+            <b>${escapeHTML(yearningCard.title)}</b>
+            <p>${escapeHTML(yearningCard.body)}</p>
+          </article>
+        </div>
+      `;
       els.resultHighlights.innerHTML = `
         <div class="glass-section">
           ${safeScenes.map(scene => `
@@ -8255,10 +8263,6 @@
           <article class="result-guide-card">
             <b>${escapeHTML(mentalPrep.title)}</b>
             <p>${escapeHTML(mentalPrep.body)}</p>
-          </article>
-          <article class="result-guide-card">
-            <b>${escapeHTML(yearningCard.title)}</b>
-            <p>${escapeHTML(yearningCard.body)}</p>
           </article>
         </div>
         <div class="glass-section">

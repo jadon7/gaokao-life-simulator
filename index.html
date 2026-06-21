@@ -1257,7 +1257,7 @@
       font-size: 33px;
       font-weight: 700;
       line-height: 1.1;
-      color: #111827;
+      color: #493008;
     }
 
     .result-title span {
@@ -1591,7 +1591,7 @@
     }
 
     .ability-radar {
-      width: 248px;
+      width: 292px;
       max-width: 100%;
       height: auto;
     }
@@ -1608,16 +1608,8 @@
     }
 
     .ability-radar-label {
-      font-family: Inter, var(--font-ui);
-      font-size: 10.6px;
-      font-weight: 700;
-      text-anchor: middle;
-      dominant-baseline: middle;
-    }
-
-    .ability-radar-word {
       font-family: var(--font-display);
-      font-size: 10.6px;
+      font-size: 11px;
       font-weight: 700;
       text-anchor: middle;
       dominant-baseline: middle;
@@ -7875,7 +7867,7 @@
     }
 
     function buildHollandRadarSVG(scores) {
-      const size = 248;
+      const size = 292;
       const center = size / 2;
       const radius = 70;
       const order = ["R", "I", "A", "S", "E", "C"];
@@ -7884,9 +7876,8 @@
       const points = order.map((key, index) => radarPoint(index, visualPercents[key], center, radius));
       const axes = order.map((key, index) => {
         const outer = radarPoint(index, 100, center, radius);
-        const label = radarPoint(index, 100, center, radius + 16);
-        const word = radarPoint(index, 100, center, radius + 32);
-        return { key, outer, label, word, color: hollandTypes[key]?.color || "#315c9a" };
+        const label = radarPoint(index, 100, center, radius + 34);
+        return { key, outer, label, color: hollandTypes[key]?.color || "#315c9a" };
       });
       return `
         <svg class="ability-radar" viewBox="0 0 ${size} ${size}" role="img" aria-label="RIASEC 雷达图">
@@ -7896,8 +7887,10 @@
           }).join("")}
           ${axes.map(axis => `
             <line x1="${center}" y1="${center}" x2="${axis.outer.x.toFixed(2)}" y2="${axis.outer.y.toFixed(2)}" class="ability-radar-axis"></line>
-            <text x="${axis.label.x.toFixed(2)}" y="${axis.label.y.toFixed(2)}" class="ability-radar-label" fill="${axis.color}">${escapeHTML(axis.key)}</text>
-            <text x="${axis.word.x.toFixed(2)}" y="${axis.word.y.toFixed(2)}" class="ability-radar-word" fill="${axis.color}">${escapeHTML(hollandTypes[axis.key]?.label || "")}</text>
+            <text x="${axis.label.x.toFixed(2)}" y="${axis.label.y.toFixed(2)}" class="ability-radar-label" fill="${axis.color}">
+              <tspan x="${axis.label.x.toFixed(2)}" dy="-0.55em">${escapeHTML(hollandTypes[axis.key]?.label || "")}</tspan>
+              <tspan x="${axis.label.x.toFixed(2)}" dy="1.15em">${escapeHTML(axis.key)}</tspan>
+            </text>
           `).join("")}
           <path d="${polygonPath(points)}" class="ability-radar-shape"></path>
           ${points.map(point => `<path d="M ${point.x.toFixed(2)} ${(point.y - 4).toFixed(2)} L ${(point.x + 4.6).toFixed(2)} ${point.y.toFixed(2)} L ${point.x.toFixed(2)} ${(point.y + 4).toFixed(2)} L ${(point.x - 4.6).toFixed(2)} ${point.y.toFixed(2)} Z" class="ability-radar-dot"></path>`).join("")}

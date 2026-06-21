@@ -2283,7 +2283,7 @@
           <span class="flow-hint">左右滑动选择形象</span>
         </div>
         <div class="entry-bottom">
-          <input class="pill-input" id="entryName" placeholder="怎么称呼你?(可选）" autocomplete="off" />
+          <input class="pill-input" id="entryName" placeholder="怎么称呼你?(可选）" maxlength="8" autocomplete="off" />
           <button class="cta-button" id="entryStart" type="button">生成我的开局</button>
         </div>
         <p class="entry-disclaimer">结果仅供互动娱乐与专业理解参考，不构成志愿填报建议，不评价专业好坏，不替用户做决定。</p>
@@ -2304,8 +2304,8 @@
           <div class="setup-fields">
             <input id="studentName" type="hidden" autocomplete="off" />
             <div class="field-row">
-              <input class="pill-input" id="province" placeholder="期望省份" autocomplete="off" />
-              <input class="pill-input" id="score" placeholder="高考分数" inputmode="numeric" autocomplete="off" />
+              <input class="pill-input" id="province" placeholder="期望省份" maxlength="8" autocomplete="off" />
+              <input class="pill-input" id="score" placeholder="高考分数" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" />
             </div>
             <div class="hope-block">
               <span class="hope-label">你期望</span>
@@ -4476,16 +4476,68 @@
       closeProcessDebug: document.querySelector("#closeProcessDebug")
     };
 
+    const NAME_MAX_LENGTH = 8;
+    const PROVINCE_MAX_LENGTH = 8;
+    const SCORE_MIN = 0;
+    const SCORE_MAX = 750;
+
+    function trimToLength(value, maxLength) {
+      return Array.from(String(value || "").trim()).slice(0, maxLength).join("");
+    }
+
+    function normalizeLimitedInput(input, maxLength) {
+      if (!input) return "";
+      const nextValue = trimToLength(input.value, maxLength);
+      if (input.value !== nextValue) input.value = nextValue;
+      return nextValue;
+    }
+
+    function normalizeScoreInput(input) {
+      if (!input) return "";
+      const nextValue = String(input.value || "").replace(/\D/g, "").slice(0, 3);
+      if (input.value !== nextValue) input.value = nextValue;
+      return nextValue;
+    }
+
+    function normalizeSetupInputTarget(target) {
+      if (!(target instanceof HTMLInputElement)) return;
+      if (target.id === "entryName" || target.id === "studentName") {
+        normalizeLimitedInput(target, NAME_MAX_LENGTH);
+      } else if (target.id === "province") {
+        normalizeLimitedInput(target, PROVINCE_MAX_LENGTH);
+      } else if (target.id === "score") {
+        normalizeScoreInput(target);
+      }
+    }
+
+    function normalizeSetupInputs() {
+      return {
+        setupName: normalizeLimitedInput(document.querySelector("#studentName"), NAME_MAX_LENGTH),
+        entryName: normalizeLimitedInput(els.entryName, NAME_MAX_LENGTH),
+        province: normalizeLimitedInput(document.querySelector("#province"), PROVINCE_MAX_LENGTH),
+        score: normalizeScoreInput(document.querySelector("#score"))
+      };
+    }
+
+    function validateSetupInputs() {
+      const { score } = normalizeSetupInputs();
+      if (!score) return "";
+      const numericScore = Number(score);
+      if (!Number.isInteger(numericScore) || numericScore < SCORE_MIN || numericScore > SCORE_MAX) {
+        return `高考分数请填写 ${SCORE_MIN}-${SCORE_MAX} 的数字`;
+      }
+      return "";
+    }
+
     function readProfile() {
       const entryMajorText = cleanEntryMajor();
-      const setupName = document.querySelector("#studentName")?.value.trim() || "";
-      const entryName = els.entryName?.value?.trim() || "";
+      const { setupName, entryName, province, score } = normalizeSetupInputs();
       const avatar = currentAvatarOption();
       return {
         name: setupName || entryName || "未命名考生",
         gender: avatar.gender || "不限定",
-        province: document.querySelector("#province")?.value.trim() || "未知省份",
-        score: document.querySelector("#score")?.value.trim() || "未知分数",
+        province: province || "未知省份",
+        score: score || "未知分数",
         dream: "暂未填写",
         hope: document.querySelector("#familyHope")?.value || "稳定且体面",
         keywords: document.querySelector("#keywords")?.value.trim() || "观察中",
@@ -5602,7 +5654,7 @@
     }
 
     function enterSetupFromCover() {
-      const entryName = els.entryName?.value?.trim() || "";
+      const { entryName } = normalizeSetupInputs();
       const setupNameInput = document.querySelector("#studentName");
       if (entryName && setupNameInput && !setupNameInput.value.trim()) {
         setupNameInput.value = entryName;
@@ -5615,6 +5667,11 @@
 
     async function startGame() {
       if (state.isStarting) return;
+      const validationError = validateSetupInputs();
+      if (validationError) {
+        showSetupError(validationError);
+        return;
+      }
       state.isStarting = true;
       state.loadError = "";
       showSetupError("");
@@ -8969,7 +9026,9 @@
         enterSetupFromCover();
       }
     });
-    els.entryName?.addEventListener("input", () => {
+    els.entryName?.addEventListener("input", event => {
+      normalizeSetupInputTarget(event.target);
+      showSetupError("");
       const setupNameInput = document.querySelector("#studentName");
       if (setupNameInput && !setupNameInput.value.trim()) {
         applyProfile(readProfile());
@@ -8997,7 +9056,9 @@
       applyProfile(readProfile());
       scheduleWarmup();
     });
-    els.form.addEventListener("input", () => {
+    els.form.addEventListener("input", event => {
+      normalizeSetupInputTarget(event.target);
+      showSetupError("");
       applyProfile(readProfile());
       scheduleWarmup();
     });

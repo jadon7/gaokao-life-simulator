@@ -21,7 +21,7 @@ const finalResultAge = 36;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
-const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "shareHooks"];
+const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "innerYearning", "shareHooks"];
 
 function systemPrompt() {
   return vNextSystemPrompt;
@@ -674,6 +674,8 @@ function validateResult(data) {
       normalized[field] = normalizeResultBlocks(data?.[field], 3, normalizeTimelineBlock);
     } else if (field === "choiceHabit" || field === "mentalPrep" || field === "letter18") {
       normalized[field] = normalizeResultCard(data?.[field], fallbackResultCard(field));
+    } else if (field === "innerYearning") {
+      normalized[field] = normalizeInnerYearning(data?.[field]);
     } else if (field === "shareHooks") {
       if (!Array.isArray(data?.[field])) throw new Error(`Invalid result JSON: missing ${field}`);
       normalized[field] = data[field].map(item => String(item).trim()).filter(Boolean);
@@ -738,6 +740,24 @@ function normalizeResultCard(item, fallback) {
   const text = optionalCleanText(item);
   if (text) return { title: fallback.title, body: text };
   return fallback;
+}
+
+function normalizeInnerYearning(item) {
+  const fallback = {
+    keyword: "自由",
+    core: "你想保留自己选择节奏的权利。",
+    evidence: "这 18 道题里，你反复把确定路线让给更像自己的出口。",
+    sacrifice: "为了它，你愿意放下部分稳定和别人眼里的体面。",
+    temperament: "你做选择时的底色，是清醒、热忱、不太装。"
+  };
+  if (!item || typeof item !== "object" || Array.isArray(item)) return fallback;
+  return {
+    keyword: optionalCleanText(item.keyword).slice(0, 8) || fallback.keyword,
+    core: optionalCleanText(item.core).slice(0, 42) || fallback.core,
+    evidence: optionalCleanText(item.evidence).slice(0, 56) || fallback.evidence,
+    sacrifice: optionalCleanText(item.sacrifice).slice(0, 56) || fallback.sacrifice,
+    temperament: optionalCleanText(item.temperament).slice(0, 42) || fallback.temperament
+  };
 }
 
 function normalizeResultTitle(value) {
@@ -863,6 +883,13 @@ function mockResponse(messages) {
       letter18: {
         title: "志愿不是判决书，顶多算开局说明书",
         body: "十八岁的你不用急着一次选对。真正拉开差距的，是你以后每次愿不愿意修正路线，继续往前走。"
+      },
+      innerYearning: {
+        keyword: "自由",
+        core: "你想要的是能自己决定节奏，而不是被标准路线推着走。",
+        evidence: "18 道题里，你多次把确定感让给了新的窗口和更大的选择权。",
+        sacrifice: "为了它，你放下过稳一点的收入，也放下过别人眼里的体面。",
+        temperament: "你做这些选择时的样子，是清醒、热忱、不太装。"
       },
       shareHooks: ["这条线像我，但比我会复盘。", "原来专业只是新手村。", "测完想给志愿表道个歉。"]
     };

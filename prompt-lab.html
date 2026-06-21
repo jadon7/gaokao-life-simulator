@@ -1052,12 +1052,14 @@
       const r = run?.result;
       if (!r) { box.textContent = "该局跑完后自动生成。"; return; }
       const parts = String(r.title || "").split(/[，,]/).filter(Boolean);
-      const titleCheck = parts.length === 3 && String(r.title).length <= 24
-        ? `<span class="badge ok">三段式合规</span>`
+      const titleCheck = parts.length === 2 && String(r.title).length <= 15
+        ? `<span class="badge ok">两段式合规</span>`
         : `<span class="badge warn">title 不合规（${parts.length} 段 / ${String(r.title).length} 字）</span>`;
+      const yearning = r.innerYearning || {};
       box.innerHTML = `
         <div class="rt">${esc(r.title)}</div>${titleCheck}
         <h5>status42</h5>${esc(r.status42 || "")}
+        <h5>innerYearning</h5>${esc(yearning.keyword || "")}｜${esc(yearning.core || "")}<br/>${esc(yearning.evidence || "")}<br/>${esc(yearning.sacrifice || "")}<br/>${esc(yearning.temperament || "")}
         <h5>careerPossibilities</h5>${(r.careerPossibilities || []).map(c => `${c.percent}% ${esc(c.label)}`).join(" ｜ ")}
         <h5>majorCareerNote</h5>${esc(r.majorCareerNote || "")}
         <h5>famousScenes</h5>${(r.famousScenes || []).map(s => `<b>${esc(s.title)}</b>：${esc(s.body)}`).join("<br/>")}

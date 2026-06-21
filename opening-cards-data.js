@@ -2033,7 +2033,7 @@ function withRandomRelationName(sourceCard) {
   if (!hit) return { card: sourceCard, relationName: "", relationGender: "", relationIntro: "" };
   const relationName = randomReplacementName(hit.pool, hit.sourceName);
   const card = JSON.parse(JSON.stringify(sourceCard));
-  const replaceName = value => String(value || "").replaceAll(hit.sourceName, relationName);
+  const replaceName = value => sanitizeSupportRoles(String(value || "").replaceAll(hit.sourceName, relationName));
   card.relationshipTrack = replaceName(card.relationshipTrack);
   card.lifeTrack = replaceName(card.lifeTrack);
   card.summary = replaceName(card.summary);
@@ -2049,6 +2049,15 @@ function withRandomRelationName(sourceCard) {
     card[key].consequence = replaceName(card[key].consequence);
   }
   return { card, relationName, relationGender: hit.gender, relationIntro: relationIntroFromCard(card, relationName, hit.gender) };
+}
+
+function sanitizeSupportRoles(value) {
+  return String(value || "")
+    .replace(/赵老师|黄老师|王老师|林老师/g, "老师")
+    .replace(/附小老师/g, "附小老师")
+    .replace(/电工李工/g, "电工师傅")
+    .replace(/带队李工|李工|孙工|陈工/g, "工程师")
+    .replace(/系主任/g, "系里老师");
 }
 
 function relationIntroFromCard(card, relationName, relationGender) {

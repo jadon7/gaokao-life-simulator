@@ -1721,7 +1721,7 @@
     .yearning-body {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 10px;
       min-width: 0;
       padding-left: 12px;
     }
@@ -1735,11 +1735,17 @@
       letter-spacing: 0;
     }
 
+    .yearning-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
     .yearning-body p {
       margin: 0;
       font-size: 14px;
       font-weight: 500;
-      line-height: 1.72;
+      line-height: 1.58;
       color: rgba(49, 56, 71, 0.76);
     }
 
@@ -4785,21 +4791,6 @@
       { name: "清越", intro: "人缘很好、说话干净利落的同班男生清越" },
       { name: "承宇", intro: "遇事不绕弯、行动很快的同班男生承宇" }
     ];
-    const maleSupportPool = [
-      { name: "浩然" },
-      { name: "子豪" },
-      { name: "子轩" },
-      { name: "浩轩" },
-      { name: "鑫磊" }
-    ];
-    const femaleSupportPool = [
-      { name: "欣怡" },
-      { name: "佳怡" },
-      { name: "婷婷" },
-      { name: "雨欣" },
-      { name: "雪婷" }
-    ];
-
     function getStoryCast() {
       const profile = state.profile || readProfile();
       const relationPool = /女/.test(profile.gender || "") ? maleRelationPool : femaleRelationPool;
@@ -4812,30 +4803,23 @@
             intro: profile.relationIntro || `开局第一张牌里已经替你搭过手的${profile.relationGender || ""}${profile.relationName}`
           }
         : fallbackRelation;
-      const supportPool = /女/.test(profile.gender || "") ? femaleSupportPool : maleSupportPool;
-      const roommate = pickFromPool(supportPool, 23);
-      const external = pickFromPool(supportPool.filter(item => item.name !== roommate.name), 53);
       return {
         relationName: relation.name,
         relationGender: profile.relationGender || (/女/.test(profile.gender || "") ? "男生" : "女生"),
         relationIntro: relation.intro,
-        roommateName: roommate.name,
-        roommateIntro: `总在上课路上边走边吃早餐的吃货舍友${roommate.name}`,
-        mentorIntro: "专业课老师按“姓+老师”格式自然出场",
-        externalName: external.name,
-        externalIntro: `合作方负责人${external.name}，说话不多但每次都带来新截止时间`
+        roommateName: "室友",
+        roommateIntro: "上课路上总在赶早餐的室友",
+        mentorIntro: "专业课老师",
+        externalName: "客户",
+        externalIntro: "客户、主管、老板会随阶段自然出现"
       };
     }
 
     function storyCastRoleNames(cast = getStoryCast()) {
       return [...new Set([
         cast.relationName,
-        cast.roommateName,
-        cast.externalName,
         ...femaleRelationPool.map(item => item.name),
         ...maleRelationPool.map(item => item.name),
-        ...maleSupportPool.map(item => item.name),
-        ...femaleSupportPool.map(item => item.name),
         "妈妈和二姨"
       ].filter(Boolean))];
     }
@@ -4883,7 +4867,7 @@
     function applyCastToTemplateText(value, cast = getStoryCast()) {
       return String(value || "")
         .replaceAll("__RELATION__", cast.relationName)
-        .replaceAll("__ROOMMATE__", cast.roommateName)
+        .replaceAll("__ROOMMATE__", "室友")
         .replaceAll("__MENTOR__", "老师");
     }
 
@@ -5069,7 +5053,7 @@
           tag: frame.leftTag,
           riasec: frame.riasecA,
           delta: frame.deltaA,
-          feedback: `你接下了第一波活，${cast.roommateName}和老师都记住你这个开学就敢上桌的人。${cast.relationIntro}也开始在群里顺手接你的话。`
+          feedback: `你接下了第一波活，室友和老师都记住你这个开学就敢上桌的人。${cast.relationIntro}也开始在群里顺手接你的话。`
         },
         right: {
           label: frame.rightDesc,
@@ -7730,9 +7714,23 @@
       ];
       const winner = items.sort((a, b) => b.score - a.score)[0] || items[0];
       return {
-        key: winner.key,
-        title: `向往${winner.key}`,
-        body: winner.body
+        keyword: winner.key,
+        core: winner.body,
+        evidence: "这 18 道题里，你的选择反复靠近同一个方向。",
+        sacrifice: "为了它，你愿意放下一部分确定感和别人眼里的体面。",
+        temperament: "你做选择时的底色，是清醒、热忱、不太装。"
+      };
+    }
+
+    function normalizeYearningCard(result = {}) {
+      const fallback = buildYearningCard();
+      const item = result && typeof result.innerYearning === "object" ? result.innerYearning : {};
+      return {
+        keyword: String(item.keyword || fallback.keyword || "自由").trim(),
+        core: String(item.core || fallback.core || "").trim(),
+        evidence: String(item.evidence || fallback.evidence || "").trim(),
+        sacrifice: String(item.sacrifice || fallback.sacrifice || "").trim(),
+        temperament: String(item.temperament || fallback.temperament || "").trim()
       };
     }
 
@@ -8284,7 +8282,7 @@
         "志愿只是起点，后面每次改写都算数",
         getFutureMessage()
       );
-      const yearningCard = buildYearningCard();
+      const yearningCard = normalizeYearningCard(result);
       els.resultTitle.innerHTML = resultTitleHTML(result.title, result);
       els.resultSummary.textContent = normalizeResultStatus(result.status42, safeScenes);
       els.resultOverview.innerHTML = `
@@ -8298,8 +8296,13 @@
         <section class="yearning-section">
           <span class="yearning-kicker">真实的你</span>
           <div class="yearning-body">
-            <b>${escapeHTML(yearningCard.title)}</b>
-            <p>${escapeHTML(yearningCard.body)}</p>
+            <b>你内心真正渴望的，是【${escapeHTML(yearningCard.keyword)}】</b>
+            <div class="yearning-lines">
+              ${[yearningCard.core, yearningCard.evidence, yearningCard.sacrifice, yearningCard.temperament]
+                .filter(Boolean)
+                .map(line => `<p>${escapeHTML(line)}</p>`)
+                .join("")}
+            </div>
           </div>
         </section>
       `;
@@ -8851,11 +8854,10 @@
     function debugStoryCastText(storyCast = {}) {
       return [
         storyCast.relationName && `关系：${storyCast.relationName}`,
-        storyCast.friendName && `朋友：${storyCast.friendName}`,
-        storyCast.roommateName && `同伴：${storyCast.roommateName}`,
+        Array.isArray(storyCast.supportRoles) && `阶段角色：${storyCast.supportRoles.join("、")}`,
+        Array.isArray(storyCast.familyRoles) && `家庭角色：${storyCast.familyRoles.join("、")}`,
         storyCast.mentorIntro && `老师：${storyCast.mentorIntro}`,
-        storyCast.externalName && `合作：${storyCast.externalName}`,
-        storyCast.familyName && `家庭：${storyCast.familyName}`
+        storyCast.familyIntro && `家庭：${storyCast.familyIntro}`
       ].filter(Boolean);
     }
 
@@ -8886,6 +8888,11 @@
       storyCast: "角色表",
       relationName: "关系角色",
       relationIntro: "关系描述",
+      secondaryRelationName: "新关系角色",
+      secondaryRelationIntro: "新关系描述",
+      supportRoles: "阶段角色",
+      campusRoles: "校园角色",
+      familyRoles: "家庭角色",
       friendName: "朋友",
       roommateName: "同伴",
       roommateIntro: "同伴描述",
@@ -9019,6 +9026,7 @@
         return debugMiniHTML([
           ["标题", result.title],
           ["状态", result.status42],
+          ["真实的你", result.innerYearning?.keyword],
           ["职业出口", Array.isArray(result.careerPossibilities) ? result.careerPossibilities.map(item => item.label).filter(Boolean).join(" / ") : ""]
         ]);
       }

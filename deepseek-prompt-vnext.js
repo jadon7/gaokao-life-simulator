@@ -466,7 +466,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 
 长度：
 - summary 20-42 字；lifeTrack 12-22 字；relationshipTrack 14-30 字，格式“阶段：具体信号”。
-- scene.title 5-8 字；scene.body 44-82 字，2 句内。
+- scene.title 5-8 字；scene.body 约 60-80 字，2 句内。
 - A/B label 8-16 字，tag 2-4 字，consequence 12-28 字。
 
 剧情：

@@ -548,6 +548,28 @@ function clampTextBySentence(value, maxLength, maxSentences = 1) {
   return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
 }
 
+function clipClause(value, maxLength) {
+  const text = optionalCleanText(value).replace(/\s+/g, "").replace(/[。！？!?；;]+$/g, "");
+  if (text.length <= maxLength) return text;
+  const clipped = text.slice(0, maxLength);
+  const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
+  return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
+}
+
+function clampSceneBody(value) {
+  const text = optionalCleanText(value).replace(/\s+/g, "");
+  if (!text) return "";
+  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?[」”』》）)]?/g) || [text];
+  const joined = parts.slice(0, 2).join("").replace(/[。！？!?；;]+$/g, "");
+  if (joined.length <= 82) return joined;
+  if (parts.length >= 2) {
+    const first = clipClause(parts[0], 44);
+    const second = clipClause(parts[1], 82 - first.length - 1);
+    return [first, second].filter(Boolean).join("。");
+  }
+  return clipClause(joined, 82);
+}
+
 function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
@@ -572,7 +594,7 @@ function normalizeSceneData(value) {
 }
 
 function cleanSceneBody(value) {
-  return clampTextBySentence(value, 82, 2);
+  return clampSceneBody(value);
 }
 
 function normalizeChoiceData(value, prefix) {

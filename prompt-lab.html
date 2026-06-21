@@ -801,11 +801,11 @@
       const h = choiceHolland(choice);
       const mt = mainType(h);
       const picked = item.pick === (side === "A" ? "left" : "right");
+      const label = choice.label || [choice.title, choice.desc].filter(Boolean).join("，") || choice.title || "";
       return `
         <div class="opt ${picked ? "picked" : ""}" data-index="${index}" data-side="${side === "A" ? "left" : "right"}">
           <span class="badge main-type" style="background:${TYPE_COLORS[mt]}">${side} 主类型 ${mt} ${TYPE_LABELS[mt]}</span>
-          <div class="t">${esc(choice.title || choice.label)}</div>
-          <div class="d">${esc(choice.desc || "")}</div>
+          <div class="t">${esc(label)}</div>
           <div class="cons">后果接力：${esc(choice.consequence || "（缺 consequence）")}</div>
           <span class="tag">${esc(choice.tag || "")}</span>
           ${riBar(h)}

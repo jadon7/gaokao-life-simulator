@@ -597,19 +597,27 @@ function cleanSceneBody(value) {
   return clampSceneBody(value);
 }
 
+function normalizeChoiceLabel(value, prefix) {
+  const text = stripChoiceTypeNoise(value, prefix)
+    .replace(/^[，,。.!！?？；;\s]+/, "")
+    .trim();
+  return balanceInlineQuote(clampTextBySentence(text, 18, 1)) || (prefix === "A" ? "当场接下这步" : "先稳住再判断");
+}
+
 function normalizeChoiceData(value, prefix) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
-    const title = normalizeChoiceTitle(value.title || value.label || "", prefix);
-    const desc = normalizeChoiceDesc(value.desc || value.description || value.label || "", title, prefix);
-    const tag = normalizeChoiceTag(value.tag || title, prefix);
+    const label = normalizeChoiceLabel(value.label || value.text || value.action || [value.title, value.desc || value.description].filter(Boolean).join("，"), prefix);
+    const title = normalizeChoiceTitle(label, prefix);
+    const desc = "";
+    const tag = normalizeChoiceTag(value.tag || label || title, prefix);
     const consequence = normalizeChoiceConsequence(value.consequence || value.feedback || "");
-    return { title, desc, tag, consequence, label: `${title}，${desc}`, riasec: normalizeRiasecPayload(value.riasec) };
+    return { title, desc, tag, consequence, label, riasec: normalizeRiasecPayload(value.riasec) };
   }
   const raw = optionalCleanText(value).replace(new RegExp(`^${prefix}[.。]\\s*`), "");
-  const title = normalizeChoiceTitle(raw, prefix);
-  const desc = normalizeChoiceDesc(raw, title, prefix);
-  const tag = normalizeChoiceTag(title, prefix);
-  return { title, desc, tag, consequence: "", label: `${title}，${desc}`, riasec: null };
+  const label = normalizeChoiceLabel(raw, prefix);
+  const title = normalizeChoiceTitle(label, prefix);
+  const tag = normalizeChoiceTag(label, prefix);
+  return { title, desc: "", tag, consequence: "", label, riasec: null };
 }
 
 function normalizeChoiceConsequence(value) {
@@ -652,16 +660,6 @@ function normalizeChoiceTitle(value, prefix) {
   if (/谁动文|谁动/.test(text)) return "查清去向";
   if (text) return text.slice(0, 5);
   return prefix === "A" ? "直接推进" : "先稳住";
-}
-
-function normalizeChoiceDesc(value, title, prefix) {
-  const text = optionalCleanText(value)
-    .replace(new RegExp(`^${prefix}[.。]\\s*`), "")
-    .replace(title, "")
-    .replace(/^[，,。.!！?？；;\s]+/, "")
-    .trim();
-  if (text.length >= 8) return balanceInlineQuote(clampTextBySentence(text, 18, 1));
-  return prefix === "A" ? "把问题摊开当场处理" : "留出余地再判断";
 }
 
 function balanceInlineQuote(value) {

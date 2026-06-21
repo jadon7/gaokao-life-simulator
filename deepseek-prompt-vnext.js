@@ -491,6 +491,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - relationshipTrack 换具体信号。
 - 不复用 stateHints.recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
 - 不写 stateHints.recentSceneObjects 里的道具。
+- 有 stateHints.choiceBalance 时，A/B 按它分属两端。
 - A/B 只用 label 写具体动作，不写类型名；A 对 outlineCard.riasecAxis[0]，B 对 outlineCard.riasecAxis[1]；两个选项必须排他。
 
 输入数据：
@@ -1128,11 +1129,13 @@ function axisActionText(axis = "") {
   }[axis] || "当场处理";
 }
 
-function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, incidentHint = "", baseCard = null) {
+function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, incidentHint = "", baseCard = null, choiceBalance = "") {
   const compact = baseCard || compactOutlineCard(card, storyCast);
   const incident = String(incidentHint || "").replace(/^本年事故：/, "").trim();
   if (!compact || !incident) return compact;
-  const choiceContrast = Array.isArray(compact.riasecAxis)
+  const choiceContrast = choiceBalance
+    ? "处理家庭关系 / 推进事业压力"
+    : Array.isArray(compact.riasecAxis)
     ? `${axisActionText(compact.riasecAxis[0])} / ${axisActionText(compact.riasecAxis[1])}`
     : compact.choiceContrast;
   return {
@@ -1144,6 +1147,16 @@ function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, inci
     abType: choiceContrast,
     callbacks: [incident]
   };
+}
+
+const familyPressurePattern = /家庭|家里|孩子|父母|伴侣|婚|产检|育儿|家务|分居|养老|择校|同居|领证|婚礼|亲密关系/;
+const careerPressurePattern = /事业|工作|项目|团队|客户|品牌|合伙|招募|创业|岗位|论文|课题|实习|校招|职场|平台|交付|方案/;
+
+function choiceBalanceHint(outlineCard = null, relationshipBeat = "", currentIncident = "") {
+  const familyText = `${outlineCard?.conflict || ""} ${outlineCard?.sideBeat || ""} ${relationshipBeat}`;
+  const careerText = `${outlineCard?.conflict || ""} ${currentIncident || ""}`;
+  if (!familyPressurePattern.test(familyText) || !careerPressurePattern.test(careerText)) return "";
+  return "一边处理家庭/关系，一边推进事业压力";
 }
 
 function compactOutlineCardWithClosing(card, storyCast = defaultStoryCast, closingFrame = "") {
@@ -2008,13 +2021,14 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const visibleEducationState = visibleEducationStateHint(history, year);
   const currentIncident = currentIncidentHint(profile, year, history, compactBaseOutlineCard);
   const closingFrame = Number(year) === 18 ? closingFrameHint(history) : "";
+  const relationshipStage = relationshipStageHint(history, year);
+  const relationshipBeat = relationshipBeatHint(history, year);
+  const choiceBalance = choiceBalanceHint(compactBaseOutlineCard, relationshipBeat, currentIncident);
   const outlineCard = closingFrame
     ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
-    : compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident, compactBaseOutlineCard);
+    : compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident, compactBaseOutlineCard, choiceBalance);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
-  const relationshipStage = relationshipStageHint(history, year);
   const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage);
-  const relationshipBeat = relationshipBeatHint(history, year);
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
@@ -2042,6 +2056,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   if (!closingFrame && currentIncident) stateHints.currentIncident = currentIncident;
   if (!closingFrame && recentIncidents) stateHints.recentIncidents = recentIncidents;
   if (!closingFrame && usedIncidents) stateHints.usedIncidents = usedIncidents;
+  if (!closingFrame && choiceBalance) stateHints.choiceBalance = choiceBalance;
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;
@@ -2069,9 +2084,12 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const storyCast = buildStoryCast(profile);
   const educationState = educationStateHint(history);
   const visibleEducationState = visibleEducationStateHint(history, startYear);
+  const relationshipStage = relationshipStageHint(history, startYear);
+  const relationshipBeat = relationshipBeatHint(history, startYear);
   const firstRawOutlineCard = getOutlineCard(startYear);
   const firstOutlineCard = compactOutlineCardWithEducation(firstRawOutlineCard, storyCast, educationState, startYear);
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
+  const choiceBalance = choiceBalanceHint(firstOutlineCard, relationshipBeat, currentIncident);
   const closingFrame = Number(startYear) === 18 ? closingFrameHint(history) : "";
   const outlineCardsForBatch = outlineCards
     .filter(card => card.year >= startYear && card.year < startYear + count)
@@ -2080,12 +2098,11 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
       const cardClosingFrame = Number(card.year) === 18 ? closingFrameHint(history) : "";
       if (cardClosingFrame) return compactOutlineCardWithClosing(card, storyCast, cardClosingFrame);
       const incident = currentIncidentHint(profile, card.year, history, compactCard);
-      return compactOutlineCardWithIncident(card, storyCast, incident, compactCard);
+      const cardChoiceBalance = choiceBalanceHint(compactCard, relationshipBeatHint(history, card.year), incident);
+      return compactOutlineCardWithIncident(card, storyCast, incident, compactCard, cardChoiceBalance);
     });
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
-  const relationshipStage = relationshipStageHint(history, startYear);
   const compactCast = compactStoryCastForYear(profile, storyCast, startYear, history, relationshipStage);
-  const relationshipBeat = relationshipBeatHint(history, startYear);
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = getRecentCallbacks(history, 4)
     .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
@@ -2114,6 +2131,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   if (!closingFrame && currentIncident) stateHints.currentIncident = currentIncident;
   if (!closingFrame && recentIncidents) stateHints.recentIncidents = recentIncidents;
   if (!closingFrame && usedIncidents) stateHints.usedIncidents = usedIncidents;
+  if (!closingFrame && choiceBalance) stateHints.choiceBalance = choiceBalance;
   if (recentSceneObjects) stateHints.recentSceneObjects = recentSceneObjects;
   if (introducedRoles) stateHints.introducedRoles = introducedRoles;
   if (newRelation) stateHints.newRelation = newRelation;

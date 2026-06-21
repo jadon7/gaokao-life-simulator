@@ -920,6 +920,7 @@
 
     .choice-preview {
       display: flex;
+      flex-direction: column;
       gap: 12px;
       width: 100%;
       flex: 0 0 auto;
@@ -947,13 +948,12 @@
     .choice-pill.right {
       background: rgba(46, 185, 150, 0.1);
       color: #2eb996;
-      align-items: flex-end;
       text-align: right;
     }
 
     .choice-pill b {
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1.35;
       overflow-wrap: anywhere;
     }
@@ -1366,17 +1366,14 @@
       letter-spacing: -0.15px;
       color: rgba(255, 255, 255, 0.92);
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
     .result-chips {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      height: 26px;
-      overflow: hidden;
+      height: auto;
+      overflow: visible;
     }
 
     .result-chips .tag {
@@ -1478,9 +1475,7 @@
       font-weight: 900;
       line-height: 14.38px;
       color: #4d5a70;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
     }
 
     .career-card:nth-child(1) {
@@ -1540,6 +1535,7 @@
       font-weight: 700;
       line-height: 1;
       color: var(--ability-accent, #0f8b8d);
+      white-space: nowrap;
     }
 
     .ability-summary {
@@ -1716,9 +1712,7 @@
       font-size: 16px;
       font-weight: 700;
       line-height: 21.44px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
     }
 
     .result-scene span {
@@ -1782,9 +1776,7 @@
       font-size: 18px;
       font-weight: 700;
       line-height: 21.24px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
     }
 
     .result-chronicle-item p {
@@ -1815,16 +1807,14 @@
     .result-hook {
       width: 100%;
       padding: 10px 14px;
-      border-radius: 999px;
+      border-radius: 18px;
       border: 1px solid rgba(70, 84, 110, 0.11);
       background: rgba(22, 119, 255, 0.11);
       font-size: 13px;
       font-weight: 900;
       line-height: 17.55px;
       color: #1677ff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
     }
 
     /* guides */
@@ -1849,9 +1839,7 @@
       font-weight: 700;
       line-height: 19.5px;
       color: #172033;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
     }
 
     .result-guide-card p {
@@ -7589,7 +7577,7 @@
       const parts = clean.split(/[，,]/).map(value => value.trim()).filter(Boolean);
       const short = parts[0] || clean || `第 ${index + 1} 个名场面`;
       return {
-        title: short.length > 14 ? `${short.slice(0, 14)}…` : short,
+        title: short,
         body: text || short
       };
     }
@@ -8446,11 +8434,7 @@
         .replace(/^你走了\d+年[，,]?/, "")
         .replace(/^从[^，。！？!?；;]{2,24}到[^，。！？!?；;]{2,24}[，,]?/, "")
         .replace(/18年/g, "这些年");
-      if (cleaned.length <= 36 && !/^从/.test(cleaned)) return cleaned;
-      const firstSentence = cleaned.split(/[。！？!?；;]/).find(Boolean) || cleaned;
-      const clipped = firstSentence.slice(0, 36);
-      const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"));
-      return (boundary >= 20 ? clipped.slice(0, boundary) : clipped).replace(/[，。！？!?；;]+$/g, "") || `靠${highLight.slice(0, 8)}混成靠谱大人，手机静音也会心虚`;
+      return cleaned || `靠${highLight.slice(0, 8)}混成靠谱大人，手机静音也会心虚`;
     }
 
     let resultImageModulePromise = null;

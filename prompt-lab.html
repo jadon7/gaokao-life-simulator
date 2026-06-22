@@ -1,0 +1,1265 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>提示词实验台 · 高考人生模拟器</title>
+  <style>
+    :root {
+      --ink: #1c2537;
+      --muted: #5d6878;
+      --line: #e3e8f0;
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f6fa; color: var(--ink); font-size: 14px; }
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: #ffffffee; backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    }
+    header h1 { font-size: 16px; margin: 0 12px 0 0; }
+    header label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    select, input[type="text"] {
+      height: 30px; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; font-size: 13px; background: #fff;
+    }
+    button {
+      height: 30px; border: 0; border-radius: 8px; padding: 0 14px; font-size: 13px; cursor: pointer;
+      background: #1677ff; color: #fff;
+    }
+    button.secondary { background: #eef2f8; color: var(--ink); }
+    button:disabled { opacity: .45; cursor: default; }
+    #status { font-size: 12px; color: #76808f; margin-left: auto; max-width: 420px; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; padding: 16px 20px 60px; max-width: 1440px; margin: 0 auto; }
+    .run-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .run-tab {
+      border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer;
+    }
+    .run-tab.active { border-color: #1677ff; color: #1677ff; font-weight: 700; }
+    .run-tab .st { margin-left: 4px; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+    }
+    .card h3 { margin: 0 0 2px; font-size: 16px; }
+    .meta { font-size: 12px; color: #76808f; }
+    .outline {
+      margin: 8px 0; padding: 8px 10px; background: #f7f9fc; border-radius: 8px; font-size: 12px; color: #5b6577; line-height: 1.6;
+    }
+    .outline b { color: #3a4150; }
+    .note-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; font-size: 12px; }
+    .note-pair > div { background: #fffbe8; border: 1px solid #f0e3ad; border-radius: 8px; padding: 6px 8px; line-height: 1.5; }
+    .note-pair .from { background: #eef6ff; border-color: #cfe3ff; }
+    .scene-body { line-height: 1.65; margin: 8px 0; }
+    .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt {
+      border: 2px solid var(--line); border-radius: 10px; padding: 10px; cursor: pointer; position: relative;
+      transition: border-color .15s, background .15s;
+    }
+    .opt:hover { border-color: #9db8e8; }
+    .opt.picked { border-color: #1677ff; background: #f0f7ff; }
+    .opt .t { font-weight: 700; }
+    .opt .d { font-size: 12px; color: #5b6577; margin: 2px 0 4px; }
+    .opt .cons { font-size: 12px; color: #8a7340; background: #fdf6e3; border-radius: 6px; padding: 3px 6px; margin: 4px 0; }
+    .opt .tag { display: inline-block; font-size: 11px; background: #eef2f8; border-radius: 999px; padding: 1px 8px; color: #5b6577; }
+    .ribar { display: flex; gap: 3px; margin-top: 6px; align-items: flex-end; height: 30px; }
+    .ribar i { width: 22px; border-radius: 3px 3px 0 0; display: block; position: relative; min-height: 2px; }
+    .ribar i::after { content: attr(data-k); position: absolute; bottom: -14px; left: 0; right: 0; text-align: center; font-size: 10px; color: #999; font-style: normal; }
+    .ribar-wrap { display: block; padding-bottom: 14px; }
+    .badge { display: inline-block; font-size: 11px; border-radius: 999px; padding: 2px 8px; margin-right: 4px; font-weight: 700; }
+    .warn { background: #fff1f0; color: #cf1322; }
+    .soft-warn { background: #fff7e6; color: #ad6800; }
+    .ok { background: #f6ffed; color: #389e0d; }
+    .info { background: #eef6ff; color: #1764c0; }
+    .main-type { color: #fff; }
+    .test-toggle { color: var(--muted); display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+    .test-toggle input { margin: 0; }
+    .flag-row { margin-top: 8px; }
+    .flag-row input { width: 100%; height: 28px; border: 1px dashed #d4dbe6; border-radius: 8px; padding: 0 8px; font-size: 12px; }
+    .qa-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+    .card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .card-head h3 { flex: 1; }
+    .timing { flex: none; color: #1764c0; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; padding: 4px 7px; border-radius: 999px; background: #eef5ff; }
+    .raw-debug { margin: 8px 0; border: 1px solid #e4e9f2; border-radius: 8px; background: #fbfcff; }
+    .raw-debug summary { cursor: pointer; padding: 7px 10px; font-size: 12px; font-weight: 800; color: #42526e; }
+    .raw-count { color: #7a8494; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .raw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 10px 10px; }
+    .raw-grid b { display: block; margin-bottom: 4px; font-size: 12px; color: #3a4150; }
+    .raw-grid pre { max-height: 360px; overflow: auto; margin: 0; padding: 8px; border: 1px solid #eef1f6; border-radius: 8px; background: #fff; font-size: 11px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+    aside .panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+    aside .panel h4 { margin: 0 0 10px; font-size: 14px; }
+    .score-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 12px; }
+    .score-row label { width: 56px; }
+    .score-row .track { flex: 1; height: 10px; background: #eef1f6; border-radius: 999px; overflow: hidden; }
+    .score-row .track i { display: block; height: 100%; border-radius: 999px; }
+    .score-row b { width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
+    .code-line { font-size: 20px; font-weight: 800; margin: 8px 0 2px; }
+    .model-pill { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border: 1px solid #dbe1ef; border-radius: 999px; background: #f6f8fc; color: #42526e; font-size: 12px; font-weight: 700; }
+    .model-pill b { color: #16213e; font-variant-numeric: tabular-nums; }
+    .model-select { min-width: 150px; }
+    .compare-select { min-width: 170px; height: 34px; }
+    .dist { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; font-size: 11px; }
+    .dist span { background: #f1f4f9; border-radius: 6px; padding: 2px 6px; }
+    .agg-run { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #eef1f6; }
+    .agg-run.fastest { background: #f6ffed; margin: 0 -8px; padding: 6px 8px; border-radius: 8px; border-bottom-color: transparent; }
+    .agg-run b { font-size: 13px; }
+    .agg-run .title { color: #76808f; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .run-time { color: #1764c0; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .speed-board { display: grid; gap: 6px; margin-top: 8px; font-size: 12px; }
+    .speed-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 6px 8px; border: 1px solid #eef1f6; border-radius: 8px; background: #fafcff; }
+    .speed-row.fastest { border-color: #b7eb8f; background: #f6ffed; }
+    .speed-row .model { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+    .speed-row .avg { color: #1764c0; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .speed-row .count { color: #76808f; font-variant-numeric: tabular-nums; }
+    .qa-list { display: grid; gap: 6px; font-size: 12px; line-height: 1.45; }
+    .qa-list .qa-item { border: 1px solid #eef1f6; border-radius: 8px; padding: 6px 8px; background: #fafcff; }
+    .qa-list b { color: #3a4150; }
+    .timing-list { display: grid; gap: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .timing-list div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed #eef1f6; padding-bottom: 3px; }
+    #resultBox { font-size: 13px; line-height: 1.6; }
+    #resultBox h5 { margin: 10px 0 4px; font-size: 12px; color: #76808f; }
+    #resultBox .rt { font-size: 16px; font-weight: 800; }
+    textarea { width: 100%; min-height: 60px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 12px; resize: vertical; }
+    .sticky-stack { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow-y: auto; }
+    .degraded-tip { background: #fff1f0; color: #cf1322; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin-bottom: 10px; display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>提示词实验台</h1>
+    <label>专业
+      <select id="cfgMajor"></select>
+    </label>
+    <label>期望
+      <select id="cfgHope">
+        <option>稳定且体面</option><option>尽快赚钱</option><option>考研深造</option><option>自由探索</option>
+      </select>
+    </label>
+    <label>省份 <input type="text" id="cfgProvince" value="浙江" style="width:60px" /></label>
+    <label>分数 <input type="text" id="cfgScore" value="588" style="width:54px" /></label>
+    <label>模型
+      <select id="cfgModel" class="model-select"></select>
+    </label>
+    <label>对比
+      <select id="cfgCompareModels" class="compare-select" multiple title="按住 Command 可多选"></select>
+    </label>
+    <label>策略
+      <select id="cfgStrategy">
+        <option value="random">随机</option>
+        <option value="A">全选 A</option>
+        <option value="B">全选 B</option>
+        <option value="avoidES">尽量避开 E/S</option>
+        <option value="manual">手动选择</option>
+      </select>
+    </label>
+    <label>局数
+      <select id="cfgRuns">
+        <option selected>1</option><option>3</option><option>5</option><option>10</option>
+      </select>
+    </label>
+    <label>并发
+      <select id="cfgConcurrency">
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="all">全部</option>
+      </select>
+    </label>
+    <button id="btnRun">开跑（累加）</button>
+    <button id="btnCompare" class="secondary">多模型对比</button>
+    <button id="btnClear" class="secondary">清空</button>
+    <button id="btnExport" class="secondary">复制反馈 JSON</button>
+    <button id="btnCopyRun" class="secondary">复制当前局</button>
+    <label class="test-toggle"><input type="checkbox" id="cfgOnlyIssues" /> 只看问题</label>
+    <span class="model-pill">模型 <b id="modelName">读取中</b></span>
+    <span id="status">就绪</span>
+  </header>
+
+  <main>
+    <section>
+      <div class="run-tabs" id="runTabs"></div>
+      <div id="cards"></div>
+    </section>
+    <aside>
+      <div class="sticky-stack">
+        <div class="degraded-tip" id="degradedTip">⚠ 当前结果不是完整真实请求，请切换到真实后端后再开跑</div>
+        <div class="panel">
+          <h4>多局汇总</h4>
+          <div id="aggRuns" class="meta">还没开始</div>
+          <div class="dist" id="aggPrimary"></div>
+        </div>
+        <div class="panel">
+          <h4>当前局 QA 体检</h4>
+          <div id="qaSummary" class="qa-list">还没开始。</div>
+        </div>
+        <div class="panel">
+          <h4>接口耗时</h4>
+          <div id="timingBox" class="timing-list">暂无请求。</div>
+        </div>
+        <div class="panel">
+          <h4>当前选中局 · RIASEC 证据</h4>
+          <div id="scoreRows"></div>
+          <div class="code-line" id="codeLine">—</div>
+          <div class="meta" id="codeMeta"></div>
+          <div class="meta" id="scoreInsight"></div>
+        </div>
+        <div class="panel">
+          <h4>调试：A/B 可达类型</h4>
+          <div class="dist" id="distA"></div>
+          <div class="dist" id="distB"></div>
+          <div class="dist" id="distWarn" style="margin-top:8px"></div>
+          <div class="meta" id="artDiag" style="margin-top:8px"></div>
+        </div>
+        <div class="panel">
+          <h4>当前局结果页</h4>
+          <div id="resultBox" class="meta">该局跑完后自动生成。</div>
+        </div>
+        <div class="panel">
+          <h4>整体反馈备注</h4>
+          <textarea id="globalNote" placeholder="把你看到的问题写在这里，连同导出 JSON 一起发给 Claude"></textarea>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const TYPE_COLORS = { R: "#315c9a", I: "#6c5ce7", A: "#ff5b23", S: "#0f8b8d", E: "#ed4710", C: "#8bbf16" };
+    const TYPE_LABELS = { R: "实用", I: "研究", A: "艺术", S: "社会", E: "企业", C: "常规" };
+    const MAJORS = [
+          "计算机科学与技术",
+          "数据科学与大数据技术",
+          "信息安全",
+          "电子信息工程",
+          "微电子科学与工程",
+          "电气工程及其自动化",
+          "自动化",
+          "机械设计制造及其自动化",
+          "车辆工程",
+          "新能源科学与工程",
+          "飞行器设计与工程",
+          "生物医学工程",
+          "土木工程",
+          "建筑学",
+          "材料科学与工程",
+          "化学工程与工艺",
+          "临床医学",
+          "口腔医学",
+          "中医学",
+          "药学",
+          "护理学",
+          "法学",
+          "思想政治教育",
+          "小学教育",
+          "汉语言文学",
+          "新闻学",
+          "数学与应用数学",
+          "应用心理学",
+          "金融学",
+          "会计学",
+          "哲学",
+          "逻辑学",
+          "历史学",
+          "考古学",
+          "农学",
+          "动物医学",
+          "视觉传达设计",
+          "音乐学"
+    ];
+    const DEFAULT_MODELS = ["deepseek-v4-flash", "deepseek-v4-pro", "MiniMax-M2.7-highspeed", "mimo-v2.5-pro"];
+    const PROMPT_LAB_DEFAULT_MODEL = "deepseek-v4-flash";
+    const ORDER = ["R", "I", "A", "S", "E", "C"];
+    const BATCH_PLAN = Array.from({ length: 18 }, (_, index) => [index + 1, 1]); // 与主程序一致：第1年 start，之后当前卡双分支预生成下一年。
+    const TOTAL_YEARS = BATCH_PLAN.length;
+    const STATUS_ICON = { pending: "…", running: "⏳", waiting: "✋", result: "📄", done: "✓", error: "✗" };
+    const STORAGE_KEY = "promptLabDraft:v1";
+
+    const state = {
+      outline: [],
+      runs: [],     // { id, status, cards:[{card,pick,flagNote}], result, degraded, error, ms }
+      activeRun: 0,
+      busy: false,
+      backend: { ready: false, model: "", mock: false, realProxy: false, hasModelKey: null, modelOptions: [] }
+    };
+
+    document.querySelector("#cfgMajor").innerHTML = MAJORS.map(m => `<option>${m}</option>`).join("");
+    function setModelOptions(models = DEFAULT_MODELS, current = models[0]) {
+      const options = models.map(model => `<option value="${esc(model)}" ${model === current ? "selected" : ""}>${esc(model)}</option>`).join("");
+      document.querySelector("#cfgModel").innerHTML = options;
+      document.querySelector("#cfgCompareModels").innerHTML = models.map(model => `<option value="${esc(model)}" selected>${esc(model)}</option>`).join("");
+    }
+    setModelOptions(DEFAULT_MODELS);
+    restoreDraft();
+    fetch("docs/18-card-golden-outline.json").then(r => r.json()).then(data => {
+      state.outline = data.acts.flatMap(act => act.cards.map(c => ({ act: act.name, ...c })));
+    }).catch(() => {});
+
+    /* ===== 产品同款计分逻辑（从 index.html 复刻） ===== */
+    function normalizeRiasecScores(value) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+      const scores = {}; let hasValue = false;
+      ORDER.forEach(key => {
+        const numeric = Math.max(0, Number(value[key]) || 0);
+        scores[key] = numeric;
+        if (numeric > 0) hasValue = true;
+      });
+      return hasValue ? scores : null;
+    }
+    function addScore(scores, code, value) { if (code in scores) scores[code] += value; }
+    function scoreHollandText(scores, text, weight = 1) {
+      const source = String(text || "");
+      const keywordMap = {
+        R: ["动手","工具","原型","做出来","修","现场","设备","硬件","工程","落地","实践","实操","搭建","测试","上手","制作","焊","施工","亲自"],
+        I: ["分析","研究","证据","数据","规律","验证","实验","推理","问题","复盘","算法","模型","调查","原因","求证","论文","结构","拆解","观察"],
+        A: ["表达","创意","设计","作品","内容","故事","审美","风格","写","展示","策划","视频","画","讲清楚","创作","灵感","品牌","拍摄"],
+        S: ["帮助","沟通","陪伴","同学","用户","学生","家人","团队","服务","倾听","公益","咨询","关系","理解","照顾","支持","安抚","协作","接住"],
+        E: ["争取","组织","推动","说服","带队","资源","机会","汇报","谈","管理","商业","客户","负责","主动","冲","公开","带人","经营","市场","影响"],
+        C: ["规则","流程","计划","表","清单","稳定","证书","整理","标准","秩序","备份","节点","按步骤","风险","边界","确认","保底","谨慎","止损","守住"]
+      };
+      Object.entries(keywordMap).forEach(([code, words]) => {
+        words.forEach(word => { if (source.includes(word)) addScore(scores, code, weight); });
+      });
+    }
+    function inferChoiceHolland(choice = {}) {
+      const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      const text = [choice.title, choice.desc, choice.tag, choice.label].filter(Boolean).join(" ");
+      scoreHollandText(scores, text, 1.4);
+      const weighted = [
+        ["R", /动手|上手|搭建|实操|制作|现场|施工|亲自|硬扛|落地|修好|焊出来/],
+        ["I", /研究|分析|求证|验证|观察|拆解|复盘|读论文|做模型|先想清楚/],
+        ["A", /创意|表达|设计|作品|风格|写出来|讲出来|做内容|拍出来/],
+        ["S", /沟通|帮助|陪伴|支持|安抚|照顾|协作|接住|带人|一起扛/],
+        ["E", /争取|推动|冲上去|主动拿下|公开表达|带队|谈下来|拉资源|报名|拍板/],
+        ["C", /稳住|保底|按计划|先确认|整理清楚|守住|边界|止损|按流程|谨慎/]
+      ];
+      weighted.forEach(([code, pattern]) => { if (pattern.test(text)) addScore(scores, code, 2.8); });
+      return scores;
+    }
+    function choiceHolland(choice) { return normalizeRiasecScores(choice.riasec) || inferChoiceHolland(choice); }
+    function runScores(run) {
+      const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      run.cards.forEach(item => {
+        if (!item.pick) return;
+        const h = choiceHolland(item.card[item.pick]);
+        ORDER.forEach(k => addScore(scores, k, Number(h[k] || 0)));
+      });
+      return scores;
+    }
+    function visualPercents(scores) {
+      const values = ORDER.map(k => Math.max(0, Number(scores[k] || 0)));
+      const min = Math.min(...values), max = Math.max(...values);
+      if (max <= 0 || max === min) return Object.fromEntries(ORDER.map((k, i) => [k, i === 0 ? 76 : 58]));
+      const ranked = ORDER.map((k, i) => ({ k, v: values[i] })).sort((a, b) => b.v - a.v);
+      const boost = new Map(ranked.map((x, i) => [x.k, [16, 10, 6, 2, -2, -5][i] || 0]));
+      return Object.fromEntries(ORDER.map((k, i) => {
+        const n = (values[i] - min) / (max - min);
+        return [k, Math.min(96, Math.max(36, Math.round(42 + Math.pow(n, 0.7) * 42 + boost.get(k))))];
+      }));
+    }
+    function mainType(h) { return ORDER.slice().sort((a, b) => (h[b] || 0) - (h[a] || 0))[0]; }
+    function runCode(run) {
+      const scores = runScores(run);
+      return ORDER.slice().sort((a, b) => scores[b] - scores[a]).slice(0, 3).join("");
+    }
+    function scoreInsight(scores) {
+      const rank = ORDER.slice().sort((a, b) => scores[b] - scores[a]);
+      const [first, second, third] = rank;
+      if (!scores[first]) return "还没有选择，暂时没有 RIASEC 倾向。";
+      const actionText = {
+        R: "更常用动手、修复、跑通来解决问题",
+        I: "更常先分析、查证、拆解原因",
+        A: "更常用表达、作品、展示或内容包装解决问题",
+        S: "更常先接住人、沟通、协作和安抚",
+        E: "更常主动争取、拍板、公开承担",
+        C: "更常按流程、保底、排计划和守边界"
+      };
+      return `自然解释：这局最明显的是 ${first} ${TYPE_LABELS[first]}型，${actionText[first]}；${second}/${third} 也在影响职业落点。`;
+    }
+
+    /* ===== API ===== */
+    function profile() {
+      const major = document.querySelector("#cfgMajor").value;
+      return {
+        name: "实验员", gender: "不限定",
+        province: document.querySelector("#cfgProvince").value || "未知省份",
+        score: document.querySelector("#cfgScore").value || "未知分数",
+        hope: document.querySelector("#cfgHope").value,
+        keywords: "观察中", major, majorLabel: major, dream: "暂未填写"
+      };
+    }
+    function historyItemPayload(item, idx, pick = item.pick) {
+      const card = item.card;
+      const chosen = card?.[pick];
+      if (!card || !chosen) return null;
+      return {
+        year: card.yearNumber || idx + 1,
+        scene: card.prompt, sceneTitle: card.sceneTitle || card.scene,
+        summary: card.context || "", phase: card.phase || "",
+        mainTrack: card.mainTrack || "", lifeTrack: card.lifeTrack || "",
+        relationshipTrack: card.relationshipTrack || "",
+        callbackSeeds: card.callbacks || [],
+        choice: chosen.tag, choiceText: chosen.label, tag: chosen.tag,
+        consequence: chosen.consequence || "",
+        holland: choiceHolland(chosen)
+      };
+    }
+    function historyPayload(run) {
+      return run.cards.map((item, idx) => item.pick ? historyItemPayload(item, idx) : null).filter(Boolean);
+    }
+    async function api(path, payload, run) {
+      const started = performance.now();
+      const label = path.endsWith("/start") ? "第1年" : path.endsWith("/next") ? `第${payload.year}年` : path.endsWith("/result") ? "结果页" : `第${payload.startYear}-${payload.startYear + payload.count - 1}年`;
+      let ok = false;
+      let data = null;
+      let timing = null;
+      try {
+        const res = await fetch(path, {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-prompt-lab-real": "1", "x-prompt-lab-debug": "1" },
+          body: JSON.stringify(payload)
+        });
+        data = await res.json();
+        ok = res.ok && data.ok;
+        if (!ok) throw new Error(data.error || `HTTP ${res.status}`);
+      } finally {
+        timing = { path, label, ms: Math.round(performance.now() - started), ok, degraded: !!(data?.degraded || data?.result?.degraded) };
+        if (run) {
+          run.timings = Array.isArray(run.timings) ? run.timings : [];
+          run.timings.push(timing);
+        }
+      }
+      if (data && typeof data === "object") {
+        Object.defineProperty(data, "__timing", { value: timing, enumerable: false, configurable: true });
+      }
+      logApiModel(path, payload, data, label);
+      if (data.degraded || data.result?.degraded) {
+        if (run) run.degraded = true;
+        document.querySelector("#degradedTip").style.display = "block";
+      }
+      return data;
+    }
+
+    function rawInputForCard(path, payload, data) {
+      const input = { endpoint: path, httpPayload: payload };
+      if (data?.debug?.request) input.modelRequest = data.debug.request;
+      return input;
+    }
+
+    function rawOutputForCard(data, card, cardIndex) {
+      if (data?.debug?.rawOutput !== undefined) {
+        return { modelRawOutput: data.debug.rawOutput, normalizedCard: card, cardIndex };
+      }
+      return data;
+    }
+
+    function cardRecord(path, payload, data, card, cardIndex = 0) {
+      return {
+        card,
+        pick: null,
+        flagNote: "",
+        loadMs: Number(data?.__timing?.ms || 0),
+        loadLabel: data?.__timing?.label || "",
+        loadDegraded: !!data?.__timing?.degraded,
+        rawInput: rawInputForCard(path, payload, data),
+        rawOutput: rawOutputForCard(data, card, cardIndex)
+      };
+    }
+
+    function prefetchNextBranches(run, currentItem, currentIndex, nextYear) {
+      const baseHistory = historyPayload(run);
+      const branches = {};
+      ["left", "right"].forEach(direction => {
+        const picked = historyItemPayload(currentItem, currentIndex, direction);
+        const path = "/api/game/next";
+        const payload = {
+          model: run.model,
+          profile: profile(),
+          history: picked ? [...baseHistory, picked] : baseHistory,
+          year: nextYear
+        };
+        branches[direction] = api(path, payload, run)
+          .then(data => {
+            if (!data.card) throw new Error(`第 ${nextYear} 年生成失败：接口没有返回卡片`);
+            return { path, payload, data, card: data.card };
+          })
+          .catch(error => ({ error }));
+      });
+      return branches;
+    }
+
+    function logApiModel(path, payload, data, label) {
+      if (!path.startsWith("/api/game/")) return;
+      const model = data?.model || payload?.model || state.backend.model;
+      if (!model) return;
+      const degraded = data?.degraded || data?.result?.degraded;
+      console.info(`[prompt-lab] ${label} ${path} model: ${model}${degraded ? " (degraded)" : ""}`);
+    }
+
+    /* ===== 全自动流水线 ===== */
+    async function startRuns(modelList = [document.querySelector("#cfgModel").value]) {
+      if (state.busy) return;
+      const strategy = document.querySelector("#cfgStrategy").value;
+      const runCount = strategy === "manual" ? 1 : Number(document.querySelector("#cfgRuns").value);
+      const models = modelList.filter(Boolean);
+      const blockReason = realBackendBlockReason(models);
+      if (blockReason) {
+        setStatus(blockReason);
+        document.querySelector("#degradedTip").style.display = "block";
+        syncRunButtons();
+        return;
+      }
+      // 累加：新对局追加到已有局后面，刷新页面才会清空
+      const baseIndex = state.runs.length;
+      const newRuns = models.flatMap(model => Array.from({ length: runCount }, (_, i) => ({
+        id: baseIndex + models.indexOf(model) * runCount + i + 1,
+        model,
+        status: "pending",
+        cards: [],
+        result: null,
+        degraded: false,
+        error: "",
+        startedAt: 0,
+        completedAt: 0,
+        ms: 0,
+        timings: [],
+        strategy
+      })));
+      state.runs.push(...newRuns);
+      state.activeRun = baseIndex;
+      state.busy = true;
+      document.querySelector("#btnRun").disabled = true;
+      document.querySelector("#btnCompare").disabled = true;
+      saveDraft();
+      renderAll();
+      setStatus(`开始 ${newRuns.length} 局 · 并发 ${concurrencyLimit()} · ${models.join(" / ")}`);
+      await runWithConcurrency(newRuns, concurrencyLimit(), run => driveRun(run, strategy));
+      state.busy = false;
+      syncRunButtons();
+      setStatus(`本批 ${newRuns.length} 局完成（${models.join(" / ")}），累计 ${state.runs.length} 局。`);
+      saveDraft();
+      renderAll();
+    }
+
+    function realBackendBlockReason(models = [document.querySelector("#cfgModel").value]) {
+      if (!state.backend.ready) return "⚠ 正在确认后端状态，暂不能开跑";
+      if (state.backend.mock && !state.backend.realProxy) return "⚠ 当前后端是 mock 模式，Prompt Lab 已禁止开跑";
+      if (state.backend.hasModelKey === false) return "⚠ 当前后端没有可用真实模型 Key，Prompt Lab 已禁止开跑";
+      const options = new Map((state.backend.modelOptions || []).map(option => [option.id, option]));
+      const missing = models.filter(model => options.has(model) && options.get(model).configured === false);
+      if (missing.length) return `⚠ 模型未配置真实 Key：${missing.join(" / ")}`;
+      return "";
+    }
+
+    function syncRunButtons() {
+      const runBlocked = Boolean(realBackendBlockReason([document.querySelector("#cfgModel").value]));
+      const compareBlocked = Boolean(realBackendBlockReason(selectedCompareModels()));
+      document.querySelector("#btnRun").disabled = state.busy || runBlocked;
+      document.querySelector("#btnCompare").disabled = state.busy || compareBlocked;
+    }
+
+    function concurrencyLimit() {
+      const value = document.querySelector("#cfgConcurrency")?.value || "1";
+      if (value === "all") return Infinity;
+      return Math.max(1, Number(value) || 1);
+    }
+
+    async function runWithConcurrency(items, limit, worker) {
+      if (!items.length) return;
+      const workers = Array.from({ length: Math.min(items.length, limit) }, async () => {
+        while (items.length) {
+          const item = items.shift();
+          await worker(item);
+        }
+      });
+      await Promise.all(workers);
+    }
+
+    function selectedCompareModels() {
+      const selected = [...document.querySelector("#cfgCompareModels").selectedOptions].map(option => option.value).filter(Boolean);
+      return selected.length ? selected : [document.querySelector("#cfgModel").value];
+    }
+
+    function clearRuns() {
+      if (state.busy) return;
+      state.runs = [];
+      state.activeRun = 0;
+      document.querySelector("#globalNote").value = "";
+      localStorage.removeItem(STORAGE_KEY);
+      document.querySelector("#degradedTip").style.display = "none";
+      setStatus("已清空，可重新开跑");
+      renderAll();
+    }
+
+    async function driveRun(run, strategy) {
+      run.status = "running";
+      run.startedAt = performance.now();
+      run.completedAt = 0;
+      try {
+        updateRunStatus(run, `局${run.id} · ${run.model}：生成第 1 年…`);
+        const startPath = "/api/game/start";
+        const startPayload = { model: run.model, profile: profile(), history: [], year: 1 };
+        const startData = await api(startPath, startPayload, run);
+        if (!startData.card) throw new Error("第 1 年生成失败：接口没有返回卡片");
+        run.cards.push(cardRecord(startPath, startPayload, startData, startData.card));
+        saveDraft();
+        if (state.activeRun === run.id - 1) renderCards();
+
+        while (run.cards.length < TOTAL_YEARS) {
+          const currentIndex = run.cards.length - 1;
+          const currentItem = run.cards[currentIndex];
+          const nextYear = currentIndex + 2;
+          updateRunStatus(run, `局${run.id} · ${run.model}：预生成第 ${nextYear} 年 A/B 分支…`);
+          const branches = prefetchNextBranches(run, currentItem, currentIndex, nextYear);
+          saveDraft();
+          if (state.activeRun === run.id - 1) renderCards();
+          await pickPhase(run, strategy);
+          const selected = await branches[currentItem.pick];
+          if (!selected || selected.error) throw selected?.error || new Error(`第 ${currentIndex + 1} 年还没有选择`);
+          run.cards.push(cardRecord(selected.path, selected.payload, selected.data, selected.card));
+          saveDraft();
+          if (state.activeRun === run.id - 1) renderCards();
+        }
+        await pickPhase(run, strategy);
+        run.status = "result";
+        updateRunStatus(run, `局${run.id} · ${run.model}：生成结果页…`);
+        const data = await api("/api/game/result", { model: run.model, profile: profile(), history: historyPayload(run) }, run);
+        run.result = data.result;
+        run.status = "done";
+        saveDraft();
+      } catch (error) {
+        run.status = "error";
+        run.error = error.message;
+        saveDraft();
+      }
+      run.ms = Math.round(performance.now() - run.startedAt);
+      run.completedAt = Date.now();
+      saveDraft();
+      renderAll();
+    }
+
+    function pickPhase(run, strategy) {
+      if (strategy !== "manual") {
+        run.cards.forEach(item => {
+          if (item.pick) return;
+          if (strategy === "A") item.pick = "left";
+          else if (strategy === "B") item.pick = "right";
+          else if (strategy === "random") item.pick = Math.random() < 0.5 ? "left" : "right";
+          else if (strategy === "avoidES") {
+            const lt = mainType(choiceHolland(item.card.left));
+            const rt = mainType(choiceHolland(item.card.right));
+            const lAvoid = lt === "E" || lt === "S", rAvoid = rt === "E" || rt === "S";
+            item.pick = lAvoid && !rAvoid ? "right" : rAvoid && !lAvoid ? "left" : (Math.random() < 0.5 ? "left" : "right");
+          }
+        });
+        if (state.activeRun === run.id - 1) { renderCards(); renderSide(); }
+        return Promise.resolve();
+      }
+      run.status = "waiting";
+      updateRunStatus(run, `局${run.id}：等待手动选择（已生成 ${run.cards.length} 张）`);
+      renderAll();
+      return new Promise(resolve => {
+        run.waitResolve = () => { run.status = "running"; run.waitResolve = null; resolve(); };
+      });
+    }
+
+    function updateRunStatus(run, text) { setStatus(text); renderTabs(); }
+
+    /* ===== 渲染 ===== */
+    function activeRunData() { return state.runs[state.activeRun] || null; }
+    function renderAll() { renderTabs(); renderCards(); renderSide(); renderAggregate(); renderResult(); }
+    function renderTabs() {
+      document.querySelector("#runTabs").innerHTML = state.runs.map((run, index) => `
+        <button class="run-tab ${index === state.activeRun ? "active" : ""}" data-run="${index}">
+          局${run.id} · ${esc(run.model || state.backend.model || "model")} <span class="st">${STATUS_ICON[run.status] || ""}</span>${run.status === "done" ? ` ${runCode(run)}` : ""}${run.degraded ? " ⚠" : ""}
+        </button>`).join("");
+    }
+    function riBar(h) {
+      const max = Math.max(...ORDER.map(k => h[k] || 0), 1);
+      return `<span class="ribar-wrap"><span class="ribar">${ORDER.map(k =>
+        `<i data-k="${k}" style="height:${Math.max(6, (h[k] || 0) / max * 30)}px;background:${TYPE_COLORS[k]}${(h[k] || 0) > 0 ? "" : "22"}"></i>`
+      ).join("")}</span></span>`;
+    }
+    function textTokens(value) {
+      const text = String(value || "").replace(/[，。！？!?；;：:\s"'“”‘’、（）()《》]/g, "");
+      const tokens = new Set();
+      for (let size = 2; size <= 3; size += 1) {
+        for (let index = 0; index <= text.length - size; index += 1) {
+          const token = text.slice(index, index + size);
+          if (!/[的一是在和了有就把也都而及与或你我他她它这那]/.test(token)) tokens.add(token);
+        }
+      }
+      return tokens;
+    }
+    function textOverlap(left, right) {
+      const a = textTokens(left), b = textTokens(right);
+      if (!a.size || !b.size) return 0;
+      let shared = 0;
+      a.forEach(token => { if (b.has(token)) shared += 1; });
+      return shared / Math.max(1, Math.min(a.size, b.size));
+    }
+    function relationshipStageText(value) {
+      return /(暧昧升温|确定关系|冷战后撤|分手收束|体面告别|新恋情萌芽|订婚结婚|生儿育女)/.test(String(value || ""));
+    }
+    function relationshipMentionText(value) {
+      return /(关系|暧昧|冷淡|冷战|分手|告别|对象|知夏|南枝|晚晴|予宁|初然|以恒|景川|星野|清越|承宇|她(?:约|等|问|回|没|不|主动|沉默|留|发|看|递|笑|说))/.test(String(value || ""));
+    }
+    function characterAnchorIssues(card, index) {
+      const text = [card.context, card.sceneTitle, card.sceneBody || card.prompt, card.lifeTrack, card.relationshipTrack].filter(Boolean).join(" ");
+      const issues = [];
+      if (/林知夏/.test(text)) issues.push("出现裸名“林知夏”，应写成“林老师”或“辅导员林老师”");
+      const firstHalf = text.slice(0, 140);
+      if (index === 0) {
+        const knownNames = ["知夏", "南枝", "晚晴", "予宁", "初然", "以恒", "景川", "星野", "清越", "承宇", "浩然", "子豪", "子轩", "浩轩", "鑫磊", "欣怡", "佳怡", "婷婷", "雨欣", "雪婷"];
+        const richAnchorPattern = /隔壁班|同班|实验搭档|舍友|室友|同学|辅导员|导师|任课|专业课|吃货|篮球|分工表|共享文档|笔记|截止日|上课路上|边走边吃早餐|社团八卦|小组群|靠窗位|最爱拉你组队/;
+        knownNames.forEach(name => {
+          let cursor = firstHalf.indexOf(name);
+          while (cursor >= 0) {
+            const windowText = firstHalf.slice(Math.max(0, cursor - 22), Math.min(firstHalf.length, cursor + name.length + 12));
+            if (!richAnchorPattern.test(windowText)) {
+              issues.push(`${name}首次出现信息量不足，应带身份/行为特征，例如“吃货舍友${name}”`);
+              break;
+            }
+            cursor = firstHalf.indexOf(name, cursor + name.length);
+          }
+        });
+      }
+      return issues;
+    }
+    function openingMajorIssues(card, index) {
+      if (index !== 0) return [];
+      const text = [card.sceneTitle, card.sceneBody || card.prompt].filter(Boolean).join(" ");
+      const major = String(profile().majorLabel || profile().major || "");
+      const rules = [
+        [/计算机|算法|软件|数据|人工智能|AI|网络|信息安全|数学|统计/, /机房|代码|算法|模型|数据|仓库|项目|原型|评分标准/],
+        [/医学|临床|护理|口腔|药|生物/, /医学|临床|病人|解剖|实验室|白大褂|教材|分组实践|学习计划|查资料/],
+        [/法|法律|法学/, /法条|案例|庭辩|证据|原告|被告|法学|模拟/],
+        [/金融|财会|经济|管理|商/, /路演|预算|报表|赞助|商学院|社团|项目|客户|资金/],
+        [/师范|教育|心理|社会/, /试讲|课堂|学生|听众|讲义|知识点|打分|访谈|咨询/],
+        [/传媒|媒体|新闻|广告|传播|影视|编导|中文|外语|语言|设计|艺术|动画|音乐|表演|播音|舞蹈|戏剧/, /作品|创作|标题|封面|镜头|脚本|设计|风格|表达/],
+        [/电子|通信|电气|自动化|机械|车辆|制造|机器|能源|材料|化工|环境|土木|建筑/, /实验|设备|仪器|说明书|报警|焊|调试|工程|材料|工地|图纸/]
+      ];
+      const rule = rules.find(([majorPattern]) => majorPattern.test(major));
+      if (!rule) return [];
+      const [, keywordPattern] = rule;
+      const issues = [];
+      if (!keywordPattern.test(text)) issues.push(`第一题没有明显联动专业“${major}”，像通用开场`);
+      if (!/^[\s\S]{0,180}$/.test(text)) issues.push("第一题信息偏长，容易把专业场景和人物介绍塞满");
+      return issues;
+    }
+    function expectedAxis(card) {
+      const outline = state.outline.find(o => Number(o.year) === Number(card.yearNumber));
+      return Array.isArray(outline?.riasecAxis) ? outline.riasecAxis : [];
+    }
+    function cardIssues(item, index, run = activeRunData()) {
+      const card = item.card;
+      const left = card.left || {};
+      const right = card.right || {};
+      const lType = mainType(choiceHolland(left));
+      const rType = mainType(choiceHolland(right));
+      const issues = [];
+      const add = (level, text) => issues.push({ level, text });
+      characterAnchorIssues(card, index).forEach(text => add("warn", text));
+      openingMajorIssues(card, index).forEach(text => add("warn", text));
+      if (lType === rType) add("warn", `A/B 主类型相同：${lType}`);
+      const narrow = ["E", "S", "C"];
+      if (narrow.includes(lType) && narrow.includes(rType)) add("soft", "双选项都在 E/S/C，容易把人格出口压窄");
+      if (!left.riasec) add("warn", "A 缺 riasec，前端只能文本推断");
+      if (!right.riasec) add("warn", "B 缺 riasec，前端只能文本推断");
+      const axis = expectedAxis(card);
+      if (axis.length >= 2) {
+        if (lType !== axis[0]) add("warn", `A 主类型偏离题纲：应 ${axis[0]}，现 ${lType}`);
+        if (rType !== axis[1]) add("warn", `B 主类型偏离题纲：应 ${axis[1]}，现 ${rType}`);
+      }
+      if (!String(left.consequence || "").trim()) add("warn", "A 缺 consequence，下一题便利贴断链");
+      if (!String(right.consequence || "").trim()) add("warn", "B 缺 consequence，下一题便利贴断链");
+      if (String(left.consequence || "").length > 36) add("soft", "A consequence 偏长，主程序卡面可能显拥挤");
+      if (String(right.consequence || "").length > 36) add("soft", "B consequence 偏长，主程序卡面可能显拥挤");
+      const summary = String(card.context || "");
+      if (index > 0) {
+        const prev = run?.cards?.[index - 1];
+        const prevCons = prev?.pick ? prev.card[prev.pick]?.consequence : "";
+        if (!summary.trim()) add("warn", "便利贴 summary 为空");
+        if (/接[住着下]?或错失|错失或接|错过或接|或错失|或错过|要么|无论|分叉|两条路|取决于|A或B|A\/B/.test(summary)) add("warn", "summary 像在同时保留 A/B 两种结果");
+        if (prevCons && textOverlap(summary.slice(0, 28), prevCons) < 0.08) add("warn", "summary 开头没有明显继承上一张所选 consequence");
+      }
+      if (relationshipMentionText(summary) && !relationshipStageText(summary)) add("warn", "summary 提到关系但没有明确阶段");
+      if (card.relationshipTrack && !relationshipStageText(card.relationshipTrack)) add("warn", "relationshipTrack 没有明确阶段");
+      if (String(card.sceneTitle || "").length > 10) add("soft", "sceneTitle 超 10 字，主程序卡面标题可能换行");
+      const repeated = run?.cards?.slice(0, index).some(prev => {
+        const prevText = [prev.card.sceneTitle, prev.card.sceneBody || prev.card.prompt].filter(Boolean).join("");
+        const nowText = [card.sceneTitle, card.sceneBody || card.prompt].filter(Boolean).join("");
+        return prevText && nowText && (prev.card.sceneTitle === card.sceneTitle || textOverlap(prevText, nowText) >= 0.55);
+      });
+      if (repeated) add("warn", "事件疑似复用前文");
+      return issues;
+    }
+    function issueBadges(issues) {
+      if (!issues.length) return `<span class="badge ok">QA 通过</span>`;
+      return issues.map(issue => `<span class="badge ${issue.level === "warn" ? "warn" : "soft-warn"}">${esc(issue.text)}</span>`).join("");
+    }
+    function optHTML(item, side, index) {
+      const choice = item.card[side === "A" ? "left" : "right"];
+      const h = choiceHolland(choice);
+      const mt = mainType(h);
+      const picked = item.pick === (side === "A" ? "left" : "right");
+      const label = choice.label || [choice.title, choice.desc].filter(Boolean).join("，") || choice.title || "";
+      return `
+        <div class="opt ${picked ? "picked" : ""}" data-index="${index}" data-side="${side === "A" ? "left" : "right"}">
+          <span class="badge main-type" style="background:${TYPE_COLORS[mt]}">${side} 主类型 ${mt} ${TYPE_LABELS[mt]}</span>
+          <div class="t">${esc(label)}</div>
+          <div class="cons">后果接力：${esc(choice.consequence || "（缺 consequence）")}</div>
+          <span class="tag">${esc(choice.tag || "")}</span>
+          ${riBar(h)}
+          ${choice.riasec ? "" : `<span class="badge warn">模型没给 riasec，走文本推断</span>`}
+        </div>`;
+    }
+    function cardChecks(item) {
+      const l = mainType(choiceHolland(item.card.left));
+      const r = mainType(choiceHolland(item.card.right));
+      const out = [];
+      if (l === r) out.push(`<span class="badge warn">A/B 主类型相同（${l}）</span>`);
+      const narrow = ["E", "S", "C"];
+      if (narrow.includes(l) && narrow.includes(r)) out.push(`<span class="badge soft-warn">窄轴：双选项都在 E/S/C</span>`);
+      else out.push(`<span class="badge ok">触达 ${[l, r].filter(t => !narrow.includes(t)).join("/")}</span>`);
+      return out.join("");
+    }
+
+    function rawDebugHTML(item) {
+      const input = item.rawInput || "这张卡生成时还没有记录原始输入，请重新开跑。";
+      const output = item.rawOutput || item.card || "这张卡生成时还没有记录原始输出，请重新开跑。";
+      const inputMeta = rawCharMeta(input);
+      const outputMeta = rawCharMeta(output);
+      return `
+        <details class="raw-debug">
+          <summary>查看原始输入 / 输出 <span class="raw-count">输入 ${formatCount(inputMeta.count)} · 输出 ${formatCount(outputMeta.count)}</span></summary>
+          <div class="raw-grid">
+            <div><b>原始输入 <span class="raw-count">${inputMeta.label} ${formatCount(inputMeta.count)}</span></b><pre>${esc(formatRaw(input))}</pre></div>
+            <div><b>原始输出 <span class="raw-count">${outputMeta.label} ${formatCount(outputMeta.count)}</span></b><pre>${esc(formatRaw(output))}</pre></div>
+          </div>
+        </details>`;
+    }
+
+    function rawCharMeta(value) {
+      if (value && typeof value === "object" && value.modelRequest) {
+        return { label: "模型请求", count: JSON.stringify(value.modelRequest).length };
+      }
+      if (value && typeof value === "object" && value.modelRawOutput !== undefined) {
+        return { label: "模型输出", count: String(value.modelRawOutput || "").length };
+      }
+      return { label: "展示文本", count: formatRaw(value).length };
+    }
+
+    function formatCount(count) {
+      return `${Number(count || 0).toLocaleString("zh-CN")} 字符`;
+    }
+
+    function formatDuration(ms) {
+      const value = Number(ms || 0);
+      if (!value) return "";
+      return value >= 1000 ? `${(value / 1000).toFixed(1)}s` : `${Math.round(value)}ms`;
+    }
+
+    function cardLoadTiming(item, card, run) {
+      if (Number(item.loadMs || 0) > 0) {
+        return { ms: Number(item.loadMs), degraded: !!item.loadDegraded };
+      }
+      return (run.timings || []).find(t => t.label === `第${card.yearNumber}年` || (Number(card.yearNumber) === 1 && t.label === "第1年"));
+    }
+
+    function cardLoadTimingText(item, card, run) {
+      const timing = cardLoadTiming(item, card, run);
+      const duration = formatDuration(timing?.ms);
+      return duration ? `加载 ${duration}${timing.degraded ? " · mock" : ""}` : "";
+    }
+
+    function formatRaw(value) {
+      if (value == null || value === "") return "（空）";
+      if (typeof value === "string") return value;
+      return JSON.stringify(value, null, 2);
+    }
+
+    function renderCards() {
+      const run = activeRunData();
+      const wrap = document.querySelector("#cards");
+      if (!run) { wrap.innerHTML = `<div class="meta">点「开跑」开始。</div>`; return; }
+      if (run.status === "error") { wrap.innerHTML = `<div class="card"><b style="color:#cf1322">局${run.id} 失败：</b>${esc(run.error)}</div>`; return; }
+      const onlyIssues = document.querySelector("#cfgOnlyIssues").checked;
+      const html = run.cards.map((item, index) => {
+        const card = item.card;
+        const outline = state.outline.find(o => Number(o.year) === Number(card.yearNumber));
+        const prev = index > 0 ? run.cards[index - 1] : null;
+        const prevCons = prev?.pick ? prev.card[prev.pick]?.consequence : "";
+        const issues = cardIssues(item, index, run);
+        if (onlyIssues && !issues.length && !item.flagNote) return "";
+        const timingText = cardLoadTimingText(item, card, run);
+        return `
+        <div class="card">
+          <div class="card-head">
+            <h3>第 ${card.yearNumber} 年 · ${esc(card.sceneTitle || "")} <span class="meta">${esc(card.phase || "")} / ${esc(card.mainTrack || "")}</span></h3>
+            ${timingText ? `<span class="timing">${timingText}</span>` : ""}
+          </div>
+          ${rawDebugHTML(item)}
+          <div class="qa-row">${cardChecks(item)}${issueBadges(issues)}</div>
+          ${outline ? `<div class="outline"><b>题纲意图</b>：${esc(outline.conflict || "")}<br/><b>abType</b>：${esc(outline.abType || "—")} ｜ <b>主线</b>：${outline.mainTrack} ｜ <b>回收</b>：${(outline.callbacks || []).join("、")}</div>` : ""}
+          ${index > 0 ? `
+          <div class="note-pair">
+            <div class="from"><b>上一张所选 consequence</b><br/>${esc(prevCons || "（上一张未选）")}</div>
+            <div><b>本张便利贴 summary</b><br/>${esc(card.context || "（空）")}</div>
+          </div>` : ""}
+          <div class="scene-body">${esc(card.sceneBody || card.prompt || "")}</div>
+          <div class="opts">${optHTML(item, "A", index)}${optHTML(item, "B", index)}</div>
+          <div class="flag-row"><input type="text" placeholder="这张卡有什么问题？（会包含在导出反馈里）" value="${esc(item.flagNote)}" data-flag="${index}" /></div>
+        </div>`;
+      }).join("");
+      wrap.innerHTML = html || (onlyIssues && run.cards.length ? `<div class="card"><span class="badge ok">当前筛选下没有问题卡</span></div>` : `<div class="meta">局${run.id} 生成中…</div>`);
+    }
+    function renderSide() {
+      const run = activeRunData();
+      if (!run) {
+        document.querySelector("#scoreRows").innerHTML = "";
+        document.querySelector("#codeLine").textContent = "—";
+        document.querySelector("#codeMeta").textContent = "";
+        document.querySelector("#scoreInsight").textContent = "";
+        document.querySelector("#distA").innerHTML = "";
+        document.querySelector("#distB").innerHTML = "";
+        document.querySelector("#distWarn").innerHTML = "";
+        document.querySelector("#artDiag").innerHTML = "";
+        document.querySelector("#qaSummary").textContent = "还没开始。";
+        document.querySelector("#timingBox").textContent = "暂无请求。";
+        return;
+      }
+      const scores = runScores(run);
+      const total = Math.max(1, ORDER.reduce((s, k) => s + scores[k], 0));
+      const vis = visualPercents(scores);
+      document.querySelector("#scoreRows").innerHTML = ORDER.map(k => {
+        const rawPct = Math.round(scores[k] / total * 100);
+        return `<div class="score-row">
+          <label style="color:${TYPE_COLORS[k]}">${k} ${TYPE_LABELS[k]}</label>
+          <span class="track"><i style="width:${rawPct}%;background:${TYPE_COLORS[k]}"></i></span>
+          <b>${scores[k].toFixed(1)} / ${rawPct}%</b>
+          <b style="color:#aab">调试视觉${vis[k]}%</b>
+        </div>`;
+      }).join("");
+      const rank = ORDER.slice().sort((a, b) => scores[b] - scores[a]);
+      const picked = run.cards.filter(i => i.pick).length;
+      document.querySelector("#codeLine").textContent = picked ? `${rank.slice(0, 3).join("")} · 主类型 ${rank[0]} ${TYPE_LABELS[rank[0]]}型` : "—";
+      document.querySelector("#codeMeta").textContent = `当前选中局：局${run.id} · 模型 ${run.model || state.backend.model || "未知"} · 已选 ${picked}/${run.cards.length} 张${run.ms ? ` · 耗时 ${(run.ms / 1000).toFixed(1)}s` : ""}`;
+      document.querySelector("#scoreInsight").textContent = scoreInsight(scores);
+      renderQaSummary(run);
+      renderTimingBox(run);
+      if (!run.cards.length) { document.querySelector("#distA").innerHTML = ""; document.querySelector("#distB").innerHTML = ""; document.querySelector("#distWarn").innerHTML = ""; document.querySelector("#artDiag").innerHTML = ""; return; }
+      const distOf = side => {
+        const counter = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+        run.cards.forEach(i => { counter[mainType(choiceHolland(i.card[side]))] += 1; });
+        return counter;
+      };
+      const da = distOf("left"), db = distOf("right");
+      document.querySelector("#distA").innerHTML = `<span><b>A 侧</b></span>` + ORDER.map(k => `<span style="color:${TYPE_COLORS[k]}">${k}:${da[k]}</span>`).join("");
+      document.querySelector("#distB").innerHTML = `<span><b>B 侧</b></span>` + ORDER.map(k => `<span style="color:${TYPE_COLORS[k]}">${k}:${db[k]}</span>`).join("");
+      const reachable = new Set();
+      run.cards.forEach(i => { reachable.add(mainType(choiceHolland(i.card.left))); reachable.add(mainType(choiceHolland(i.card.right))); });
+      const missing = ORDER.filter(k => !reachable.has(k));
+      document.querySelector("#distWarn").innerHTML = missing.length
+        ? `<span class="badge warn">本局无论怎么选都拿不到主类型：${missing.join("、")}</span>`
+        : `<span class="badge ok">六类型都有机会成为主类型</span>`;
+      const artOptionCount = run.cards.reduce((sum, item) => {
+        return sum + (mainType(choiceHolland(item.card.left)) === "A" ? 1 : 0) + (mainType(choiceHolland(item.card.right)) === "A" ? 1 : 0);
+      }, 0);
+      const artCardCount = run.cards.filter(item => mainType(choiceHolland(item.card.left)) === "A" || mainType(choiceHolland(item.card.right)) === "A").length;
+      const artPicked = run.cards.filter(item => item.pick && mainType(choiceHolland(item.card[item.pick])) === "A").length;
+      document.querySelector("#artDiag").textContent = `A 艺术机会：${artOptionCount}/${run.cards.length * 2} 个选项，覆盖 ${artCardCount}/${run.cards.length} 张；当前已选命中 ${artPicked} 次，若随机选期望约 ${(artOptionCount / 2).toFixed(1)} 次。`;
+    }
+    function qaRows(run) {
+      return run.cards.map((item, index) => ({ item, index, issues: cardIssues(item, index, run) })).filter(row => row.issues.length || row.item.flagNote);
+    }
+    function renderQaSummary(run) {
+      const rows = qaRows(run);
+      const box = document.querySelector("#qaSummary");
+      if (!run.cards.length) { box.textContent = "生成后会自动显示问题卡。"; return; }
+      if (!rows.length) { box.innerHTML = `<div class="qa-item"><span class="badge ok">当前 ${run.cards.length} 张未发现自动体检问题</span></div>`; return; }
+      box.innerHTML = rows.map(row => `
+        <div class="qa-item">
+          <b>第 ${row.item.card.yearNumber} 年</b>
+          ${row.issues.map(issue => `<span class="badge ${issue.level === "warn" ? "warn" : "soft-warn"}">${esc(issue.text)}</span>`).join("")}
+          ${row.item.flagNote ? `<div class="meta">人工备注：${esc(row.item.flagNote)}</div>` : ""}
+        </div>
+      `).join("");
+    }
+    function renderTimingBox(run) {
+      const timings = Array.isArray(run.timings) ? run.timings : [];
+      const box = document.querySelector("#timingBox");
+      if (!timings.length) { box.textContent = "暂无请求。"; return; }
+      const total = timings.reduce((sum, item) => sum + Number(item.ms || 0), 0);
+      const slowest = timings.slice().sort((a, b) => Number(b.ms || 0) - Number(a.ms || 0))[0];
+      box.innerHTML = `
+        <div><b>总耗时</b><span>${(total / 1000).toFixed(1)}s</span></div>
+        <div><b>最慢</b><span>${esc(slowest?.label || "—")} · ${((slowest?.ms || 0) / 1000).toFixed(1)}s</span></div>
+        ${timings.slice(-8).map(item => `<div><span>${esc(item.label)}${item.degraded ? " · mock" : ""}</span><span>${(Number(item.ms || 0) / 1000).toFixed(1)}s</span></div>`).join("")}
+      `;
+    }
+    function renderAggregate() {
+      const done = state.runs.filter(r => r.status === "done");
+      if (!state.runs.length) { document.querySelector("#aggRuns").textContent = "还没开始"; document.querySelector("#aggPrimary").innerHTML = ""; return; }
+      const strategyLabels = { A: "全A", B: "全B", random: "随机", avoidES: "避ES", manual: "手动" };
+      const speedRows = modelSpeedRows(done);
+      const fastestModel = speedRows[0]?.model || "";
+      document.querySelector("#aggRuns").innerHTML = state.runs.map(run => {
+        const code = run.cards.length ? runCode(run) : "—";
+        const runSeconds = run.ms ? `${(run.ms / 1000).toFixed(1)}s` : "—";
+        const isFastest = run.status === "done" && run.model === fastestModel;
+        return `<div class="agg-run ${isFastest ? "fastest" : ""}">
+          <b>局${run.id}</b> <span class="meta">${esc(run.model || "")} · ${strategyLabels[run.strategy] || ""}</span> ${STATUS_ICON[run.status]}
+          <span style="color:${TYPE_COLORS[code[0]] || "#999"};font-weight:700">${code}</span>
+          <span class="run-time">${runSeconds}</span>
+          <span class="title">${esc(run.result?.title || run.error || "")}</span>${run.degraded ? "⚠" : ""}
+        </div>`;
+      }).join("");
+      const counter = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      done.forEach(run => { counter[runCode(run)[0]] += 1; });
+      document.querySelector("#aggPrimary").innerHTML = done.length
+        ? `<span><b>多局主类型频次</b></span>` + ORDER.map(k => `<span style="color:${TYPE_COLORS[k]}">${k}:${counter[k]}</span>`).join("") + renderSpeedBoard(speedRows)
+        : "";
+    }
+    function modelSpeedRows(doneRuns) {
+      const grouped = new Map();
+      doneRuns.filter(run => run.ms > 0).forEach(run => {
+        const key = run.model || "未知模型";
+        const item = grouped.get(key) || { model: key, count: 0, totalMs: 0, fastestMs: Infinity };
+        item.count += 1;
+        item.totalMs += run.ms;
+        item.fastestMs = Math.min(item.fastestMs, run.ms);
+        grouped.set(key, item);
+      });
+      return [...grouped.values()].map(item => ({
+        ...item,
+        avgMs: Math.round(item.totalMs / Math.max(1, item.count))
+      })).sort((a, b) => a.avgMs - b.avgMs);
+    }
+    function renderSpeedBoard(rows) {
+      if (!rows.length) return "";
+      const fastest = rows[0].model;
+      return `<div class="speed-board">
+        <span><b>模型耗时排行</b></span>
+        ${rows.map(row => `<div class="speed-row ${row.model === fastest ? "fastest" : ""}">
+          <span class="model">${row.model === fastest ? "最快 · " : ""}${esc(row.model)}</span>
+          <span class="avg">均 ${(row.avgMs / 1000).toFixed(1)}s</span>
+          <span class="count">${row.count} 局</span>
+        </div>`).join("")}
+      </div>`;
+    }
+    function renderResult() {
+      const run = activeRunData();
+      const box = document.querySelector("#resultBox");
+      const r = run?.result;
+      if (!r) { box.textContent = "该局跑完后自动生成。"; return; }
+      const parts = String(r.title || "").split(/[，,]/).filter(Boolean);
+      const titleCheck = parts.length >= 3
+        ? `<span class="badge ok">三段式</span>`
+        : `<span class="badge warn">title 少于三段（${parts.length} 段）</span>`;
+      const yearning = r.innerYearning || {};
+      box.innerHTML = `
+        <div class="rt">${esc(r.title)}</div>${titleCheck}
+        <h5>status42</h5>${esc(r.status42 || "")}
+        <h5>innerYearning</h5>${esc(yearning.keyword || "")}｜${esc(yearning.core || "")}<br/>${esc(yearning.evidence || "")}<br/>${esc(yearning.sacrifice || "")}<br/>${esc(yearning.temperament || "")}
+        <h5>careerPossibilities</h5>${(r.careerPossibilities || []).map(c => `${c.percent}% ${esc(c.label)}`).join(" ｜ ")}
+        <h5>majorCareerNote</h5>${esc(r.majorCareerNote || "")}
+        <h5>famousScenes</h5>${(r.famousScenes || []).map(s => `<b>${esc(s.title)}</b>：${esc(s.body)}`).join("<br/>")}
+        <h5>timelineBlocks</h5>${(r.timelineBlocks || []).map(s => `<b>${esc(s.title)}</b>：${esc(s.body)}`).join("<br/>")}
+        <h5>choiceHabit / mentalPrep / letter18</h5>
+        ${[r.choiceHabit, r.mentalPrep, r.letter18].filter(Boolean).map(s => `<b>${esc(s.title)}</b>：${esc(s.body)}`).join("<br/>")}
+        <h5>shareHooks</h5>${(r.shareHooks || []).map(esc).join("<br/>")}`;
+    }
+
+    /* ===== 交互 ===== */
+    document.querySelector("#runTabs").addEventListener("click", event => {
+      const tab = event.target.closest(".run-tab");
+      if (!tab) return;
+      state.activeRun = Number(tab.dataset.run);
+      saveDraft();
+      renderAll();
+    });
+    document.querySelector("#cards").addEventListener("click", event => {
+      const opt = event.target.closest(".opt");
+      if (!opt) return;
+      const run = activeRunData();
+      if (!run) return;
+      const item = run.cards[Number(opt.dataset.index)];
+      if (!item) return;
+      item.pick = opt.dataset.side;
+      saveDraft();
+      renderCards(); renderSide(); renderTabs();
+      if (run.waitResolve && run.cards.every(i => i.pick)) run.waitResolve();
+    });
+    document.querySelector("#cards").addEventListener("input", event => {
+      const flag = event.target.closest("[data-flag]");
+      const run = activeRunData();
+      if (flag && run) {
+        run.cards[Number(flag.dataset.flag)].flagNote = flag.value;
+        saveDraft();
+      }
+    });
+    document.querySelector("#globalNote").addEventListener("input", saveDraft);
+    document.querySelector("#cfgOnlyIssues").addEventListener("change", renderCards);
+    document.querySelector("#cfgModel").addEventListener("change", () => {
+      document.querySelector("#modelName").textContent = document.querySelector("#cfgModel").value || state.backend.model || "未知";
+      syncRunButtons();
+    });
+    document.querySelector("#cfgCompareModels").addEventListener("change", syncRunButtons);
+    document.querySelector("#btnRun").addEventListener("click", () => startRuns());
+    document.querySelector("#btnCompare").addEventListener("click", () => startRuns(selectedCompareModels()));
+    document.querySelector("#btnClear").addEventListener("click", clearRuns);
+    document.querySelector("#btnCopyRun").addEventListener("click", async () => {
+      const run = activeRunData();
+      if (!run) { setStatus("当前没有可复制的局"); return; }
+      try {
+        await copyText(JSON.stringify(runFeedbackPayload(run), null, 2));
+        setStatus(`局${run.id} 证据包已复制`);
+      } catch (error) {
+        setStatus(`复制失败：${error.message || error}`);
+      }
+    });
+    document.querySelector("#btnExport").addEventListener("click", async () => {
+      const payload = {
+        config: { ...profile(), strategy: document.querySelector("#cfgStrategy").value, selectedModel: document.querySelector("#cfgModel").value, compareModels: selectedCompareModels(), runs: state.runs.length, backendModel: state.backend.model, backendMock: state.backend.mock },
+        globalNote: document.querySelector("#globalNote").value,
+        speedRank: modelSpeedRows(state.runs.filter(run => run.status === "done")),
+        aggregate: state.runs.map(run => ({ run: run.id, model: run.model, strategy: run.strategy, status: run.status, code: run.cards.length ? runCode(run) : "", degraded: run.degraded, title: run.result?.title || "", ms: run.ms, completedAt: run.completedAt || null, issueCards: qaRows(run).length })),
+        runs: state.runs.map(runFeedbackPayload)
+      };
+      const text = JSON.stringify(payload, null, 2);
+      try {
+        await copyText(text);
+        setStatus(`反馈 JSON 已复制到剪贴板（${state.runs.length} 局）`);
+      } catch (error) {
+        setStatus(`复制失败：${error.message || error}`);
+      }
+    });
+
+    function runFeedbackPayload(run) {
+      return {
+        run: run.id,
+        model: run.model,
+        strategy: run.strategy,
+        status: run.status,
+        degraded: run.degraded,
+        ms: run.ms,
+        completedAt: run.completedAt || null,
+        timings: run.timings || [],
+        scores: runScores(run),
+        qa: qaRows(run).map(row => ({
+          year: row.item.card.yearNumber,
+          sceneTitle: row.item.card.sceneTitle,
+          issues: row.issues.map(issue => issue.text),
+          flagNote: row.item.flagNote || ""
+        })),
+        cards: run.cards.map((i, index) => ({
+          model: run.model,
+          year: i.card.yearNumber,
+          sceneTitle: i.card.sceneTitle,
+          sceneBody: i.card.sceneBody,
+          summary: i.card.context,
+          relationshipTrack: i.card.relationshipTrack,
+          lifeTrack: i.card.lifeTrack,
+          pick: i.pick,
+          flagNote: i.flagNote,
+          loadMs: i.loadMs || null,
+          loadLabel: i.loadLabel || "",
+          loadDegraded: !!i.loadDegraded,
+          rawInput: i.rawInput || null,
+          rawOutput: i.rawOutput || null,
+          issues: cardIssues(i, index, run).map(issue => issue.text),
+          a: pickFields(i.card.left),
+          b: pickFields(i.card.right)
+        })),
+        result: run.result
+      };
+    }
+    function pickFields(c) { return { title: c.title, desc: c.desc, tag: c.tag, consequence: c.consequence, riasec: c.riasec, mainType: mainType(choiceHolland(c)) }; }
+
+    async function copyText(text) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!ok) throw new Error("浏览器拒绝写入剪贴板");
+    }
+
+    function saveDraft() {
+      try {
+        const runs = state.runs.map(run => ({
+          ...run,
+          waitResolve: undefined,
+          startedAt: 0,
+          status: ["running", "waiting", "result"].includes(run.status) ? "done" : run.status
+        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          activeRun: state.activeRun,
+          globalNote: document.querySelector("#globalNote")?.value || "",
+          runs
+        }));
+      } catch (error) {
+        console.warn("Save draft failed:", error);
+      }
+    }
+
+    function restoreDraft() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        if (!Array.isArray(draft.runs)) return;
+        state.runs = draft.runs.map(run => ({
+          ...run,
+          waitResolve: null,
+          cards: Array.isArray(run.cards) ? run.cards : [],
+          status: run.status || "done"
+        }));
+        state.activeRun = Math.min(Math.max(Number(draft.activeRun) || 0, 0), Math.max(0, state.runs.length - 1));
+        if (typeof draft.globalNote === "string") document.querySelector("#globalNote").value = draft.globalNote;
+      } catch (error) {
+        console.warn("Restore draft failed:", error);
+      }
+    }
+
+    function setStatus(text) { document.querySelector("#status").textContent = text; }
+    function esc(value) { return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+
+    fetch("/api/health").then(r => r.json()).then(d => {
+      state.backend = { ready: true, model: d.model || "", mock: !!d.mock, realProxy: !!d.promptLabRealProxy, hasModelKey: d.hasModelKey, modelOptions: d.modelOptions || [] };
+      const models = Array.isArray(d.availableModels) && d.availableModels.length ? d.availableModels : DEFAULT_MODELS;
+      setModelOptions(models, models.includes(PROMPT_LAB_DEFAULT_MODEL) ? PROMPT_LAB_DEFAULT_MODEL : (d.model || DEFAULT_MODELS[0]));
+      document.querySelector("#modelName").textContent = document.querySelector("#cfgModel").value || d.model || "未知";
+      const blockReason = realBackendBlockReason();
+      document.querySelector("#degradedTip").style.display = blockReason ? "block" : "none";
+      const proxyNote = state.backend.realProxy ? "本地页面 · 线上真实请求" : "后端就绪";
+      setStatus(blockReason || `${proxyNote} · Prompt Lab 默认 ${document.querySelector("#cfgModel").value || d.model || ""}`);
+      syncRunButtons();
+    }).catch(() => {
+      state.backend = { ready: false, model: "", mock: false, realProxy: false, hasModelKey: null, modelOptions: [] };
+      document.querySelector("#modelName").textContent = "未连接";
+      setStatus("⚠ 后端未启动？请先 npm start");
+      document.querySelector("#degradedTip").style.display = "block";
+      syncRunButtons();
+    });
+    renderAll();
+    syncRunButtons();
+
+    // ?auto=A|B|random|avoidES&runs=N 自动开跑（回归测试用）
+    const params = new URLSearchParams(location.search);
+    const autoStrategy = params.get("auto");
+    if (autoStrategy && ["A", "B", "random", "avoidES"].includes(autoStrategy)) {
+      document.querySelector("#cfgStrategy").value = autoStrategy;
+      if (params.get("runs")) document.querySelector("#cfgRuns").value = params.get("runs");
+      startRuns();
+    }
+  </script>
+</body>
+</html>

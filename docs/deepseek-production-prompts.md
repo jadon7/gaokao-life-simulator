@@ -13,6 +13,12 @@
 3. `POST /api/game/batch`
 4. `POST /api/game/result`
 
+调用机制约束：
+
+- `index.html` 和 `prompt-lab.html` 必须始终使用同一套提示词调用机制。
+- 生产主流程当前标准是：第 1 年请求 `/api/game/start`，之后每次选择后只请求 1 年 `/api/game/next`，并传入当前完整 `history`。
+- 修改请求节奏、payload、模型选择或降级策略时，必须同步检查 `index.html` 与 `prompt-lab.html`；不能只改一边。
+
 建议搭配以下文档一起使用：
 
 - [高考人生模拟器协议 vNext](./story-state-card-protocol.md)

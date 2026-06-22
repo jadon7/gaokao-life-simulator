@@ -1,0 +1,52 @@
+// 前端 UI 验收测试（headless Chrome DOM 断言，TDD red-green）。
+// 用法：先在 $BASE（默认 http://127.0.0.1:8788，建议 DEEPSEEK_MOCK=1）启动服务，再 `node tests/run-ui-tests.mjs [jad80]`。
+import { execFileSync } from "node:child_process";
+
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const BASE = process.env.BASE || "http://127.0.0.1:8788";
+const only = process.argv[2];
+
+function decode(s) {
+  return s.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+}
+
+function probe(name) {
+  const html = execFileSync(CHROME, [
+    "--headless=new", "--disable-gpu", "--hide-scrollbars",
+    "--force-device-scale-factor=2", "--window-size=412,915",
+    "--virtual-time-budget=9000", "--dump-dom", `${BASE}/?selftest=${name}`
+  ], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const m = html.match(/<title>SELFTEST:(.*?)<\/title>/s);
+  if (!m) throw new Error(`未拿到 SELFTEST 标题（页面可能没加载或探针未运行）`);
+  return JSON.parse(decode(m[1]));
+}
+
+const suites = {
+  // JAD-80：测试卡片页年龄/年份文案格式
+  jad80: d => [
+    ["文案顺序为「{age}岁·{N}/total年」、紧凑·、无空格", d.orderOk === true],
+    [`年龄主字号 > 年份小字号（age=${d.ageFont} / count=${d.countFont}）`, d.fontOk === true],
+    ["文案不换行、不溢出容器", d.nowrap === true],
+    [`实际文案=${d.text}`, /^\d+岁·\d+\/\d+年$/.test(d.text || "")]
+  ]
+};
+
+let failed = 0;
+for (const name of Object.keys(suites)) {
+  if (only && only !== name) continue;
+  console.log(`\n[${name}]`);
+  let data;
+  try {
+    data = probe(name);
+  } catch (err) {
+    console.log("  ✗ 探针失败:", err.message);
+    failed += 1;
+    continue;
+  }
+  for (const [desc, ok] of suites[name](data)) {
+    console.log(`  ${ok ? "✓" : "✗"} ${desc}`);
+    if (!ok) failed += 1;
+  }
+}
+console.log(failed ? `\nFAIL（${failed} 项未通过）` : "\nPASS（全部通过）");
+process.exit(failed ? 1 : 0);

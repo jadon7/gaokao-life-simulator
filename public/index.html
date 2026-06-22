@@ -294,7 +294,7 @@
     }
 
     .persona-flow .flow-hint {
-      margin-top: 28px;
+      margin-top: 4px;
     }
 
     .major-flow .flow-hint {
@@ -380,24 +380,70 @@
     .persona-coverflow {
       position: relative;
       width: 100%;
-      height: 196px;
-      touch-action: none;
+      height: auto;
+      touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
     }
 
     .persona-ring {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 130px;
-      height: 176px;
-      transform: translate(-50%, -50%);
-      border: 3px dashed #ffffff;
-      border-radius: 26px;
-      box-shadow: 0 0 0 7px rgba(67, 82, 111, 0.04);
-      pointer-events: none;
-      z-index: 0;
+      display: none;
+    }
+
+    .persona-grid {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      width: 100%;
+    }
+
+    .gender-card {
+      width: min(43%, 148px);
+      min-height: 174px;
+      padding: 16px 12px 14px;
+      border-radius: 28px;
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 18px 38px rgba(53, 68, 96, 0.11);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #273246;
+      transition: transform 0.16s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .gender-card:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .gender-card.is-active {
+      border-color: rgba(58, 135, 255, 0.65);
+      background: rgba(239, 246, 255, 0.92);
+      box-shadow: 0 22px 48px rgba(22, 119, 255, 0.18);
+    }
+
+    .gender-head {
+      width: 82px;
+      height: 82px;
+      border-radius: 999px;
+      background: rgba(151, 170, 200, 0.14) var(--gender-photo) center 18% / 118% auto no-repeat;
+      box-shadow: inset 0 0 0 1px rgba(67, 82, 111, 0.08);
+    }
+
+    .gender-card b {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .gender-card span:last-child {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: rgba(39, 50, 70, 0.56);
+      text-align: center;
     }
 
     .persona-card {
@@ -1271,36 +1317,24 @@
     .result-hero {
       position: relative;
       width: 100%;
-      height: 398px;
-      border-radius: 30px;
+      min-height: 112px;
+      border-radius: 26px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      gap: 4px;
+      justify-content: center;
+      gap: 10px;
       padding: 16px;
-    }
-
-    .result-hero {
-      background: rgba(17, 22, 30, 0.16);
+      border: 1px solid rgba(84, 100, 130, 0.12);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(244, 248, 255, 0.62) 100%);
+      box-shadow: 0 18px 44px rgba(52, 68, 98, 0.1);
     }
 
     .result-hero-img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
-      opacity: 0;
-      transition: opacity 0.5s ease;
+      display: none;
     }
 
-    .result-hero.is-img-ready .result-hero-img {
-      opacity: 1;
-    }
-
-    /* 结果就绪后：hero 形象与各段文案一起错峰淡入 */
+    /* 结果就绪后：结果信息与各段文案一起错峰淡入 */
     .result-card.is-loading .result-eyebrow,
     .result-card.is-loading .result-actions {
       display: none;
@@ -1340,10 +1374,7 @@
     }
 
     .result-hero::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(15, 20, 28, 0.04) 0%, rgba(15, 20, 28, 0.04) 75%, rgba(15, 20, 28, 0.62) 100%);
+      display: none;
     }
 
     .result-hero > * {
@@ -1352,8 +1383,7 @@
     }
 
     .result-hero .result-hero-img {
-      position: absolute;
-      z-index: 0;
+      display: none;
     }
 
     .result-portrait {
@@ -1366,8 +1396,8 @@
       font-weight: 500;
       line-height: 1.2;
       letter-spacing: -0.15px;
-      color: rgba(255, 255, 255, 0.92);
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+      color: rgba(49, 56, 71, 0.78);
+      text-shadow: none;
     }
 
     .result-chips {
@@ -2310,10 +2340,6 @@
       animation-delay: 0.32s;
     }
 
-    .result-card.is-loading .result-hero::before {
-      background-color: rgba(17, 22, 30, 0.2);
-    }
-
     /* ====== small screens ====== */
     @media (max-width: 360px) {
       .play-brand .play-year {
@@ -2339,12 +2365,12 @@
             <p class="display-sub">完成 18 次选择，体验不一样的人生</p>
           </div>
         </div>
-        <div class="persona-flow" aria-label="选择你的形象">
+        <div class="persona-flow" aria-label="选择性别">
           <div class="persona-coverflow" id="avatarCoverflow">
             <span class="persona-ring" aria-hidden="true"></span>
-            <div class="persona-grid" id="avatarGrid" role="radiogroup" aria-label="角色形象"></div>
+            <div class="persona-grid" id="avatarGrid" role="radiogroup" aria-label="性别"></div>
           </div>
-          <span class="flow-hint">左右滑动选择形象</span>
+          <span class="flow-hint">选择你的性别</span>
         </div>
         <div class="entry-bottom">
           <input class="pill-input" id="entryName" placeholder="怎么称呼你?(可选）" maxlength="8" autocomplete="off" />
@@ -2413,8 +2439,6 @@
       <span class="badge badge-dark result-eyebrow" id="resultEyebrow">18张牌后的你</span>
       <h2 class="result-title" id="resultTitle">正在生成</h2>
       <div class="result-hero" id="resultHero">
-        <img class="result-hero-img" id="resultHeroImg" alt="" />
-        <div class="result-portrait" id="resultPortrait" aria-hidden="true"></div>
         <p class="result-status-text" id="resultSummary"></p>
         <div class="result-chips" id="resultTags"></div>
       </div>
@@ -4431,6 +4455,9 @@
         photoUrl: `${characterBasePath}/${item.id}-18.webp`
       };
     });
+    const genderAvatarOptions = ["男1", "女1"]
+      .map(id => avatarOptions.find(item => item.id === id))
+      .filter(Boolean);
     const avatarStep = 98;
     let avatarCenter = 0;
     let avatarDrag = null;
@@ -4531,7 +4558,6 @@
       resultInsights: document.querySelector("#resultInsights"),
       resultHighlights: document.querySelector("#resultHighlights"),
       resultGuides: document.querySelector("#resultGuides"),
-      resultPortrait: document.querySelector("#resultPortrait"),
       resultHero: document.querySelector("#resultHero"),
       processSheet: document.querySelector("#processSheet"),
       processSummary: document.querySelector("#processSummary"),
@@ -5125,16 +5151,6 @@
       return avatarOptions.find(item => item.id === state.avatar) || avatarOptions[0];
     }
 
-    function avatarGenderFolder(avatar = currentAvatarOption()) {
-      return avatar.gender === "男生" ? "male" : "female";
-    }
-
-    function selectedAvatarResultArt() {
-      const avatar = currentAvatarOption();
-      const resultFile = avatar.resultFile || `${avatar.id}-${avatar.resultAge || 38}.webp`;
-      return `url('${characterBasePath}/${resultFile}'), ${finalRoleArt}`;
-    }
-
     function hollandTypeArtUrl(primary = "I") {
       const code = String(primary || "I").trim().charAt(0).toUpperCase();
       const safeCode = hollandTypes[code] ? code : "I";
@@ -5160,7 +5176,8 @@
     function applyProfile(profile = readProfile()) {
       state.profile = profile;
       const requestedAvatar = profile.avatar || state.avatar || avatarOptions[0].id;
-      state.avatar = avatarOptions.some(item => item.id === requestedAvatar) ? requestedAvatar : avatarOptions[0].id;
+      const matchedAvatar = avatarOptions.find(item => item.id === requestedAvatar) || avatarOptions[0];
+      state.avatar = genderAvatarOptions.find(item => item.gender === matchedAvatar.gender)?.id || genderAvatarOptions[0]?.id || avatarOptions[0].id;
       if (profile.major && majors[profile.major]) state.major = profile.major;
       const shownMajor = profile.majorLabel || majorLabel();
       const avatar = currentAvatarOption();
@@ -5213,32 +5230,32 @@
 
     function renderAvatarGrid() {
       if (!els.avatarGrid) return;
-      document.querySelector("#avatarCount")?.replaceChildren(document.createTextNode(`${avatarOptions.length} 张形象卡`));
-      if (els.avatarGrid.children.length !== avatarOptions.length) {
+      if (els.avatarGrid.children.length !== genderAvatarOptions.length) {
         buildAvatarCoverflowCards();
-        initAvatarCoverflowControls();
       }
-      avatarCenter = Math.max(0, avatarOptions.findIndex(item => item.id === state.avatar));
-      layoutAvatarCoverflow(avatarCenter, false);
+      updateGenderSelection();
     }
 
     function buildAvatarCoverflowCards() {
-      els.avatarGrid.innerHTML = avatarOptions.map((avatar, index) => {
+      els.avatarGrid.innerHTML = genderAvatarOptions.map((avatar, index) => {
         const active = avatar.id === state.avatar ? " is-active" : "";
         return `
-          <button type="button" class="persona-card${active}" role="radio" aria-checked="${avatar.id === state.avatar}" aria-label="${escapeHTML(avatar.title)} ${escapeHTML(avatar.desc)}" data-avatar="${escapeHTML(avatar.id)}" data-index="${index}" style="--persona-h:${avatar.hue};--persona-filter:saturate(${avatar.sat}) hue-rotate(${avatar.rotate});">
-            <span class="persona-photo" aria-hidden="true"></span>
+          <button type="button" class="gender-card${active}" role="radio" aria-checked="${avatar.id === state.avatar}" aria-label="${escapeHTML(avatar.gender)}" data-avatar="${escapeHTML(avatar.id)}" data-index="${index}" style="--gender-photo:url('${avatar.photoUrl}')">
+            <span class="gender-head" aria-hidden="true"></span>
+            <b>${escapeHTML(avatar.gender)}</b>
+            <span>${avatar.gender === "男生" ? "使用男性玩家开局" : "使用女性玩家开局"}</span>
           </button>
         `;
       }).join("");
-      Array.from(els.avatarGrid.querySelectorAll(".persona-card")).forEach((cardEl, index) => {
-        const photoUrl = avatarOptions[index]?.photoUrl;
-        if (photoUrl) applyCardArt(cardEl.querySelector(".persona-photo"), [photoUrl]);
+    }
+
+    function updateGenderSelection() {
+      if (!els.avatarGrid) return;
+      Array.from(els.avatarGrid.querySelectorAll(".gender-card")).forEach(card => {
+        const active = card.dataset.avatar === state.avatar;
+        card.classList.toggle("is-active", active);
+        card.setAttribute("aria-checked", active ? "true" : "false");
       });
-      const dots = document.querySelector("#avatarDots");
-      if (dots) {
-        dots.innerHTML = avatarOptions.map((_, index) => `<button type="button" class="persona-dot" data-index="${index}" aria-label="第 ${index + 1} 个形象"></button>`).join("");
-      }
     }
 
     function layoutAvatarCoverflow(centerFloat, animate = true) {
@@ -5277,10 +5294,14 @@
     function selectAvatarByIndex(index, animate = true) {
       const nextIndex = wrapIndex(Math.round(index), avatarOptions.length);
       const nextId = avatarOptions[nextIndex]?.id || avatarOptions[0].id;
+      selectAvatarById(nextId, animate);
+    }
+
+    function selectAvatarById(nextId, animate = true) {
+      if (!avatarOptions.some(item => item.id === nextId)) return;
       if (animate && nextId !== state.avatar) hapticTap(20);
-      avatarCenter = index;
       state.avatar = nextId;
-      layoutAvatarCoverflow(index, animate);
+      updateGenderSelection();
       applyProfile(readProfile());
       scheduleWarmup();
     }
@@ -5592,24 +5613,6 @@
     function prefetchUpcomingArt() {
       [1, 2].forEach(offset => {
         prefetchCardArtForYearNumber(state.index + offset + 1);
-      });
-    }
-
-    function heroArtUrls() {
-      const avatar = currentAvatarOption();
-      const resultFile = avatar.resultFile || `${avatar.id}-${avatar.resultAge || 38}.webp`;
-      return [`${characterBasePath}/${resultFile}`, "assets/card_interaction/final_role_creator.webp"];
-    }
-
-    function applyHeroArt() {
-      const hero = els.resultHero;
-      const img = document.querySelector("#resultHeroImg");
-      if (!hero || !img) return;
-      hero.classList.remove("is-img-ready");
-      resolveFirstArt(heroArtUrls(), url => {
-        if (!url) return;
-        img.src = url;
-        hero.classList.add("is-img-ready");
       });
     }
 
@@ -8172,8 +8175,7 @@
 
     async function showResult() {
       els.progressFill.style.width = "100%";
-      // API 等待期间只预载 hero 形象与 RIASEC 公仔图，等结果文案一起亮相
-      heroArtUrls().forEach(url => probeArt(url));
+      // API 等待期间只预载 RIASEC 公仔图，等结果文案一起亮相
       probeArt(hollandTypeArtUrl(getHollandSummaryData().primary));
       showFlow("result");
       renderResultLoading();
@@ -8219,7 +8221,6 @@
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading");
       card?.classList.add("is-revealed");
-      applyHeroArt();
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears}张牌后的你`;
       els.resultTitle.textContent = "这一页没装订成功";
@@ -8241,7 +8242,6 @@
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading");
       card?.classList.add("is-revealed");
-      applyHeroArt();
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const hollandSummary = getHollandSummaryData();
@@ -9162,11 +9162,9 @@
       selectMajorByIndex(Number.isFinite(index) ? index : 0, true);
     });
     els.avatarGrid?.addEventListener("click", event => {
-      const card = event.target.closest(".persona-card");
+      const card = event.target.closest(".gender-card");
       if (!card) return;
-      if (avatarDrag?.moved) return;
-      const index = Number(card.dataset.index ?? avatarOptions.findIndex(item => item.id === card.dataset.avatar));
-      selectAvatarByIndex(Number.isFinite(index) ? index : 0, true);
+      selectAvatarById(card.dataset.avatar || avatarOptions[0].id, true);
     });
     document.querySelector("#randomTop")?.addEventListener("click", () => resetGame(false, "setup"));
     document.querySelector("#restartTop").addEventListener("click", () => resetGame(true, "entry"));
@@ -9212,7 +9210,7 @@
     window.addEventListener("resize", () => {
       window.requestAnimationFrame(() => {
         if (els.majorGrid?.children.length) layoutMajorCoverflow(coverflowCenter, false);
-        if (els.avatarGrid?.children.length) layoutAvatarCoverflow(avatarCenter, false);
+        if (els.avatarGrid?.children.length) updateGenderSelection();
         fitEntryTitle();
         fitActiveCardContent();
         fitCareerCardLabels();

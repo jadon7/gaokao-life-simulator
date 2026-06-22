@@ -7870,7 +7870,7 @@
       code.split("").forEach(key => {
         (hollandTypes[key]?.directions || []).forEach(item => seen.add(item));
       });
-      return Array.from(seen).slice(0, 7).join("、");
+      return Array.from(seen).join("、");
     }
 
     function formatHollandTypeLabel(code) {

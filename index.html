@@ -933,13 +933,14 @@
       border-radius: 27px;
       border: 1px solid rgba(255, 255, 255, 0.54);
       box-shadow: inset 0 1px 0 1px rgba(255, 255, 255, 0.46);
+      background-color: rgba(227, 235, 246, 0.78);
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
     }
 
     .life-card .card-illustration:not(.is-img-ready) {
-      display: none;
+      background-image: linear-gradient(135deg, rgba(238, 244, 252, 0.92), rgba(218, 228, 241, 0.72));
     }
 
     .life-card.layout-balanced .card-illustration {
@@ -5591,13 +5592,17 @@
       })();
     }
 
+    function prefetchCardArt(card, index) {
+      if (!card) return;
+      const url = sceneArtUrl(card, index);
+      if (url) probeArt(url);
+    }
+
     function prefetchCardArtForYearNumber(yearNumber) {
       const index = Number(yearNumber || 1) - 1;
       if (index < 0 || index >= state.totalYears) return;
       const card = state.deck[index];
-      if (!card) return;
-      const url = sceneArtUrl(card, index);
-      if (url) probeArt(url);
+      prefetchCardArt(card, index);
     }
 
     function prefetchUpcomingArt() {
@@ -6615,7 +6620,6 @@
       if (signature !== branchPrefetchSignature(card)) return null;
       const nextYear = (card.yearNumber || state.index + 1) + 1;
       if (nextYear > state.totalYears) return null;
-      prefetchCardArtForYearNumber(nextYear);
       const prefetch = {
         signature,
         index: state.index,
@@ -6636,7 +6640,13 @@
           signal: controller.signal,
           abortMessage: "预加载已取消"
         })
-          .then(data => data?.card || null)
+          .then(data => {
+            if (!data?.card) return null;
+            const nextCard = normalizeRemoteCard(data.card);
+            applyPreviousInfoToCard(nextCard);
+            prefetchCardArt(nextCard, nextYear - 1);
+            return nextCard;
+          })
           .catch(error => {
             branch.error = error;
             return null;
@@ -6663,10 +6673,8 @@
     async function loadAnnualCardAfterChoice(yearNumber, prefetchedBranch) {
       if (yearNumber < 1 || yearNumber > state.totalYears) return null;
       if (prefetchedBranch?.promise) {
-        const rawCard = await prefetchedBranch.promise;
-        if (rawCard) {
-          const card = normalizeRemoteCard(rawCard);
-          applyPreviousInfoToCard(card);
+        const card = await prefetchedBranch.promise;
+        if (card) {
           state.deck[yearNumber - 1] = card;
           resetStreamState();
           return card;

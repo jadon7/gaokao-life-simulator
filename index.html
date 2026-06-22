@@ -7647,78 +7647,14 @@
       return map[top];
     }
 
-    function buildYearningCard() {
-      const { explore, ambition, stability, empathy, discipline, pressure } = state.values;
-      const stats = getChoiceStats();
-      const holland = getHollandSummaryData();
-      const hollandBoost = code => (holland.scores?.[code] || 0) * 2;
-      const directionBias = stats.total ? (stats.right - stats.left) / stats.total : 0;
-      const items = [
-        {
-          key: "自由",
-          score: explore * 1.2 + directionBias * 18,
-          body: "你不一定讨厌稳定，只是不想每一步都被既定轨道写好。能自己选择节奏，对你很重要。"
-        },
-        {
-          key: "事业",
-          score: ambition * 1.1 + discipline * 0.35 + pressure * 0.15,
-          body: "你会被更大的平台、更难的任务和能证明自己的位置吸引。你想把能力换成真实影响力。"
-        },
-        {
-          key: "家庭",
-          score: empathy * 0.8 + stability * 0.55 + pressure * 0.1,
-          body: "你在乎身边人的安全感，也希望自己不是只会赢项目的人。亲近的人过得稳，会让你更踏实。"
-        },
-        {
-          key: "成功",
-          score: ambition * 1.25 + hollandBoost("E") + pressure * 0.15,
-          body: "你想被结果证明，也想站到更大的桌面上。掌声不是全部，但你不想一直做无名背景。"
-        },
-        {
-          key: "安稳",
-          score: stability * 1.2 + discipline * 0.35 - Math.max(0, directionBias) * 10,
-          body: "你向往一种可持续的生活：有确定收入、有清楚边界，也有余力处理自己的日常。"
-        },
-        {
-          key: "专业成就",
-          score: discipline * 0.85 + hollandBoost("I") + hollandBoost("R"),
-          body: "你希望自己不是只会选择，而是真的把一门东西做深。被专业认可，比短期热闹更能打动你。"
-        },
-        {
-          key: "被看见",
-          score: ambition * 0.5 + hollandBoost("A") + hollandBoost("E"),
-          body: "你不想一直默默做完就算了。作品、表达和公开反馈，会让你确认自己正在长出来。"
-        },
-        {
-          key: "创造",
-          score: explore * 0.75 + hollandBoost("A") + hollandBoost("R"),
-          body: "你向往从无到有的成就感。比起照着标准答案走，你更想亲手做出一个可被验证的东西。"
-        },
-        {
-          key: "被理解",
-          score: empathy * 0.9 + pressure * 0.35,
-          body: "你习惯把很多压力先吞下去，但真实的你也希望有人能看懂你不是冷淡，只是在硬撑。"
-        }
-      ];
-      const winner = items.sort((a, b) => b.score - a.score)[0] || items[0];
-      return {
-        keyword: winner.key,
-        core: winner.body,
-        evidence: "这 18 道题里，你的选择反复靠近同一个方向。",
-        sacrifice: "为了它，你愿意放下一部分确定感和别人眼里的体面。",
-        temperament: "你做选择时的底色，是清醒、热忱、不太装。"
-      };
-    }
-
     function normalizeYearningCard(result = {}) {
-      const fallback = buildYearningCard();
       const item = result && typeof result.innerYearning === "object" ? result.innerYearning : {};
       return {
-        keyword: String(item.keyword || fallback.keyword || "自由").trim(),
-        core: String(item.core || fallback.core || "").trim(),
-        evidence: String(item.evidence || fallback.evidence || "").trim(),
-        sacrifice: String(item.sacrifice || fallback.sacrifice || "").trim(),
-        temperament: String(item.temperament || fallback.temperament || "").trim()
+        keyword: String(item.keyword || "").trim(),
+        core: String(item.core || "").trim(),
+        evidence: String(item.evidence || "").trim(),
+        sacrifice: String(item.sacrifice || "").trim(),
+        temperament: String(item.temperament || "").trim()
       };
     }
 
@@ -8281,7 +8217,7 @@
         <section class="yearning-section">
           <span class="yearning-kicker">真实的你</span>
           <div class="yearning-body">
-            <b>你内心真正渴望的，是【${escapeHTML(yearningCard.keyword)}】</b>
+            ${yearningCard.keyword ? `<b>你内心真正渴望的，是【${escapeHTML(yearningCard.keyword)}】</b>` : ""}
             <div class="yearning-lines">
               ${[yearningCard.core, yearningCard.evidence, yearningCard.sacrifice, yearningCard.temperament]
                 .filter(Boolean)

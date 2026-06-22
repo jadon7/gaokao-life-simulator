@@ -678,7 +678,7 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
 - famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence。
 - timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价。
 - letter18 做回顾收尾：回收 18 年里最关键的收获/代价，再给 18 岁自己一句话。
-- innerYearning 写“真实的你”：keyword 从 yearningStats.topKeywords 选；core 一句话点破向往；evidence 引用选择次数或关键年；sacrifice 写为此放弃了什么；temperament 写选择时的底色。
+- innerYearning 写“真实的你”：keyword 按 history 自行提炼；core 点破向往；evidence 引用选择或关键年；sacrifice 写为此放弃了什么；temperament 写选择时的底色。
 - 不要排名、贬损、疾病化判断、性别/专业刻板标签；禁用旧示例词：嘴硬心软/存款能打/账本漂亮。
 
 输入数据：
@@ -1314,31 +1314,6 @@ function buildResultEvidence(history = []) {
 }
 
 function buildYearningStats(history = []) {
-  const rules = [
-    ["自由", /自由|选择|城市|换|离开|创业|空间|节奏|窗口|新路/],
-    ["事业", /事业|项目|客户|团队|平台|升职|交付|老板|下属|合伙|岗位/],
-    ["家庭", /家庭|家里|孩子|父母|老人|照护|房贷|择校|伴侣|结婚/],
-    ["成功", /争取|抢|公开|负责|带队|资源|机会|晋升|上台|拍板/],
-    ["安稳", /稳定|安稳|流程|保底|守住|体面|边界|收入|确定/],
-    ["专业成就", /专业|论文|作品|证据|研究|方案|技术|算法|设计|课题/],
-    ["被看见", /公开|展示|表达|出圈|汇报|讲|发布|认可/],
-    ["创造", /做|创作|作品|原型|搭|设计|内容|产品|从无到有/],
-    ["被理解", /沟通|解释|陪|理解|关系|沉默|压力|硬撑|说清/]
-  ];
-  const counts = new Map(rules.map(([label]) => [label, 0]));
-  history.forEach(item => {
-    const text = [item?.sceneTitle, item?.choiceTag, item?.choiceText, item?.consequence, item?.lifeTrack, item?.relationshipTrack]
-      .filter(Boolean)
-      .join(" ");
-    rules.forEach(([label, pattern]) => {
-      if (pattern.test(text)) counts.set(label, counts.get(label) + 1);
-    });
-  });
-  const topKeywords = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .filter(([, count]) => count > 0)
-    .slice(0, 3)
-    .map(([keyword, count]) => ({ keyword, count }));
   const sacrificeHints = history
     .filter(item => /放弃|推掉|错过|离开|搁置|告别|少陪|没回|拒绝/.test([item?.choiceText, item?.consequence].filter(Boolean).join(" ")))
     .slice(-4)
@@ -1349,7 +1324,6 @@ function buildYearningStats(history = []) {
     }));
   return {
     totalChoices: history.length,
-    topKeywords: topKeywords.length ? topKeywords : [{ keyword: "自由", count: 0 }],
     sacrificeHints
   };
 }

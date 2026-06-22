@@ -478,15 +478,15 @@ function parseJsonContent(content) {
 function validateAnnual(data, history = [], repeatHistory = history, expectedYear = null) {
   const normalized = {};
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
-  normalized.summary = clampTextBySentence(data.summary, 42, 2);
+  normalized.summary = optionalCleanText(data.summary);
   const fallbackYear = Math.min(Math.max(Number(expectedYear || (Array.isArray(history) ? history.length + 1 : 1)) || 1, 1), totalGameYears);
   normalized.year = fallbackYear;
   normalized.question = `第 ${fallbackYear} 年 / ${totalGameYears}`;
   const outline = getOutlineCard(normalized.year);
   normalized.phase = optionalCleanText(data.phase) || optionalCleanText(outline?.phase);
   normalized.mainTrack = outline?.mainTrack || (/relationship/i.test(String(data.mainTrack || "").trim()) ? "relationship" : "life");
-  normalized.lifeTrack = clampTextBySentence(data.lifeTrack, 22, 1);
-  normalized.relationshipTrack = clampTextBySentence(data.relationshipTrack, 30, 1);
+  normalized.lifeTrack = optionalCleanText(data.lifeTrack);
+  normalized.relationshipTrack = optionalCleanText(data.relationshipTrack);
   const modelCallbacks = Array.isArray(data.callbackSeeds || data.callbacks)
     ? (data.callbackSeeds || data.callbacks).map(item => optionalCleanText(item)).filter(Boolean).slice(0, 3)
     : [];
@@ -496,7 +496,7 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   normalized.b = normalizeChoiceData(data.b, "B");
   applyOutlineRiasec(normalized);
   const yearNumber = normalized.year;
-  normalized.summary = yearNumber === 1 ? "" : clampTextBySentence(normalized.summary, 42, 2);
+  normalized.summary = yearNumber === 1 ? "" : optionalCleanText(normalized.summary);
   if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
@@ -511,7 +511,7 @@ function applyOutlineRiasec(card) {
 
 function buildHistoryConsequence(history = []) {
   const last = Array.isArray(history) ? history.at(-1) : null;
-  if (last?.consequence) return optionalCleanText(last.consequence).slice(0, 32);
+  if (last?.consequence) return optionalCleanText(last.consequence);
   const text = optionalCleanText([last?.choice, last?.choiceText].filter(Boolean).join("，"));
   if (/拒|不|撤|稳|等|缓|谈判|排|守|边界|暂时|冷静/.test(text)) {
     return "你把上一年的乱节奏按住了，手头终于没再一起炸";
@@ -526,54 +526,17 @@ function mergeFeedbackParts(consequence, offstage) {
   const left = optionalCleanText(consequence).replace(/[，。！？!?；;]+$/g, "");
   const right = optionalCleanText(offstage).replace(/^(上一年|上一年的决定|这一年)[，,]*/g, "").replace(/[，。！？!?；;]+$/g, "");
   const merged = [left, right].filter(Boolean).join("，");
-  return clampTextBySentence(merged, 42, 2);
+  return merged;
 }
 
 function optionalCleanText(value) {
   return String(value || "").trim();
 }
 
-function shortText(value, limit = 80) {
-  return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
-}
-
-function clampTextBySentence(value, maxLength, maxSentences = 1) {
-  const text = optionalCleanText(value).replace(/\s+/g, "");
-  if (!text) return "";
-  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?[」”』》）)]?/g) || [text];
-  const joined = parts.slice(0, maxSentences).join("").replace(/[。！？!?；;]+$/g, "");
-  if (joined.length <= maxLength) return joined;
-  const clipped = joined.slice(0, maxLength);
-  const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
-  return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
-}
-
-function clipClause(value, maxLength) {
-  const text = optionalCleanText(value).replace(/\s+/g, "").replace(/[。！？!?；;]+$/g, "");
-  if (text.length <= maxLength) return text;
-  const clipped = text.slice(0, maxLength);
-  const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
-  return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
-}
-
-function clampSceneBody(value) {
-  const text = optionalCleanText(value).replace(/\s+/g, "");
-  if (!text) return "";
-  const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?[」”』》）)]?/g) || [text];
-  const joined = parts.slice(0, 2).join("").replace(/[。！？!?；;]+$/g, "");
-  if (joined.length <= 82) return joined;
-  if (parts.length >= 2) {
-    const first = clipClause(parts[0], 44);
-    const second = clipClause(parts[1], 82 - first.length - 1);
-    return [first, second].filter(Boolean).join("。");
-  }
-  return clipClause(joined, 82);
-}
-
 function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
-      title: clampTextBySentence(value.title, 8, 1),
+      title: optionalCleanText(value.title),
       body: cleanSceneBody(value.body)
     };
   }
@@ -582,19 +545,19 @@ function normalizeSceneData(value) {
   const contextMatch = raw.match(/(?:^|\n)\s*情境[:：]\s*([\s\S]+)/);
   if (eventMatch || contextMatch) {
     return {
-      title: clampTextBySentence(eventMatch?.[1] || "这一年的岔路口", 8, 1),
+      title: optionalCleanText(eventMatch?.[1] || "这一年的岔路口"),
       body: cleanSceneBody(contextMatch?.[1] || raw.replace(eventMatch?.[0] || "", ""))
     };
   }
   const sentenceMatch = raw.match(/^(.{8,28}?[。！？!?])([\s\S]*)$/);
   return {
-    title: clampTextBySentence(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口", 8, 1),
+    title: optionalCleanText(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口"),
     body: cleanSceneBody(sentenceMatch?.[2] || raw)
   };
 }
 
 function cleanSceneBody(value) {
-  return clampSceneBody(value);
+  return optionalCleanText(value);
 }
 
 function normalizeChoiceLabel(value, prefix) {
@@ -602,7 +565,7 @@ function normalizeChoiceLabel(value, prefix) {
     .replace(/^(动手补救|查证判断|表达产出|沟通协作|争取拍板|流程保底)[，,、：:\s]*/g, "")
     .replace(/^[，,。.!！?？；;\s]+/, "")
     .trim();
-  return balanceInlineQuote(clampTextBySentence(text, 18, 1)) || (prefix === "A" ? "当场接下这步" : "先稳住再判断");
+  return balanceInlineQuote(text) || (prefix === "A" ? "当场接下这步" : "先稳住再判断");
 }
 
 function normalizeChoiceData(value, prefix) {
@@ -622,7 +585,7 @@ function normalizeChoiceData(value, prefix) {
 }
 
 function normalizeChoiceConsequence(value) {
-  return balanceInlineQuote(clampTextBySentence(value, 28, 1));
+  return balanceInlineQuote(value);
 }
 
 function normalizeRiasecPayload(value) {
@@ -659,7 +622,7 @@ function normalizeChoiceTitle(value, prefix) {
   if (/金句收|体面金句/.test(text)) return "金句收尾";
   if (/简历证|证明/.test(text)) return "重写证据";
   if (/谁动文|谁动/.test(text)) return "查清去向";
-  if (text) return text.slice(0, 5);
+  if (text) return text;
   return prefix === "A" ? "直接推进" : "先稳住";
 }
 
@@ -694,7 +657,7 @@ function normalizeChoiceTag(value, prefix) {
   if (/沟通|安抚|接人|接住|关系|情绪|陪/.test(text)) return "沟通";
   if (/争取|抢|主动|拍板|谈判|冲/.test(text)) return "争取";
   if (/流程|稳|保底|体面|排现实|边界|守|务实/.test(text)) return "稳住";
-  if (text && text !== "A" && text !== "B") return text.slice(0, 4);
+  if (text && text !== "A" && text !== "B") return text;
   return prefix === "A" ? "主动处理" : "稳住节奏";
 }
 
@@ -768,20 +731,20 @@ function normalizeResultBlocks(value, count, normalizer) {
 
 function normalizeSceneCardBlock(item, index) {
   if (item && typeof item === "object" && !Array.isArray(item)) {
-    const title = optionalCleanText(item.title || item.headline || item.name).slice(0, 24);
+    const title = optionalCleanText(item.title || item.headline || item.name);
     const body = optionalCleanText(item.body || item.desc || item.text);
     if (title || body) return { title: title || `第 ${index + 1} 个片段`, body: body || title };
   }
   const text = optionalCleanText(item);
   if (!text) return null;
   const title = text.split(/[，,。.!！?？]/).map(part => part.trim()).find(Boolean) || text;
-  return { title: title.slice(0, 24), body: text };
+  return { title, body: text };
 }
 
 function normalizeTimelineBlock(item, index) {
   const fallbackTitles = ["18-22 岁：大学四年", "22-30 岁：毕业第一站", "30-36 岁：沉浮与名场面"];
   if (item && typeof item === "object" && !Array.isArray(item)) {
-    const title = optionalCleanText(item.title || item.headline || item.name).slice(0, 28);
+    const title = optionalCleanText(item.title || item.headline || item.name);
     const body = optionalCleanText(item.body || item.desc || item.text);
     if (title || body) return { title: title || fallbackTitles[index], body: body || title };
   }
@@ -792,7 +755,7 @@ function normalizeTimelineBlock(item, index) {
 
 function normalizeResultCard(item, fallback) {
   if (item && typeof item === "object" && !Array.isArray(item)) {
-    const title = optionalCleanText(item.title || item.headline || item.name).slice(0, 30);
+    const title = optionalCleanText(item.title || item.headline || item.name);
     const body = optionalCleanText(item.body || item.desc || item.text);
     if (title || body) return { title: title || fallback.title, body: body || fallback.body };
   }
@@ -824,10 +787,7 @@ function normalizeResultStatus(value) {
     .replace(/^从[^，。！？!?；;]{2,24}到[^，。！？!?；;]{2,24}[，,]?/, "")
     .replace(/18年/g, "这些年")
     .replace(/[。！？!?；;]+$/g, "");
-  if (cleaned.length <= 36) return cleaned;
-  const clipped = cleaned.slice(0, 36);
-  const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"));
-  return (boundary >= 20 ? clipped.slice(0, boundary) : clipped).replace(/[，。！？!?；;]+$/g, "");
+  return cleaned;
 }
 
 function fallbackResultCard(field) {
@@ -851,7 +811,7 @@ function fallbackResultCard(field) {
 function normalizeCareerPossibility(item) {
   if (!item || typeof item !== "object") return null;
   const percent = Math.max(1, Math.min(99, Number(item.percent || 0)));
-  const label = optionalCleanText(item.label).slice(0, 10);
+  const label = optionalCleanText(item.label);
   if (!percent || !label) return null;
   return { percent, label };
 }
@@ -988,7 +948,7 @@ function mockRelationName(parsed) {
 
 function mockSceneTitle(year, outlineCard) {
   const seed = outlineCard?.callbacks?.[0] || outlineCard?.comedyDevice || outlineCard?.phase || "人生弹窗";
-  return `第${year}年·${String(seed).slice(0, 6)}`;
+  return `第${year}年·${String(seed)}`;
 }
 
 function mockAnnualCard(parsed, year, outlineCard, relationName, axis) {
@@ -1022,28 +982,28 @@ function mockIncidentText(parsed, outlineCard) {
 
 function mockLifeTrack(parsed, year, incident) {
   const timeFrame = optionalCleanText(parsed?.stateHints?.timeFrame) || `${Math.min(35, 17 + year)}岁左右`;
-  return shortText(`${timeFrame}，${incident}压到台面`, 22);
+  return `${timeFrame}，${incident}压到台面`;
 }
 
 function mockRelationshipTrack(parsed, year, relationName) {
   const stage = optionalCleanText(parsed?.stateHints?.relationshipStage) || (year <= 2 ? "暧昧升温" : "订婚结婚");
   const fact = optionalCleanText(parsed?.stateHints?.relationshipBeat).replace(/^关系事实：/, "");
-  return shortText(`${stage}：${relationName}${fact || "主动问你下一步"}`, 30);
+  return `${stage}：${relationName}${fact || "主动问你下一步"}`;
 }
 
 function mockSceneBody(parsed, outlineCard, relationName, incident) {
   const last = optionalCleanText(parsed?.stateHints?.lastYear).replace(/^上一年：/, "");
   const conflict = outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`;
-  return shortText(`${last ? `${last}。` : ""}${conflict}${relationName}在旁边等你给一句准话。`, 82);
+  return `${last ? `${last}。` : ""}${conflict}${relationName}在旁边等你给一句准话。`;
 }
 
 function mockChoice(source, desc, tag, consequence, mainType) {
-  const title = shortText(String(source || "先处理").replace(/[，。！？!?；;：:].*$/g, ""), 5) || "先处理";
+  const title = String(source || "先处理").replace(/[，。！？!?；;：:].*$/g, "") || "先处理";
   return {
     title,
-    desc: shortText(desc, 18),
-    tag: shortText(tag || title, 4),
-    consequence: shortText(consequence, 28),
+    desc,
+    tag: tag || title,
+    consequence,
     riasec: mockRiasec(mainType)
   };
 }

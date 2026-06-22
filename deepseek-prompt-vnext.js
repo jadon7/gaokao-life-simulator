@@ -594,12 +594,12 @@ function openingPromptForYear(year = 1) {
 function closingFrameHint(history = []) {
   const first = history.find(item => Number(item?.year) === 1) || history[0];
   const last = history.at(-1);
-  const firstTitle = shortText(first?.sceneTitle || first?.scene, 12);
-  const lastTitle = shortText(last?.sceneTitle || last?.scene, 12);
+  const firstTitle = cleanPromptText(first?.sceneTitle || first?.scene);
+  const lastTitle = cleanPromptText(last?.sceneTitle || last?.scene);
   const keyChoices = history
     .filter(item => item?.choiceText || item?.consequence)
     .slice(-3)
-    .map(item => shortText(item.choiceText || item.consequence, 10))
+    .map(item => cleanPromptText(item.choiceText || item.consequence))
     .filter(Boolean)
     .join("、");
   return `第18年收尾：回看${firstTitle || "开局"}、${lastTitle || "最后一年"}和这一路的关键选择${keyChoices ? `（${keyChoices}）` : ""}；给18岁一句真话，再决定未来五年活法`;
@@ -1019,18 +1019,18 @@ function deriveDramaFields(card = {}) {
     "最终落点拍板": "最后不是写金句，是决定接下来五年怎么活"
   };
   return {
-    readableConflict: shortText(card.conflict, 72),
+    readableConflict: cleanPromptText(card.conflict),
     hook: hookByDevice[card.comedyDevice] || `${card.comedyDevice || "现实荒诞"}里冒出一个必须立刻处理的钩子`,
     twist: `先让用户以为只是${card.mainTrack === "relationship" ? "关系问题" : "现实问题"}，再露出它会反噬${card.mainTrack === "relationship" ? "生活选择" : "关系或长期路径"}`,
     choiceContrast: card.abType || "两种打法",
     mustNotInclude: `不要把旁支信息写成第二个冲突；本卡只拍 ${card.mainTrack || "life"} 事件和 ${axisText} 计分轴`,
-    resultEvidence: `如果玩家选择本卡，结果页要能回收“${shortText((card.callbacks || [])[0] || card.comedyDevice, 12)}”作为职业/关系/代价证据`
+    resultEvidence: `如果玩家选择本卡，结果页要能回收“${cleanPromptText((card.callbacks || [])[0] || card.comedyDevice)}”作为职业/关系/代价证据`
   };
 }
 
 function directorText(value, storyCast = defaultStoryCast) {
   const relationName = storyCast?.relationName || defaultStoryCast.relationName;
-  return shortText(value, 90)
+  return cleanPromptText(value)
     .replace(/关系线核心角色/g, relationName)
     .replace(/关系线/g, "亲密关系")
     .replace(/生活线|现实线/g, "现实状态")
@@ -1056,7 +1056,7 @@ function compactOutlineCard(card, storyCast = defaultStoryCast) {
     mainTrack: enriched.mainTrack,
     comedyDevice: enriched.comedyDevice,
     riasecAxis: enriched.riasecAxis,
-    conflict: shortText(enriched.readableConflict || enriched.conflict, 72),
+    conflict: cleanPromptText(enriched.readableConflict || enriched.conflict),
     hook: enriched.hook,
     twist: enriched.twist,
     choiceContrast: enriched.choiceContrast,
@@ -1151,32 +1151,32 @@ function compactOutlineCardWithClosing(card, storyCast = defaultStoryCast, closi
   };
 }
 
-function shortText(value, limit = 80) {
-  return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
+function cleanPromptText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
 }
 
 function normalizeChoiceHistoryItem(item) {
   return {
     year: Number(item?.year || 0) || 0,
-    sceneTitle: shortText(item?.sceneTitle || item?.scene, 28),
-    summary: shortText(item?.summary, 48),
-    choiceTag: shortText(item?.tag || item?.choice, 18),
-    choiceText: shortText(item?.choiceText, 40),
-    consequence: shortText(item?.consequence, 40),
-    lifeTrack: shortText(item?.lifeTrack, 42),
-    relationshipTrack: shortText(item?.relationshipTrack, 42),
-    callbackSeeds: Array.isArray(item?.callbackSeeds) ? item.callbackSeeds.map(seed => shortText(seed, 16)).filter(Boolean).slice(0, 3) : [],
-    appearedRoles: Array.isArray(item?.appearedRoles) ? item.appearedRoles.map(role => shortText(role, 10)).filter(Boolean).slice(0, 8) : []
+    sceneTitle: cleanPromptText(item?.sceneTitle || item?.scene),
+    summary: cleanPromptText(item?.summary),
+    choiceTag: cleanPromptText(item?.tag || item?.choice),
+    choiceText: cleanPromptText(item?.choiceText),
+    consequence: cleanPromptText(item?.consequence),
+    lifeTrack: cleanPromptText(item?.lifeTrack),
+    relationshipTrack: cleanPromptText(item?.relationshipTrack),
+    callbackSeeds: Array.isArray(item?.callbackSeeds) ? item.callbackSeeds.map(seed => cleanPromptText(seed)).filter(Boolean).slice(0, 3) : [],
+    appearedRoles: Array.isArray(item?.appearedRoles) ? item.appearedRoles.map(role => cleanPromptText(role)).filter(Boolean).slice(0, 8) : []
   };
 }
 
 function compactProfile(profile = {}) {
-  const major = shortText(profile.majorLabel || profile.major, 24);
+  const major = cleanPromptText(profile.majorLabel || profile.major);
   const out = {
-    hope: shortText(profile.hope, 18),
+    hope: cleanPromptText(profile.hope),
     major
   };
-  const gender = shortText(profile.gender, 12);
+  const gender = cleanPromptText(profile.gender);
   if (gender && gender !== "不限定") out.gender = gender;
   return out;
 }
@@ -1185,11 +1185,11 @@ function compactStoryCast(profile = {}, existingCast = null) {
   const cast = existingCast || buildStoryCast(profile);
   const out = {
     relationName: cast.relationName,
-    relationIntro: shortText(cast.relationIntro, 34),
+    relationIntro: cleanPromptText(cast.relationIntro),
     secondaryRelationName: cast.secondaryRelationName,
-    secondaryRelationIntro: shortText(cast.secondaryRelationIntro, 34),
-    mentorIntro: shortText(cast.mentorIntro, 34),
-    familyIntro: shortText(cast.familyIntro, 34)
+    secondaryRelationIntro: cleanPromptText(cast.secondaryRelationIntro),
+    mentorIntro: cleanPromptText(cast.mentorIntro),
+    familyIntro: cleanPromptText(cast.familyIntro)
   };
   return out;
 }
@@ -1246,7 +1246,7 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, hi
   const matureCast = { ...baseCast };
   if (includeRelation || useSecondaryRelation) {
     matureCast.relationName = useSecondaryRelation ? cast.secondaryRelationName : cast.relationName;
-    matureCast.relationIntro = useSecondaryRelation ? cast.secondaryRelationIntro : shortText(`与你关系反复推进的${cast.relationName}`, 34);
+    matureCast.relationIntro = useSecondaryRelation ? cast.secondaryRelationIntro : cleanPromptText(`与你关系反复推进的${cast.relationName}`);
   }
   return matureCast;
 }
@@ -1259,9 +1259,9 @@ function compactAnnualHistory(history = []) {
 function repeatGuard(history = []) {
   const last = history.at(-1);
   if (!last) return "";
-  const choice = shortText(last.choiceText || last.tag || last.choice, 24);
-  const consequence = shortText(last.consequence, 28);
-  const relation = shortText(last.relationshipTrack, 24);
+  const choice = cleanPromptText(last.choiceText || last.tag || last.choice);
+  const consequence = cleanPromptText(last.consequence);
+  const relation = cleanPromptText(last.relationshipTrack);
   if (!choice && !consequence) return "";
   return `勿重复：${choice}${consequence ? `；已发生：${consequence}` : ""}${relation ? `；关系别复写：${relation}` : ""}`;
 }
@@ -1269,14 +1269,14 @@ function repeatGuard(history = []) {
 function stageGuard(history = []) {
   const last = history.at(-1);
   if (!last) return "";
-  const consequence = shortText(last.consequence, 56);
+  const consequence = cleanPromptText(last.consequence);
   const text = [
     last.choice,
     last.choiceText,
     last.tag,
     last.consequence,
     last.relationshipTrack
-  ].map(item => shortText(item, 42)).join("，");
+  ].map(item => cleanPromptText(item)).join("，");
   if (/告别|分手|收尾|删好友|删掉|到此为止|陪.*走到这里|彻底失联|彻底消失|已无交集/.test(text)) {
     return "上一年关系=体面告别";
   }
@@ -1292,11 +1292,11 @@ function stageGuard(history = []) {
 function normalizeResultHistoryItem(item) {
   return {
     y: Number(item?.year || 0) || 0,
-    t: shortText(item?.sceneTitle || item?.scene, 16),
-    c: shortText(item?.choiceText || item?.tag || item?.choice, 22),
-    r: shortText(item?.consequence || item?.summary, 34),
-    life: shortText(item?.lifeTrack, 26),
-    rel: shortText(item?.relationshipTrack, 28),
+    t: cleanPromptText(item?.sceneTitle || item?.scene),
+    c: cleanPromptText(item?.choiceText || item?.tag || item?.choice),
+    r: cleanPromptText(item?.consequence || item?.summary),
+    life: cleanPromptText(item?.lifeTrack),
+    rel: cleanPromptText(item?.relationshipTrack),
     h: item?.holland || {}
   };
 }
@@ -1307,9 +1307,9 @@ function buildResultEvidence(history = []) {
     .filter(Boolean);
   return picked.map(item => ({
     year: Number(item?.year || 0) || 0,
-    sceneTitle: shortText(item?.sceneTitle || item?.scene, 18),
-    choiceText: shortText(item?.choiceText || item?.tag || item?.choice, 24),
-    consequence: shortText(item?.consequence || item?.summary, 38)
+    sceneTitle: cleanPromptText(item?.sceneTitle || item?.scene),
+    choiceText: cleanPromptText(item?.choiceText || item?.tag || item?.choice),
+    consequence: cleanPromptText(item?.consequence || item?.summary)
   }));
 }
 
@@ -1319,8 +1319,8 @@ function buildYearningStats(history = []) {
     .slice(-4)
     .map(item => ({
       year: Number(item?.year || 0) || 0,
-      choice: shortText(item?.choiceText || item?.choiceTag, 16),
-      consequence: shortText(item?.consequence, 28)
+      choice: cleanPromptText(item?.choiceText || item?.choiceTag),
+      consequence: cleanPromptText(item?.consequence)
     }));
   return {
     totalChoices: history.length,
@@ -1334,7 +1334,7 @@ function getRecentCallbacks(history = [], limit = 5) {
   [...history].reverse().forEach(item => {
     const seeds = Array.isArray(item?.callbackSeeds) ? item.callbackSeeds : [];
     seeds.forEach(seed => {
-      const value = shortText(seed, 16);
+      const value = cleanPromptText(seed);
       if (!value || seen.has(value) || out.length >= limit) return;
       seen.add(value);
       out.push(value);
@@ -1347,7 +1347,7 @@ function getRecentSceneTitles(history = [], limit = 8) {
   const seen = new Set();
   const out = [];
   [...history].reverse().forEach(item => {
-    const value = shortText(item?.sceneTitle || item?.scene, 18);
+    const value = cleanPromptText(item?.sceneTitle || item?.scene);
     if (!value || seen.has(value) || out.length >= limit) return;
     seen.add(value);
     out.push(value);
@@ -1356,7 +1356,7 @@ function getRecentSceneTitles(history = [], limit = 8) {
 }
 
 function describeTrack(history = [], key, fallback) {
-  const latest = [...history].reverse().map(item => shortText(item?.[key], 42)).find(Boolean);
+  const latest = [...history].reverse().map(item => cleanPromptText(item?.[key])).find(Boolean);
   return latest || fallback;
 }
 
@@ -1915,7 +1915,7 @@ function appearedRoleNames(history = []) {
   history.forEach(item => {
     if (Array.isArray(item?.appearedRoles)) {
       item.appearedRoles.forEach(role => {
-        const value = shortText(role, 10);
+        const value = cleanPromptText(role);
         if (value) names.add(value);
       });
     }
@@ -1946,9 +1946,9 @@ function introducedRolesHint(storyCast = defaultStoryCast, history = []) {
 function lastYearText(history = []) {
   const last = history.at(-1);
   if (!last) return "";
-  const title = shortText(last.sceneTitle || last.scene, 18);
-  const choice = shortText(last.choiceText || last.choiceTag || last.choice, 28);
-  const consequence = shortText(last.consequence || last.summary, 42);
+  const title = cleanPromptText(last.sceneTitle || last.scene);
+  const choice = cleanPromptText(last.choiceText || last.choiceTag || last.choice);
+  const consequence = cleanPromptText(last.consequence || last.summary);
   return `上一年：${title || "上一张牌"}；你选了${choice || "一个方向"}；结果${consequence || "局面继续推进"}`;
 }
 

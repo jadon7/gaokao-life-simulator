@@ -4975,7 +4975,7 @@
     function readableFixedOption(label, tag) {
       const text = String(label || "").trim();
       if (text.length >= 12) return text;
-      return `${text}，按${String(tag || "当前判断").slice(0, 6)}处理`;
+      return `${text}，按${String(tag || "当前判断")}处理`;
     }
 
     function buildFixedCard(yearNumber) {
@@ -6046,25 +6046,14 @@
       const leftSection = extractPartialObjectSection(text, "a", ["b"]);
       const rightSection = extractPartialObjectSection(text, "b", ["callbacks"]);
       return {
-        summary: clampStreamTextBySentence(extractPartialJsonString(text, "summary"), 52, 2),
-        lifeTrack: clampStreamTextBySentence(extractPartialJsonString(text, "lifeTrack"), 26, 1),
-        relationshipTrack: clampStreamTextBySentence(extractPartialJsonString(text, "relationshipTrack"), 34, 1),
-        sceneTitle: clampStreamTextBySentence(extractPartialJsonString(sceneSection, "title"), 10, 1),
+        summary: cleanStreamText(extractPartialJsonString(text, "summary")),
+        lifeTrack: cleanStreamText(extractPartialJsonString(text, "lifeTrack")),
+        relationshipTrack: cleanStreamText(extractPartialJsonString(text, "relationshipTrack")),
+        sceneTitle: cleanStreamText(extractPartialJsonString(sceneSection, "title")),
         sceneBody: cleanStreamText(extractPartialJsonString(sceneSection, "body")),
         leftLabel: normalizeStreamChoiceLabel(leftSection, "A"),
         rightLabel: normalizeStreamChoiceLabel(rightSection, "B")
       };
-    }
-
-    function clampStreamTextBySentence(value, maxLength, maxSentences = 1) {
-      const text = String(value || "").replace(/\s+/g, "").trim();
-      if (!text) return "";
-      const parts = text.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [text];
-      const joined = parts.slice(0, maxSentences).join("").replace(/[。！？!?；;]+$/g, "");
-      if (joined.length <= maxLength) return joined;
-      const clipped = joined.slice(0, maxLength);
-      const boundary = Math.max(clipped.lastIndexOf("，"), clipped.lastIndexOf("、"), clipped.lastIndexOf("："));
-      return (boundary >= Math.floor(maxLength * 0.55) ? clipped.slice(0, boundary) : clipped).replace(/[，、：。！？!?；;]+$/g, "");
     }
 
     function cleanStreamText(value) {
@@ -6079,7 +6068,7 @@
         .replace(new RegExp(`^${fallback}[.。]\\s*`), "")
         .replace(/\s+/g, "")
         .trim();
-      return text ? clampStreamTextBySentence(text, 18, 1) : "";
+      return text;
     }
 
     function extractPartialObjectSection(text, key, nextKeys = []) {
@@ -6221,8 +6210,8 @@
 
     function shortChoiceFeedback(tag, label) {
       const cleanTag = String(tag || "").trim();
-      if (cleanTag && cleanTag !== "A" && cleanTag !== "B") return `选了${cleanTag.slice(0, 6)}`;
-      const action = String(label || "").replace(/[。.!！?？]$/g, "").slice(0, 7);
+      if (cleanTag && cleanTag !== "A" && cleanTag !== "B") return `选了${cleanTag}`;
+      const action = String(label || "").replace(/[。.!！?？]$/g, "");
       return `选了${action || cleanTag || "这条路"}`;
     }
 
@@ -6279,8 +6268,7 @@
     function previousChoiceBrief(previousInfo) {
       return cleanFeedbackText(previousInfo?.choice || previousInfo?.choiceText || previousInfo?.tag || "")
         .replace(/[，,。.!！?？；;：:].*$/g, "")
-        .trim()
-        .slice(0, 7);
+        .trim();
     }
 
     function composePreviousFeedback(card, options = {}) {
@@ -6292,7 +6280,7 @@
         return track || modelFeedback || buildOffstageFallback(textCategories([card.eventTitle, card.scene, card.prompt].filter(Boolean).join("")));
       }
       const choice = previousChoiceBrief(previousInfo);
-      const previousOutcome = compactFeedbackPart(previousInfo.feedback || buildVisibleChoiceFeedback(previousInfo.choiceText, previousInfo.choiceKey), 44);
+      const previousOutcome = compactFeedbackPart(previousInfo.feedback || buildVisibleChoiceFeedback(previousInfo.choiceText, previousInfo.choiceKey));
       if (!includeChoice) return previousOutcome || modelFeedback;
       return [choice ? `你选了「${choice}」` : "上一轮选择", previousOutcome].filter(Boolean).join("，");
     }
@@ -6300,7 +6288,7 @@
     function previousFeedbackTitle(card, feedback = "") {
       const previousInfo = card.previous || reconstructPreviousInfo(card);
       const choice = previousChoiceBrief(previousInfo);
-      if (choice) return `选了${choice}`.slice(0, 8);
+      if (choice) return `选了${choice}`;
       const source = [previousInfo?.sceneTitle, previousInfo?.choice, previousInfo?.tag, feedback].filter(Boolean).join("，");
       const rules = [
         [/借钱|还款|钱包|金额/, "朋友借钱"],
@@ -6325,7 +6313,7 @@
         .replace(/[，。！？!?；;：:].*$/g, "")
         .replace(/你|自己|一次|一个/g, "")
         .trim();
-      return (title || "上一年回响").slice(0, 8);
+      return title || "上一年回响";
     }
 
     function previousFeedbackHTML(card) {
@@ -6459,21 +6447,12 @@
         .trim();
     }
 
-    function compactFeedbackPart(value, maxLength) {
+    function compactFeedbackPart(value) {
       const clean = cleanFeedbackText(value).replace(/[。.!！?？；;]+$/g, "").trim();
-      if (!clean || clean.length <= maxLength) return clean;
-      const clipped = clean.slice(0, maxLength);
-      const boundary = Math.max(
-        clipped.lastIndexOf("，"),
-        clipped.lastIndexOf("、"),
-        clipped.lastIndexOf("。"),
-        clipped.lastIndexOf("；")
-      );
-      return (boundary >= Math.floor(maxLength * 0.58) ? clipped.slice(0, boundary) : clipped).trim();
+      return clean;
     }
 
     function shortFeedbackText(value) {
-      const maxLength = 48;
       const clean = cleanFeedbackText(value)
         .replace(/你选了[「『“"']?[^」』”"'\s，。！？!?；;]{0,42}[」』”"']?[，。！？!?；;]?/g, "")
         .replace(/选了[「『“"']?[^」』”"'\s，。！？!?；;]{0,42}[」』”"']?[，。！？!?；;]?/g, "")
@@ -6482,35 +6461,15 @@
         .replace(/\b[AB][.。:：]\s*/g, "")
         .replace(/\s+/g, "");
       if (!clean) return "";
-      const pieces = clean.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [clean];
-      let result = "";
-      for (const piece of pieces) {
-        const next = `${result}${piece}`;
-        if (result && next.length > maxLength) break;
-        result = next;
-        if (result.length >= 36 && /[。！？!?；;]$/.test(result)) break;
-      }
-      if (!result) result = clean;
-      if (result.length > maxLength) {
-        const clipped = result.slice(0, maxLength);
-        const boundary = Math.max(
-          clipped.lastIndexOf("。"),
-          clipped.lastIndexOf("！"),
-          clipped.lastIndexOf("？"),
-          clipped.lastIndexOf("；"),
-          clipped.lastIndexOf("，")
-        );
-        result = boundary >= 28 ? clipped.slice(0, boundary + 1) : clipped;
-      }
-      return result.replace(/[。.!！?？；;]+$/g, "").trim();
+      return clean.replace(/[。.!！?？；;]+$/g, "").trim();
     }
 
     function composeNextHeader(choiceFeedback, modelSummary = "") {
       const summary = briefHeaderText(modelSummary);
       const choice = briefHeaderText(choiceFeedback);
-      if (!summary) return `上年：${choice || "这一年留下了新后果"}`.slice(0, 48);
+      if (!summary) return `上年：${choice || "这一年留下了新后果"}`;
       const suffix = choice ? `｜${choice}` : "";
-      return `上年：${summary}${suffix}`.slice(0, 96);
+      return `上年：${summary}${suffix}`;
     }
 
     function briefHeaderText(value) {
@@ -6519,8 +6478,7 @@
         .replace(/^[^：:]{1,6}[:：]\s*/, "")
         .replace(/[明暗]线/g, "")
         .replace(/[。.!！?？]+$/g, "")
-        .trim()
-        .slice(0, 70);
+        .trim();
     }
 
     function applyFeedbackToNextCard(card, chosen) {
@@ -7144,9 +7102,7 @@
     }
 
     function conciseChoiceTitle(value) {
-      const raw = String(value || "").trim();
-      const first = raw.split(/[，,。.!！?？；;]/).map(item => item.trim()).find(Boolean) || raw;
-      return first.length > 7 ? first.slice(0, 7) : first;
+      return String(value || "").trim();
     }
 
     function escapeRegExp(value) {
@@ -8475,14 +8431,9 @@
 
     function resultStatusHTML(text) {
       const raw = String(text || "").trim();
-      const parts = raw.match(/[^。！？!?]+[。！？!?]?/g) || [raw || "这一局结果正在整理。"];
-      const lead = parts.shift() || raw;
-      const tags = parts.join("").match(/[^，。！？!?；;]+[，。！？!?；;]?/g) || [];
-      const compactTags = tags.slice(0, 2).map(item => item.replace(/[。！？!?；;]+$/g, "").trim()).filter(Boolean);
       return `
         <span class="result-status">
-          <span class="result-status-lead">${escapeHTML(lead.replace(/[。！？!?]+$/g, ""))}</span>
-          ${compactTags.length ? `<span class="result-status-tags">${compactTags.map(item => `<span class="result-status-tag">${escapeHTML(item)}</span>`).join("")}</span>` : ""}
+          <span class="result-status-lead">${escapeHTML(raw || "这一局结果正在整理。")}</span>
         </span>
       `;
     }
@@ -8514,12 +8465,12 @@
     function normalizeResultStatus(status, scenes = []) {
       const raw = String(status || "").replace(/\s+/g, "").trim();
       const highLight = scenes.find(scene => scene?.title)?.title || "几次救场";
-      if (!raw) return `靠${highLight.slice(0, 8)}混成靠谱大人，手机静音也会心虚。`;
+      if (!raw) return `靠${highLight}混成靠谱大人，手机静音也会心虚。`;
       const cleaned = raw
         .replace(/^你走了\d+年[，,]?/, "")
         .replace(/^从[^，。！？!?；;]{2,24}到[^，。！？!?；;]{2,24}[，,]?/, "")
         .replace(/18年/g, "这些年");
-      return cleaned || `靠${highLight.slice(0, 8)}混成靠谱大人，手机静音也会心虚`;
+      return cleaned || `靠${highLight}混成靠谱大人，手机静音也会心虚`;
     }
 
     let resultImageModulePromise = null;

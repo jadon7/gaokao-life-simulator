@@ -1,0 +1,3 @@
+[   14994ms] [INFO] [gaokao] /api/game/start model: deepseek-v4-flash {transport: stream} @ https://gaokao.dsxzai.com/?t=runtime-fix-20260618:5438
+[   19885ms] [INFO] [gaokao] /api/game/next model: deepseek-v4-flash {transport: fetch} @ https://gaokao.dsxzai.com/?t=runtime-fix-20260618:5438
+[   19959ms] [INFO] [gaokao] /api/game/next model: deepseek-v4-flash {transport: fetch} @ https://gaokao.dsxzai.com/?t=runtime-fix-20260618:5438

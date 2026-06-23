@@ -1,0 +1,3 @@
+[   13901ms] [INFO] [gaokao] /api/game/start model: deepseek-v4-flash {transport: stream} @ http://127.0.0.1:8765/:5438
+[   13907ms] [INFO] [gaokao] /api/game/next model: deepseek-v4-flash (degraded) {transport: fetch} @ http://127.0.0.1:8765/:5438
+[   13908ms] [INFO] [gaokao] /api/game/next model: deepseek-v4-flash (degraded) {transport: fetch} @ http://127.0.0.1:8765/:5438

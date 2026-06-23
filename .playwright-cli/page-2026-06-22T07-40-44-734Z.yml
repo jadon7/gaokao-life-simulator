@@ -1,0 +1,22 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - region "高考人生模拟器入口页" [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: 从 18 岁出发
+        - generic [ref=e7]:
+          - heading "人生不是预制菜 给未来的人生验验牌" [level=1] [ref=e8]:
+            - generic [ref=e9]: 人生不是预制菜
+            - generic [ref=e10]: 给未来的人生验验牌
+          - paragraph [ref=e11]: 完成 18 次选择，体验不一样的人生
+      - generic "选择性别" [ref=e12]:
+        - radiogroup "性别" [ref=e14]:
+          - radio "男生" [checked] [ref=e15] [cursor=pointer]:
+            - generic [ref=e17]: 男生
+          - radio "女生" [ref=e18] [cursor=pointer]:
+            - generic [ref=e20]: 女生
+      - generic [ref=e21]:
+        - textbox "怎么称呼你?(可选）" [ref=e22]
+        - button "生成我的开局" [ref=e23] [cursor=pointer]
+      - paragraph [ref=e24]: 结果仅供互动娱乐与专业理解参考，不构成志愿填报建议，不评价专业好坏，不替用户做决定。
+  - generic:
+    - checkbox

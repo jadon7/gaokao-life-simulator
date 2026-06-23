@@ -432,6 +432,31 @@ async function sendAnnualStream(res, { pathname, profile, history, body, model, 
   }
 }
 
+async function sendResultStream(res, { profile, history, model, debug = false, clientSignal = null }) {
+  res.writeHead(200, {
+    "content-type": "application/x-ndjson; charset=utf-8",
+    "cache-control": "no-store",
+    "x-content-type-options": "nosniff"
+  });
+  sendNdjson(res, { type: "meta", model });
+  try {
+    const result = await callModel(
+      buildResultMessages({ profile, history }),
+      validateResult,
+      model,
+      text => sendNdjson(res, { type: "delta", text }),
+      debug,
+      () => sendNdjson(res, { type: "reset" }),
+      clientSignal
+    );
+    sendNdjson(res, { type: "done", ok: true, model, degraded: !!result.degraded, result, ...debugField(result) });
+  } catch (error) {
+    sendNdjson(res, { type: "error", ok: false, error: error.message || "Request failed" });
+  } finally {
+    res.end();
+  }
+}
+
 function shouldProxyPromptLabRealRequest(req, pathname) {
   return mockMode && req.headers["x-prompt-lab-real"] === "1" && /^\/api\/game\/(?:start|next|batch|result)$/.test(pathname);
 }
@@ -533,10 +558,14 @@ function optionalCleanText(value) {
   return String(value || "").trim();
 }
 
+function stripYearPrefix(value) {
+  return String(value || "").replace(/^第\s*[\d一二三四五六七八九十]+\s*年(?!级)[\s·•・:：，,。.、\-—_|]*/, "").trim();
+}
+
 function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
-      title: optionalCleanText(value.title),
+      title: stripYearPrefix(value.title),
       body: cleanSceneBody(value.body)
     };
   }
@@ -731,7 +760,7 @@ function normalizeResultBlocks(value, count, normalizer) {
 
 function normalizeSceneCardBlock(item, index) {
   if (item && typeof item === "object" && !Array.isArray(item)) {
-    const title = optionalCleanText(item.title || item.headline || item.name);
+    const title = stripYearPrefix(item.title || item.headline || item.name);
     const body = optionalCleanText(item.body || item.desc || item.text);
     if (title || body) return { title: title || `第 ${index + 1} 个片段`, body: body || title };
   }
@@ -1092,6 +1121,11 @@ async function handleApi(req, res, pathname) {
 
     if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
       await sendAnnualStream(res, { pathname, profile, history, body, model: requestModel, debug: promptLabDebug, clientSignal });
+      return;
+    }
+
+    if (pathname === "/api/game/result/stream") {
+      await sendResultStream(res, { profile, history, model: requestModel, debug: promptLabDebug, clientSignal });
       return;
     }
 

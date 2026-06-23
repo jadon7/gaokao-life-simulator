@@ -384,6 +384,40 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
   });
 }
 
+function resultStreamResponse({ profile, history, env, model, debug = false, clientSignal = null }) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = data => controller.enqueue(encoder.encode(`${JSON.stringify(data)}\n`));
+      send({ type: "meta", model });
+      try {
+        const result = await callModel(
+          buildResultMessages({ profile, history }),
+          validateResult,
+          env,
+          model,
+          text => send({ type: "delta", text }),
+          debug,
+          () => send({ type: "reset" }),
+          clientSignal
+        );
+        send({ type: "done", ok: true, model, degraded: !!result.degraded, result, ...debugField(result) });
+      } catch (error) {
+        send({ type: "error", ok: false, error: error.message || "Request failed" });
+      } finally {
+        controller.close();
+      }
+    }
+  });
+  return new Response(stream, {
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff"
+    }
+  });
+}
+
 function isPromptLabDebugRequest(request) {
   return request.headers.get("x-prompt-lab-real") === "1" || request.headers.get("x-prompt-lab-debug") === "1";
 }
@@ -474,10 +508,14 @@ function optionalCleanText(value) {
     .trim();
 }
 
+function stripYearPrefix(value) {
+  return String(value || "").replace(/^第\s*[\d一二三四五六七八九十]+\s*年(?!级)[\s·•・:：，,。.、\-—_|]*/, "").trim();
+}
+
 function normalizeSceneData(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return {
-      title: optionalCleanText(value.title),
+      title: stripYearPrefix(optionalCleanText(value.title)),
       body: cleanSceneBody(value.body)
     };
   }
@@ -672,7 +710,7 @@ function normalizeResultBlocks(value, count, normalizer) {
 
 function normalizeSceneCardBlock(item, index) {
   if (item && typeof item === "object" && !Array.isArray(item)) {
-    const title = optionalCleanText(item.title || item.headline || item.name);
+    const title = stripYearPrefix(optionalCleanText(item.title || item.headline || item.name));
     const body = optionalCleanText(item.body || item.desc || item.text);
     if (title || body) return { title: title || `第 ${index + 1} 个片段`, body: body || title };
   }
@@ -1021,6 +1059,10 @@ async function handleApi(request, env, pathname) {
   try {
     if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
       return annualStreamResponse({ pathname, profile, history, body, env, model, debug: promptLabDebug, clientSignal: request.signal });
+    }
+
+    if (pathname === "/api/game/result/stream") {
+      return resultStreamResponse({ profile, history, env, model, debug: promptLabDebug, clientSignal: request.signal });
     }
 
     if (pathname === "/api/game/start") {

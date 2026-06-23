@@ -1,0 +1,7 @@
+[      74ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8765/favicon.ico:0
+[   27247ms] [INFO] [gaokao] /api/game/start model: deepseek-v4-flash {transport: stream} @ http://127.0.0.1:8765/:5440
+[   27252ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8765/assets/character_scenes/male/%E7%94%B71/year_01/scene_01.webp:0
+[   27252ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8765/assets/character_scenes/male/%E7%94%B71/year_02/scene_02.webp:0
+[   27252ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8765/assets/character_scenes/male/%E7%94%B71/year_03/scene_03.webp:0
+[   27257ms] [INFO] [gaokao] /api/game/next model: deepseek-v4-flash (degraded) {transport: fetch} @ http://127.0.0.1:8765/:5440
+[   27258ms] [INFO] [gaokao] /api/game/next model: deepseek-v4-flash (degraded) {transport: fetch} @ http://127.0.0.1:8765/:5440

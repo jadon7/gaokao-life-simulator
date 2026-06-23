@@ -1,0 +1,244 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - region "用户基础信息" [ref=e33]:
+      - generic [ref=e34]:
+        - heading "你希望怎么开局？" [level=1] [ref=e36]
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - radiogroup "意向专业方向":
+              - radio "计算机科学与技术 代码、数据与系统思维" [checked] [ref=e39] [cursor=pointer]:
+                - img [ref=e41]
+                - generic [ref=e50]:
+                  - generic [ref=e51]: 计算机科学与技术
+                  - generic [ref=e52]: 代码、数据与系统思维
+              - radio "数据科学与大数据技术 代码、数据与系统思维" [ref=e53] [cursor=pointer]:
+                - img [ref=e55]
+                - generic [ref=e64]:
+                  - generic [ref=e65]: 数据科学与大数据技术
+                  - generic [ref=e66]: 代码、数据与系统思维
+              - radio "信息安全 代码、数据与系统思维" [ref=e67] [cursor=pointer]:
+                - img [ref=e69]
+                - generic [ref=e76]:
+                  - generic [ref=e77]: 信息安全
+                  - generic [ref=e78]: 代码、数据与系统思维
+              - radio "电子信息工程 芯片、信号与智能硬件" [ref=e79] [cursor=pointer]:
+                - img [ref=e81]
+                - generic [ref=e88]:
+                  - generic [ref=e89]: 电子信息工程
+                  - generic [ref=e90]: 芯片、信号与智能硬件
+              - radio "微电子科学与工程 芯片、信号与智能硬件":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 微电子科学与工程
+                  - generic: 芯片、信号与智能硬件
+              - radio "电气工程及其自动化 电网、控制与能源系统":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 电气工程及其自动化
+                  - generic: 电网、控制与能源系统
+              - radio "自动化 控制、系统与机器协作":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 自动化
+                  - generic: 控制、系统与机器协作
+              - radio "机械设计制造及其自动化 图纸、产线与工程实作":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 机械设计制造及其自动化
+                  - generic: 图纸、产线与工程实作
+              - radio "车辆工程 图纸、产线与工程实作":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 车辆工程
+                  - generic: 图纸、产线与工程实作
+              - radio "新能源科学与工程 新能源、效率与未来产业":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 新能源科学与工程
+                  - generic: 新能源、效率与未来产业
+              - radio "飞行器设计与工程 飞行器、精密与硬核工程":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 飞行器设计与工程
+                  - generic: 飞行器、精密与硬核工程
+              - radio "生物医学工程 医学、设备与工程交叉":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 生物医学工程
+                  - generic: 医学、设备与工程交叉
+              - radio "土木工程 结构、现场与城市基建":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 土木工程
+                  - generic: 结构、现场与城市基建
+              - radio "建筑学 空间、图纸与审美判断":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 建筑学
+                  - generic: 空间、图纸与审美判断
+              - radio "材料科学与工程 材料、实验与产业应用":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 材料科学与工程
+                  - generic: 材料、实验与产业应用
+              - radio "化学工程与工艺 流程、实验与规模化生产":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 化学工程与工艺
+                  - generic: 流程、实验与规模化生产
+              - radio "临床医学 白大褂、病人和长期训练":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 临床医学
+                  - generic: 白大褂、病人和长期训练
+              - radio "口腔医学 诊室、手感与细节判断":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 口腔医学
+                  - generic: 诊室、手感与细节判断
+              - radio "中医学 方剂、辨证与传统经验":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 中医学
+                  - generic: 方剂、辨证与传统经验
+              - radio "药学 剂量、药物与安全边界":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 药学
+                  - generic: 剂量、药物与安全边界
+              - radio "护理学 照护、流程与临床陪伴":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 护理学
+                  - generic: 照护、流程与临床陪伴
+              - radio "法学 法条、证据与公平":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 法学
+                  - generic: 法条、证据与公平
+              - radio "思想政治教育 表达、课堂与公共议题":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 思想政治教育
+                  - generic: 表达、课堂与公共议题
+              - radio "小学教育 讲台、学生与成长":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 小学教育
+                  - generic: 讲台、学生与成长
+              - radio "汉语言文学 文字、表达与文本判断":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 汉语言文学
+                  - generic: 文字、表达与文本判断
+              - radio "新闻学 采访、现场与公共表达":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 新闻学
+                  - generic: 采访、现场与公共表达
+              - radio "数学与应用数学 公式、证明与抽象能力":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 数学与应用数学
+                  - generic: 公式、证明与抽象能力
+              - radio "应用心理学 行为、人心与助人方法":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 应用心理学
+                  - generic: 行为、人心与助人方法
+              - radio "金融学 资本、风险与判断":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 金融学
+                  - generic: 资本、风险与判断
+              - radio "会计学 报表、流程与组织秩序":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 会计学
+                  - generic: 报表、流程与组织秩序
+              - radio "哲学 问题、逻辑与思辨":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 哲学
+                  - generic: 问题、逻辑与思辨
+              - radio "逻辑学 问题、逻辑与思辨":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 逻辑学
+                  - generic: 问题、逻辑与思辨
+              - radio "历史学 史料、现场与时间感":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 历史学
+                  - generic: 史料、现场与时间感
+              - radio "考古学 史料、现场与时间感":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 考古学
+                  - generic: 史料、现场与时间感
+              - radio "农学 土地、作物与长期照看":
+                - generic:
+                  - img
+                - generic:
+                  - generic: 农学
+                  - generic: 土地、作物与长期照看
+              - radio "动物医学 动物、病例与临床判断" [ref=e91] [cursor=pointer]:
+                - img [ref=e93]
+                - generic [ref=e104]:
+                  - generic [ref=e105]: 动物医学
+                  - generic [ref=e106]: 动物、病例与临床判断
+              - radio "视觉传达设计 视觉、作品与审美表达" [ref=e107] [cursor=pointer]:
+                - img [ref=e109]
+                - generic [ref=e118]:
+                  - generic [ref=e119]: 视觉传达设计
+                  - generic [ref=e120]: 视觉、作品与审美表达
+              - radio "音乐学 舞台、练习与声音表达" [ref=e121] [cursor=pointer]:
+                - img [ref=e123]
+                - generic [ref=e128]:
+                  - generic [ref=e129]: 音乐学
+                  - generic [ref=e130]: 舞台、练习与声音表达
+          - generic [ref=e131]: 选择你想要的专业
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - textbox "期望省份" [ref=e134]
+            - textbox "高考分数" [ref=e135]
+          - generic [ref=e136]:
+            - generic [ref=e137]: 你期望
+            - radiogroup "你期望" [ref=e138]:
+              - radio "稳定且体面" [checked] [ref=e139] [cursor=pointer]
+              - radio "尽快赚钱" [ref=e140] [cursor=pointer]
+              - radio "考研深造" [ref=e141] [cursor=pointer]
+              - radio "自由探索" [ref=e142] [cursor=pointer]
+        - button "开始验牌" [ref=e144] [cursor=pointer]
+  - generic:
+    - checkbox

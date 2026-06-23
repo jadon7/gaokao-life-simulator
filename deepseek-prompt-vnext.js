@@ -471,7 +471,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 
 长度：
 - summary 20-42 字；lifeTrack 12-22 字；relationshipTrack 14-30 字，格式“阶段：具体信号”。
-- scene.title 5-8 字；scene.body 约 50-70 字，三句以内。
+- scene.title 10 字内、白话清晰；scene.body 约 50-70 字，三句以内。
 - A/B label 8-16 字，tag 2-4 字，consequence 12-28 字。
 
 剧情：
@@ -670,16 +670,16 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
 风格：面向 18 岁用户，大白话，轻松具体，不像职业建议报告；所有结论必须来自输入 historyDigest/evidence/hollandSummary。
 
 规则：
-- title 是三段式人生标签，用中文逗号自然分隔，按 history 提炼，不做字数硬限制。
+- title 三段式称号，中文逗号分隔成 3 段：①精神状态 ②现实处境或代价 ③职业身份，每段 4-7 字，形如“嘴硬心软，项目救场，AI产品策划”；按 history 提炼、不照抄示例，口吻像朋友“这不就是你吗”。
 - status42 24-36 字，写 18 年后的状态，含一个高光/代价/关系余味，不重复 title 职业。
 - majorCareerNote 解释“初始专业 + 关键选择 + RIASEC”如何导向职业。
-- careerPossibilities 给 3 个差异明显的出口；同专业下也要区分稳定组织、市场化岗位、表达/产品/研究等路线。
+- careerPossibilities 给 3 个差异明显的出口（稳定组织 / 市场化 / 表达·产品·研究等）；label 只写职位名、≤6 字、不带机构或领域前缀（如“主治医师”“产品经理”“科普作者”）。
 - 数组数量必须完整：careerPossibilities 3 条，famousScenes 3 条，timelineBlocks 3 条，shareHooks 2 条；每个 title/body/label 都不能为空。
-- famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence。
-- timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价。
+- famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence；title 10 字内、白话清晰。
+- timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价；title 标年龄段。
 - letter18 做回顾收尾：回收 18 年里最关键的收获/代价，再给 18 岁自己一句话。
 - innerYearning 写“真实的你”：keyword 按 history 自行提炼；core 点破向往；evidence 引用选择或关键年；sacrifice 写为此放弃了什么；temperament 写选择时的底色。
-- 不要排名、贬损、疾病化判断、性别/专业刻板标签；禁用旧示例词：嘴硬心软/存款能打/账本漂亮。
+- 不要排名、贬损、疾病化判断、性别/专业刻板标签。
 
 输入数据：
 {{INPUT_JSON}}
@@ -694,6 +694,13 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
     { "percent": 0, "label": "" },
     { "percent": 0, "label": "" }
   ],
+  "innerYearning": {
+    "keyword": "",
+    "core": "",
+    "evidence": "",
+    "sacrifice": "",
+    "temperament": ""
+  },
   "famousScenes": [
     { "title": "", "body": "" },
     { "title": "", "body": "" },
@@ -704,17 +711,10 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
     { "title": "", "body": "" },
     { "title": "", "body": "" }
   ],
+  "shareHooks": ["", ""],
   "choiceHabit": { "title": "", "body": "" },
   "mentalPrep": { "title": "", "body": "" },
-  "letter18": { "title": "", "body": "" },
-  "innerYearning": {
-    "keyword": "",
-    "core": "",
-    "evidence": "",
-    "sacrifice": "",
-    "temperament": ""
-  },
-  "shareHooks": ["", ""]
+  "letter18": { "title": "", "body": "" }
 }`;
 
 const outlineCards = outlineData.acts.flatMap(act => act.cards.map(card => ({
@@ -2219,9 +2219,9 @@ export function buildResultInput({ profile, history, totalGameYears = 18, finalR
       topCallbacks: getRecentCallbacks(history, 4),
       dominantTheme: dominantTheme(history),
       titleFormulaHints: {
-        emotionalState: "从 history 的关系处理、抗压、人际沟通、最高/最低 RIASEC 项里提炼",
-        realityState: "从商业机会、行业周期、稳定性、收入与生活代价里提炼",
-        careerOutlet: "必须由 profile.major / profile.majorLabel 和 history 的长期选择收敛出具体职业"
+        emotionalState: "精神状态/性格，从关系、抗压、沟通、RIASEC 提炼，例 嘴硬心软、清醒内耗",
+        realityState: "现实处境/代价，从机会、行业周期、收入与生活代价提炼，例 项目救场、副业回血",
+        careerOutlet: "职业身份，必须由 major/majorLabel 与长期选择收敛成具体职业，例 AI产品策划、升学规划师"
       }
     }
   };

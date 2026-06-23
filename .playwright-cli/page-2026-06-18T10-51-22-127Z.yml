@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - region "卡牌决策区" [ref=e145]:
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - generic [ref=e148]:
+            - generic [ref=e149]: 高考人生模拟器
+            - generic [ref=e150]:
+              - generic [ref=e151]: 18岁
+              - generic [ref=e152]: ·1/18年
+          - button "返回上一题" [disabled] [ref=e153]
+        - generic "答题进度" [ref=e154]
+      - generic [ref=e156]:
+        - article [ref=e157]:
+          - heading "登录页又红了" [level=3] [ref=e159]
+          - paragraph [ref=e161]: 周四23:10，机房电脑上的登录页又弹红字，你负责的模块还没跑通，明天大厂工程师技术沙龙，赵老师看过你的提问稿，点名让你代表新生发问。黑长直学霸予宁把键盘推回你手边：“你去顺问题吧，我先盯着页面。”她说得镇定，可报错框还在一遍遍刷新。
+          - generic [ref=e162]:
+            - button "准备提问 去顺技术沙龙问题，把报错交给小组" [ref=e163] [cursor=pointer]:
+              - generic [ref=e164]: 准备提问
+              - generic [ref=e165]: 去顺技术沙龙问题，把报错交给小组
+            - button "修完登录 留下排查登录页，放弃沙龙提问" [ref=e166] [cursor=pointer]:
+              - generic [ref=e167]: 修完登录
+              - generic [ref=e168]: 留下排查登录页，放弃沙龙提问
+        - article
+        - article
+  - generic:
+    - checkbox

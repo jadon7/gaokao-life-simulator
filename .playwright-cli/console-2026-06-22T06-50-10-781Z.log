@@ -1,0 +1,1 @@
+[      42ms] [INFO] [gaokao] /api/game/result model: deepseek-v4-flash (degraded) {transport: fetch} @ http://127.0.0.1:8765/?flow=result:6041

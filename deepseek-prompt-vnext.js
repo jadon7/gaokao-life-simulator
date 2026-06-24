@@ -479,6 +479,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 有 stateHints.reliefMode 时，scene 第一落点写被认可、关系稳定、做成事、收到感谢、获得技能或发现喜欢方向。
 {{OPENING_PROMPT}}
 - 按 stateHints.timeFrame / careerRoute 判断阶段；题面不写当前年份、当前年龄。
+- careerRoute=已毕业工作/直接就业 时，scene 写岗位、客户、团队、收入、城市，不写校园、学院、课程、奖学金、导师、室友。
 - 按 stateHints.routeState 承接选择惯性。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 有 stateHints.currentIncident 时，scene.body 以它为本年事件。
@@ -544,6 +545,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - pressureMode=relief 时：第一句给明确好结果；选项只承接收获，如继续/休整、放大/打磨、稳定/边界。
 - 有 stateHints.reliefMode 时，scene 第一落点写被认可、关系稳定、做成事、收到感谢、获得技能或发现喜欢方向。
 - 每张卡按 stateHints.timeFrame / careerRoute 判断阶段；题面不写当前年份、当前年龄。
+- careerRoute=已毕业工作/直接就业 时，scene 写岗位、客户、团队、收入、城市，不写校园、学院、课程、奖学金、导师、室友。
 - 每张卡按 stateHints.routeState 承接选择惯性。
 - lifeTrack 写本年新状态。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
@@ -1250,7 +1252,13 @@ function randomizedStoryCardForYear(year = 1, context = {}) {
   const currentYear = Number(year || 1);
   const history = context?.history || [];
   const profile = context?.profile || {};
-  const eligible = randomizedStoryEventCards.filter(card => currentYear >= card.minYear && currentYear <= card.maxYear);
+  const educationState = educationStateHint(history, profile);
+  const campusOnlyCardIds = new Set(["scholarship_recognition", "club_competition", "roommate_split"]);
+  const eligible = randomizedStoryEventCards.filter(card => {
+    if (currentYear < card.minYear || currentYear > card.maxYear) return false;
+    if (currentYear >= 5 && ["已放弃考研", "已直接就业"].includes(educationState) && campusOnlyCardIds.has(card.id)) return false;
+    return true;
+  });
   if (!eligible.length) return null;
   const ordered = eligible
     .map(card => ({ card, score: storyCardScore(card, currentYear, history, profile) }))
@@ -2574,19 +2582,26 @@ function lifeStageHint(year = 1, history = [], profile = {}) {
 
 function educationStateHint(history = [], profile = {}) {
   if (isDirectWorkProfile(profile)) return "已直接就业";
-  const text = history.map(item => [
+  const rows = history.map(item => [
+    Number(item?.year || 0) || 0,
     item?.sceneTitle,
     item?.summary,
     item?.choiceTag,
+    item?.tag,
+    item?.choice,
     item?.choiceText,
     item?.consequence,
     item?.lifeTrack
-  ].filter(Boolean).join(" ")).join(" ");
-  if (/放弃考研|退出考研|搁置考研|推掉考研|不考研|复习群沉底|项目压过复习|抢项目机会/.test(text)) {
-    return "已放弃考研";
-  }
-  if (/继续读研|继续考研|锁定考研|锁定备考|备考窗口|完整备考|考研上岸|保研成功|读研|研究生|复试|录取|深造/.test(text)) {
-    return "继续读研";
+  ].filter(Boolean).join(" "));
+  for (const text of [...rows].reverse()) {
+    const hasStudyContext = /考研|保研|备考|复习|绩点/.test(text);
+    const hasWorkTurn = /放弃考研|退出考研|搁置考研|推掉考研|不考研|不读研|不继续读研|不走读研|放弃读研|放弃.*备考|暂缓备考|暂停备考|复习群沉底|备考当背景|项目压过复习|复习.*(?:放到后面|放下|暂时|沉底)|抢项目|冲项目|接项目|先去做项目|项目跑起来|投实习|投岗位|校招|找工作/.test(text);
+    if (hasWorkTurn && (hasStudyContext || Number(text.match(/^\d+/)?.[0] || 0) <= 6)) {
+      return "已放弃考研";
+    }
+    if (/继续读研|继续考研|锁定考研|锁定备考|闭门学|备考窗口|完整备考|考研上岸|保研成功|复习表终于|退掉.*项目|读研|研究生|复试|录取|深造/.test(text)) {
+      return "继续读研";
+    }
   }
   return "";
 }

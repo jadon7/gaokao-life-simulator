@@ -674,7 +674,7 @@ export const vNextResultTaskPrompt = `生成 18 张牌结束后的结果页 JSON
 - title 三段式称号，中文逗号分隔成 3 段：①精神状态 ②现实处境或代价 ③职业身份，每段 4-7 字，形如“嘴硬心软，项目救场，AI产品策划”；按 history 提炼、不照抄示例，口吻像朋友“这不就是你吗”。
 - status42 24-36 字，写 18 年后的状态，含一个高光/代价/关系余味，不重复 title 职业。
 - majorCareerNote 解释“初始专业 + 关键选择 + RIASEC”如何导向职业。
-- careerPossibilities 给 3 个差异明显的出口（稳定组织 / 市场化 / 表达·产品·研究等）；label 只写职位名、≤6 字、不带机构或领域前缀（如“主治医师”“产品经理”“科普作者”）。
+- careerPossibilities 给 3 个差异明显的出口（稳定组织 / 市场化 / 表达·产品·研究等）；percent 按 hollandSummary.scores 和 history 证据拉开，三项合计约 100，不套固定数字；label 只写职位名、≤6 字、不带机构或领域前缀（如“主治医师”“产品经理”“科普作者”）。
 - 数组数量必须完整：careerPossibilities 3 条，famousScenes 3 条，timelineBlocks 3 条，shareHooks 2 条；每个 title/body/label 都不能为空。
 - famousScenes 至少 2 条追溯 evidence 里的 sceneTitle/choiceText/consequence；title 10 字内、白话清晰。
 - timelineBlocks 覆盖前期/中期/后期，第二段必须回收第 8-15 年的关键代价；title 标年龄段。

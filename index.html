@@ -8866,9 +8866,82 @@
       ].join("，");
     }
 
+    const careerLabelTypeRules = {
+      R: /工程|技术|硬件|建筑|制造|设备|临床|实作|实操|研发|施工|运维|产品工程|主治|医生/,
+      I: /研究|分析|算法|数据|科研|实验|建模|统计|策略|咨询|诊断|调研|风控模型/,
+      A: /设计|内容|创意|作者|策划|编导|媒体|品牌|视觉|交互|写作|科普|作品|导演/,
+      S: /教师|教育|咨询|心理|用户研究|培训|医疗服务|护理|社工|公益|社群|服务|沟通/,
+      E: /经理|产品|运营|创业|商务|市场|销售|管理|合伙|负责人|增长|项目统筹|法律商务/,
+      C: /会计|审计|财务|合规|法务|风控|公务员|行政|流程|运营管理|数据运营|内控|档案/
+    };
+
+    function inferCareerCodeFromLabel(label, fallbackCode = "I") {
+      const text = String(label || "");
+      const scored = Object.entries(careerLabelTypeRules)
+        .map(([code, pattern]) => ({ code, score: (text.match(pattern) || []).length }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+      return scored[0]?.code || fallbackCode;
+    }
+
+    function careerPercentSeed() {
+      return [
+        majorLabel(),
+        ...state.history.map(item => [
+          item.year,
+          item.choiceText || item.choice || item.tag || "",
+          Object.entries(item.holland || {}).map(([key, value]) => `${key}${Number(value) || 0}`).join("")
+        ].join(":"))
+      ].join("|");
+    }
+
+    function distributeCareerPercents(weights) {
+      const base = weights.map(value => Math.max(0.03, Number(value) || 0.03));
+      const total = base.reduce((sum, value) => sum + value, 0) || 1;
+      const raw = base.map(value => clamp((value / total) * 100, 12, 62));
+      let rounded = raw.map(Math.round);
+      let diff = 100 - rounded.reduce((sum, value) => sum + value, 0);
+      let guard = 0;
+      while (diff !== 0 && guard < 120) {
+        const direction = diff > 0 ? 1 : -1;
+        const candidates = rounded
+          .map((value, index) => ({ index, value, weight: base[index], room: direction > 0 ? 62 - value : value - 12 }))
+          .filter(item => item.room > 0)
+          .sort((a, b) => direction > 0 ? b.weight - a.weight : a.weight - b.weight);
+        if (!candidates.length) break;
+        rounded[candidates[0].index] += direction;
+        diff -= direction;
+        guard += 1;
+      }
+      return rounded;
+    }
+
+    function normalizeCareerPercentMatches(matches = []) {
+      const cleaned = matches
+        .slice(0, 3)
+        .map(item => ({ ...item, label: normalizeCareerLabel(item.label) }))
+        .filter(item => item.label);
+      if (cleaned.length < 3) return cleaned;
+      const summary = getHollandSummaryData();
+      const scores = summary.scores || {};
+      const rankCodes = (summary.rank || []).map(([code]) => code).filter(code => hollandTypes[code]);
+      const seed = careerPercentSeed();
+      const totalScore = Math.max(Object.values(scores).reduce((sum, value) => sum + (Number(value) || 0), 0), 1);
+      const weights = cleaned.map((item, index) => {
+        const code = inferCareerCodeFromLabel(item.label, rankCodes[index] || rankCodes[0] || "I");
+        const rankIndex = rankCodes.indexOf(code);
+        const scoreShare = (Number(scores[code]) || 0) / totalScore;
+        const rankBoost = [0.14, 0.09, 0.05, 0.02, 0, -0.01][rankIndex] || 0;
+        const jitter = ((hashString(`${seed}:${item.label}:${code}:${index}`) % 17) - 8) / 100;
+        return Math.max(0.05, scoreShare + rankBoost + jitter);
+      });
+      const percents = distributeCareerPercents(weights);
+      return cleaned.map((item, index) => ({ ...item, percent: `${percents[index]}%` }));
+    }
+
     function careerProbabilityHTML(text, possibilities = null) {
       const raw = String(text || "").trim();
-      const matches = Array.isArray(possibilities) && possibilities.length
+      const rawMatches = Array.isArray(possibilities) && possibilities.length
         ? possibilities.slice(0, 3).map(item => ({
           percent: formatCareerPercent(item.percent),
           label: normalizeCareerLabel(item.label)
@@ -8879,6 +8952,7 @@
             percent: `${match[1]}%`,
             label: normalizeCareerLabel(match[2])
           }));
+      const matches = normalizeCareerPercentMatches(rawMatches);
       const summary = careerSummaryText(raw, matches);
       if (matches.length < 3) {
         return `<div class="career-probability"><p class="career-summary">${escapeHTML(summary || raw)}</p></div>`;

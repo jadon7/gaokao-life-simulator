@@ -1376,9 +1376,6 @@
       filter: none;
     }
 
-    /* 流式生成期间隐藏操作按钮，避免分享到不完整结果 */
-    .result-card.is-streaming .result-actions { display: none; }
-
     /* 结果页卡片轻微倾斜，自上而下依次 +1° / -1° */
     #resultOverview .glass-section { transform: rotate(1deg); }
     #resultInsights .ability-section { transform: rotate(-1deg); }
@@ -1471,8 +1468,7 @@
     }
 
     /* 结果就绪后：结果信息与各段文案一起错峰淡入 */
-    .result-card.is-loading .result-eyebrow,
-    .result-card.is-loading .result-actions {
+    .result-card.is-loading .result-eyebrow {
       display: none;
     }
 
@@ -2127,6 +2123,12 @@
 
     .result-actions button:active {
       transform: translateY(1px);
+    }
+
+    .result-actions button:disabled {
+      cursor: default;
+      opacity: 0.55;
+      box-shadow: none !important;
     }
 
     .result-actions #saveResult {
@@ -8534,6 +8536,13 @@
       };
     }
 
+    function setResultActionsReady(isReady) {
+      const save = document.querySelector("#saveResult");
+      if (!save) return;
+      save.disabled = !isReady;
+      save.textContent = isReady ? "分享结果" : "生成中";
+    }
+
     async function showResult() {
       els.progressFill.style.width = "100%";
       // API 等待期间只预载 RIASEC 公仔图，等结果文案一起亮相
@@ -8541,6 +8550,7 @@
       applyResultTheme(hollandSummary.primary);
       probeArt(hollandTypeArtUrl(hollandSummary.primary));
       showFlow("result");
+      setResultActionsReady(false);
       renderResultLoading();
       renderResultStreaming({});
       try {
@@ -8602,6 +8612,7 @@
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading", "is-streaming");
       card?.classList.add("is-revealed");
+      setResultActionsReady(false);
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears}张牌后的你`;
       els.resultTitle.textContent = "这一页没装订成功";
@@ -8630,6 +8641,7 @@
       if (!card) return;
       card.classList.remove("is-loading");
       card.classList.add("is-streaming");
+      setResultActionsReady(false);
       const eyebrow = document.querySelector("#resultEyebrow");
       if (eyebrow) eyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const summary = getHollandSummaryData();
@@ -8702,6 +8714,7 @@
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading", "is-streaming");
       card?.classList.add("is-revealed");
+      setResultActionsReady(true);
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const hollandSummary = getHollandSummaryData();
@@ -9176,6 +9189,7 @@
     }
 
     function openShareSheet() {
+      if (!state.result) return;
       const sheet = document.querySelector("#shareSheet");
       if (sheet) sheet.hidden = false;
     }

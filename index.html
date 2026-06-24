@@ -8717,7 +8717,7 @@
       els.resultSummary.textContent = normalizeResultStatus(result.status42, safeScenes);
       els.resultOverview.innerHTML = `
         <div class="glass-section">
-          ${careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities)}
+          ${careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities, result.title)}
         </div>
       `;
       fitCareerCardLabels();
@@ -8977,6 +8977,38 @@
       return rounded;
     }
 
+    function careerPercentValue(value) {
+      return Number(String(formatCareerPercent(value)).match(/\d+(?:\.\d+)?/)?.[0] || 0);
+    }
+
+    function sortCareerMatches(matches = []) {
+      return [...matches].sort((a, b) => careerPercentValue(b.percent) - careerPercentValue(a.percent));
+    }
+
+    function careerMatchesFromPossibilities(possibilities = []) {
+      const rawMatches = Array.isArray(possibilities)
+        ? possibilities.slice(0, 3).map(item => ({
+          percent: formatCareerPercent(item.percent),
+          label: normalizeCareerLabel(item.label)
+        })).filter(item => item.percent !== "0%" && item.label)
+        : [];
+      return sortCareerMatches(normalizeCareerPercentMatches(rawMatches));
+    }
+
+    function topCareerLabelFromPossibilities(possibilities = []) {
+      return careerMatchesFromPossibilities(possibilities)[0]?.label || "";
+    }
+
+    function careerLabelFromTitle(title) {
+      return String(title || "").split(/[，,]/).map(seg => seg.trim()).filter(Boolean)[2] || "";
+    }
+
+    function alignCareerTextWithTopCareer(text, title, topCareer) {
+      const titleCareer = careerLabelFromTitle(title);
+      if (!text || !titleCareer || !topCareer || titleCareer === topCareer) return text;
+      return String(text).split(titleCareer).join(topCareer);
+    }
+
     function normalizeCareerPercentMatches(matches = []) {
       const cleaned = matches
         .slice(0, 3)
@@ -9000,7 +9032,7 @@
       return cleaned.map((item, index) => ({ ...item, percent: `${percents[index]}%` }));
     }
 
-    function careerProbabilityHTML(text, possibilities = null) {
+    function careerProbabilityHTML(text, possibilities = null, title = "") {
       const raw = String(text || "").trim();
       const rawMatches = Array.isArray(possibilities) && possibilities.length
         ? possibilities.slice(0, 3).map(item => ({
@@ -9014,15 +9046,18 @@
             label: normalizeCareerLabel(match[2])
           }));
       const matches = normalizeCareerPercentMatches(rawMatches);
-      const summary = careerSummaryText(raw, matches);
-      if (matches.length < 3) {
-        return `<div class="career-probability"><p class="career-summary">${escapeHTML(summary || raw)}</p></div>`;
+      const sortedMatches = sortCareerMatches(matches);
+      const topCareer = sortedMatches[0]?.label || "";
+      const alignedRaw = alignCareerTextWithTopCareer(raw, title, topCareer);
+      const summary = careerSummaryText(alignedRaw, sortedMatches);
+      if (sortedMatches.length < 3) {
+        return `<div class="career-probability"><p class="career-summary">${escapeHTML(summary || alignedRaw)}</p></div>`;
       }
       return `
         <div class="career-probability">
           <p class="career-summary">${escapeHTML(summary)}</p>
           <div class="career-cards">
-            ${matches.map(item => `
+            ${sortedMatches.map(item => `
               <div class="career-card">
                 <b>${escapeHTML(item.percent)}</b>
                 <span>${escapeHTML(item.label)}</span>
@@ -9043,17 +9078,18 @@
         return false;
       }
       const possibilities = Array.isArray(partial.careerPossibilities) ? partial.careerPossibilities : [];
-      const key = careerOverviewKey(note, possibilities);
+      const title = String(partial.title || "").trim();
+      const key = careerOverviewKey(note, possibilities, title);
       if (state.resultCareerRenderKey === key) return true;
       state.resultCareerRenderKey = key;
-      els.resultOverview.innerHTML = `<div class="glass-section">${careerProbabilityHTML(note, possibilities)}</div>`;
+      els.resultOverview.innerHTML = `<div class="glass-section">${careerProbabilityHTML(note, possibilities, title)}</div>`;
       fitCareerCardLabels();
       return true;
     }
 
-    function careerOverviewKey(note, possibilities = []) {
+    function careerOverviewKey(note, possibilities = [], title = "") {
       const careers = possibilities.slice(0, 3).map(item => `${formatCareerPercent(item.percent)}:${normalizeCareerLabel(item.label)}`);
-      return JSON.stringify([String(note || "").trim(), careers]);
+      return JSON.stringify([String(note || "").trim(), careers, String(title || "").trim()]);
     }
 
     function formatCareerPercent(value) {
@@ -9099,7 +9135,12 @@
       const fallback = buildShareableLifeTitle(getHollandSummaryData(), result?.careerPossibilities || []);
       const text = raw || fallback;
       // 三段式称号：第一段（精神状态）单独一行；现实处境 + 职业身份用「的」连成第二行
-      const segments = text.split(/[，,]/).map(seg => seg.trim()).filter(Boolean);
+      const topCareer = topCareerLabelFromPossibilities(result?.careerPossibilities || []);
+      const segments = text.split(/[，,]/).map(seg => seg.trim()).filter(Boolean).slice(0, 3);
+      if (topCareer) {
+        if (segments.length >= 3) segments[2] = topCareer;
+        else segments.push(topCareer);
+      }
       if (segments.length <= 1) return escapeHTML(text);
       const rest = segments.slice(1);
       const lines = [segments[0], rest.length >= 2 ? `${rest[0]}的${rest.slice(1).join("")}` : rest.join("")];

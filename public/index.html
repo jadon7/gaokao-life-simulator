@@ -4846,6 +4846,7 @@
       const out = {
         year: item.year,
         sceneTitle: item.sceneTitle || item.scene || "",
+        sceneBody: item.sceneBody || item.scene || "",
         choice: item.choice || "",
         choiceText: item.choiceText || "",
         consequence: item.consequence || "",
@@ -4955,7 +4956,7 @@
       { title: "群里点名", prompt: "新生群刚安静三分钟，男生室友__ROOMMATE__就把你拉进第一个小项目，辅导员__MENTOR__还在群里看着。隔壁班女生__RELATION__也在同一间机房自习，你还没认全人，开学第一波活已经开始点名。", left: "先上桌", right: "先摸路", leftHint: "上桌", rightHint: "摸路", tagA: "露脸", tagB: "稳住", consequenceA: "__MENTOR__记住你的名字，__RELATION__开始在群里接话", consequenceB: "课表先稳住了，__RELATION__记住你常坐靠窗位", deltaA: { ambition: 5, explore: 3, pressure: -2 }, deltaB: { stability: 5, discipline: 3, explore: 1 }, riasecA: { E: 4, S: 1, C: 1 }, riasecB: { C: 4, I: 1, S: 1 } },
       { title: "文件失踪", prompt: "上一波活让你在群里有了姓名，展示前材料却突然空白，__ROOMMATE__疯狂发问号。__RELATION__给你留的靠窗座还在，你的电脑先进入职场预告片：人在大学，锅已到账。", left: "先补锅", right: "先查因", leftHint: "补锅", rightHint: "查因", tagA: "救场", tagB: "求证", consequenceA: "你补出展示材料，项目群默认你能当备用电源", consequenceB: "你查到文件源头，返工少了一半但群里安静了", deltaA: { discipline: 4, pressure: -2, ambition: 2 }, deltaB: { explore: 4, discipline: 3, stability: 1 }, riasecA: { C: 3, R: 2, E: 1 }, riasecB: { I: 4, C: 1, R: 1 } },
       { title: "合照起哄", prompt: "补锅那晚之后，活动合照被__ROOMMATE__发进群，顺手艾特你和隔壁班女生__RELATION__。你想解释只是同框，她却回了一个表情，像在说：别把暧昧写成情况说明。", left: "接住梗", right: "讲清楚", leftHint: "接梗", rightHint: "讲清", tagA: "暧昧", tagB: "理清", consequenceA: "群里开始起哄，__RELATION__没否认还顺手补了个表情", consequenceB: "话是讲清了，__RELATION__把聊天气氛降到礼貌区", deltaA: { empathy: 5, explore: 3, pressure: -1 }, deltaB: { discipline: 3, stability: 3, empathy: 1 }, riasecA: { S: 4, A: 2 }, riasecB: { I: 3, C: 2, S: 1 } },
-      { title: "考研群炸", prompt: "你和__RELATION__的合照梗还没冷，考研群、绩点表、项目邀约同天冒泡。__MENTOR__说机会难得，__ROOMMATE__说别卷死，手机像在开三方会，只差给你发会议纪要。", left: "闭门学", right: "冲项目", leftHint: "考研", rightHint: "项目", tagA: "深造", tagB: "机会", consequenceA: "你退掉两个项目群，复习表终于能被认真打开", consequenceB: "项目跑起来了，复习群沉底，__RELATION__留了句别熬太晚", deltaA: { discipline: 5, stability: 3, explore: 1 }, deltaB: { ambition: 5, explore: 4, pressure: -2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 4, R: 1, A: 1 } },
+      { title: "考研群炸", prompt: "上一轮展示热度还没冷，考研群、绩点表、项目邀约同天冒泡。__MENTOR__说机会难得，__ROOMMATE__说别卷死，手机像在开三方会，只差给你发会议纪要。", left: "闭门学", right: "冲项目", leftHint: "考研", rightHint: "项目", tagA: "深造", tagB: "机会", consequenceA: "你退掉两个项目群，复习表终于能被认真打开", consequenceB: "项目跑起来了，复习群沉底，导师提醒你别把备考当背景板", deltaA: { discipline: 5, stability: 3, explore: 1 }, deltaB: { ambition: 5, explore: 4, pressure: -2 }, riasecA: { I: 4, C: 2 }, riasecB: { E: 4, R: 1, A: 1 } },
       { title: "展示出圈", prompt: "你前面为了项目压过复习，那份展示被学长转给合作方，截图一路飞到对方群里。被看见很爽，下一版催更也很快，像刚出圈就被加班实名认领。", left: "做系列", right: "磨质量", leftHint: "放大", rightHint: "打磨", tagA: "出圈", tagB: "耐磨", consequenceA: "关注涨得很快，合作方开始把下一版排进日程", consequenceB: "增长慢了，但每次发布更稳，__RELATION__也少催你睡觉", deltaA: { ambition: 6, explore: 3, pressure: -2 }, deltaB: { discipline: 4, stability: 3, explore: 1 }, riasecA: { A: 3, E: 3 }, riasecB: { C: 3, I: 2, A: 1 } },
       { title: "约饭撞车", prompt: "合作方催更排进日程后，你和__RELATION__约好的饭被临时工作撞掉。她回你一个没事，后面没有句号也没有表情，你第一次发现两个字也能带字幕：你最好真有事。", left: "先见她", right: "先交付", leftHint: "赴约", rightHint: "交付", tagA: "接人", tagB: "保活", consequenceA: "饭终于吃上了，项目群把你记成慢回但没炸", consequenceB: "项目按时交了，__RELATION__撤回一条你没看见的消息", deltaA: { empathy: 6, stability: 1, ambition: -1 }, deltaB: { discipline: 5, pressure: -2, empathy: -1 }, riasecA: { S: 4, A: 1, C: 1 }, riasecB: { C: 4, R: 1, E: 1 } },
       { title: "两头夹击", prompt: "你刚把那顿饭补上，导师__MENTOR__又点你去学院展示，合作方项目群同时喊数据卡住。__RELATION__问你今晚还吃饭吗，你看着三个窗口，感觉自己被系统申请多开。", left: "冲展示", right: "救数据", leftHint: "体面", rightHint: "结果", tagA: "露脸", tagB: "交付", consequenceA: "__MENTOR__记住了你，项目群开始用省略号表达意见", consequenceB: "数据救回来了，展示位让给别人，__RELATION__也没再追问", deltaA: { ambition: 5, empathy: 1, pressure: -2 }, deltaB: { discipline: 5, stability: 3, pressure: 1 }, riasecA: { E: 4, A: 1, S: 1 }, riasecB: { C: 4, R: 1, I: 1 } },
@@ -5024,16 +5025,14 @@
     ];
     function getStoryCast() {
       const profile = state.profile || readProfile();
-      const relationPool = /女/.test(profile.gender || "") ? maleRelationPool : femaleRelationPool;
-      const fallbackRelation = pickFromPool(relationPool, 11);
       const legalRelationNames = new Set([...femaleRelationPool, ...maleRelationPool].map(item => item.name));
       const relation = profile.relationName
         && legalRelationNames.has(profile.relationName)
         ? {
             name: profile.relationName,
-            intro: profile.relationIntro || `开局第一张牌里已经替你搭过手的${profile.relationGender || ""}${profile.relationName}`
+            intro: profile.relationIntro || `上一年打过交道的同学${profile.relationName}`
           }
-        : fallbackRelation;
+        : { name: "", intro: "关系对象" };
       return {
         relationName: relation.name,
         relationGender: profile.relationGender || (/女/.test(profile.gender || "") ? "男生" : "女生"),
@@ -5118,9 +5117,9 @@
         `你把课表重新排过，作息终于没再一路失控`
       ];
       const relationshipTemplates = [
-        `${cast.relationName}记住了你下课时间，偶尔给你留座`,
-        `${cast.relationName}说你太忙，却还是会给你留消息`,
-        `${cast.relationName}没催你回复，但开始把你排进周末`
+        `${cast.relationIntro}记住了你下课时间，偶尔给你留座`,
+        `${cast.relationIntro}说你太忙，却还是会给你留消息`,
+        `${cast.relationIntro}没催你回复，但开始把你排进周末`
       ];
       const mainTrack = fixedMainTrack(template);
       return {
@@ -5189,7 +5188,7 @@
       const otherTrack = tracks.mainTrack === "relationship" ? tracks.lifeTrack : tracks.relationshipTrack;
       const cast = getStoryCast();
       const options = [
-        `${otherTrack}；${cast.relationName}也把上次那件事记进了聊天里`,
+        `${otherTrack}；${cast.relationIntro}也把上次那件事记进了聊天里`,
         `${otherTrack}；家里少催了两句，却开始盯你的下一步`,
         `${otherTrack}；朋友群把前一次选择改成了新梗`
       ];
@@ -5269,14 +5268,14 @@
           title: frame.left,
           desc: frame.leftDesc,
           tag: frame.leftTag,
-          consequence: `老师记住你，${cast.relationName}开始在群里接你的话`,
+          consequence: `老师记住你，${cast.relationIntro}开始在群里接你的话`,
           riasec: frame.riasecA
         },
         b: {
           title: frame.right,
           desc: frame.rightDesc,
           tag: frame.rightTag,
-          consequence: `节奏先稳住了，${cast.relationName}记住你没被第一波热闹带跑`,
+          consequence: `节奏先稳住了，${cast.relationIntro}记住你没被第一波热闹带跑`,
           riasec: frame.riasecB
         },
         left: {
@@ -6525,6 +6524,7 @@
         year: card.yearNumber || Number(String(card.year || "").match(/\d+/)?.[0] || index + 1),
         yearLabel: card.year,
         scene: card.prompt,
+        sceneBody: card.prompt,
         sceneTitle: card.scene,
         summary: composePreviousFeedback(card) || card.context,
         source: card.source || "",
@@ -6727,7 +6727,7 @@
       }
       if (sceneCategories.has("work") || sceneCategories.has("study")) {
         const cast = getStoryCast();
-        return `${cast.relationName}已经会顺手给你留机房靠窗的位置，你嘴上装没事，对方其实早把你排进日常了`;
+        return `${cast.relationIntro}已经会顺手给你留机房靠窗的位置，你嘴上装没事，对方其实早把你排进日常了`;
       }
       return "你这边刚收完残局，另一头的人和事也开始重新按你现在的分量来对待你";
     }
@@ -8001,7 +8001,7 @@
     }
 
     function normalizeTimelineBlock(item, index) {
-      const fallbackTitles = ["18-22 岁：大学四年", "22-30 岁：毕业第一站", "30-36 岁：沉浮与名场面"];
+      const fallbackTitles = ["18-22 岁：大学四年", "22-30 岁：毕业第一站", "30-35 岁：沉浮与名场面"];
       if (item && typeof item === "object" && !Array.isArray(item)) {
         const title = String(item.title || item.headline || "").trim();
         const body = String(item.body || item.desc || item.text || "").trim();
@@ -8041,7 +8041,7 @@
       return [
         { title: "18-22 岁：大学四年", body: getCollegeNode() },
         { title: "22-30 岁：毕业第一站", body: getCareerNode() },
-        { title: "30-36 岁：沉浮与转向", body: getLifeNode() }
+        { title: "30-35 岁：沉浮与转向", body: getLifeNode() }
       ];
     }
 
@@ -8064,7 +8064,7 @@
     }
 
     function sampleTraitTimeline(key) {
-      const ages = [18, 22, 30, 36];
+      const ages = [18, 22, 30, 35];
       const steps = [0, 4, 12, state.totalYears];
       const series = traitTimelineSeries(key);
       return steps.map((step, index) => ({
@@ -9239,8 +9239,6 @@
       storyCast: "角色表",
       relationName: "关系角色",
       relationIntro: "关系描述",
-      secondaryRelationName: "新关系角色",
-      secondaryRelationIntro: "新关系描述",
       supportRoles: "阶段角色",
       campusRoles: "校园角色",
       familyRoles: "家庭角色",
@@ -9266,7 +9264,6 @@
       twist: "反转",
       choiceContrast: "选项对照",
       sideBeat: "旁线推进",
-      abType: "选项类型",
       callbacks: "回响种子",
       history: "历史摘要",
       stateHints: "状态提示",
@@ -9283,7 +9280,6 @@
       timeFrame: "时间",
       careerRoute: "人生路线",
       lifeStage: "人生/关系阶段",
-      relationshipStatus: "关系状态",
       lifeStatus: "现实状态",
       educationState: "考研选择",
       openingFrame: "开场预设",

@@ -2047,7 +2047,7 @@ function withRandomRelationName(sourceCard) {
     card[key].tag = replaceName(card[key].tag);
     card[key].consequence = replaceName(card[key].consequence);
   }
-  return { card, relationName, relationGender: hit.gender, relationIntro: relationIntroFromCard(card, relationName, hit.gender) };
+  return { card, relationName, relationGender: hit.gender, relationIntro: relationIntroFromCard(card, relationName) };
 }
 
 function sanitizeSupportRoles(value) {
@@ -2059,13 +2059,8 @@ function sanitizeSupportRoles(value) {
     .replace(/系主任/g, "系里老师");
 }
 
-function relationIntroFromCard(card, relationName, relationGender) {
-  const text = [card.relationshipTrack, card.scene?.body].filter(Boolean).join(" ");
-  const match = text.match(new RegExp(`(?:：|，|。|\\s)([^，。：“”]{1,8})${relationName}`));
-  const prefix = String(match?.[1] || "").replace(/第一次|主动|替你|把|在|给你/g, "").trim();
-  if (prefix && !/男生|女生/.test(prefix)) return `${prefix}${relationName}`;
-  if (prefix) return `${prefix}${relationName}`;
-  return `开局第一张牌里已经替你搭过手的${relationGender}${relationName}`;
+function relationIntroFromCard(card, relationName) {
+  return relationName ? `上一年打过交道的同学${relationName}` : "";
 }
 
 function mainRiasecType(choice = {}) {

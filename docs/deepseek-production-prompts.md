@@ -324,13 +324,13 @@
     "conflict": "学长看中你们的小工具，想直接带你去参加校外比赛，还暗示后面可能接上创业园资源。你得决定要不要先抢机会。",
     "characters": ["学长/前辈", "室友/同伴"],
     "abType": "抢机会 / 守底盘",
-    "summaryTask": "关系线推进：你们之间的客气感开始变少",
     "callbacks": ["校外比赛", "创业园机会"]
   },
   "history": [],
   "stateHints": {
     "recentCallbacks": ["小工具项目", "硬盘事故", "合照"],
-    "relationshipStatus": "刚开始从普通同学变得更熟",
+    "relationshipStage": "暧昧升温",
+    "relationshipBeat": "关系背景：一起改到关灯",
     "lifeStatus": "你在系里有了能兜底的名声"
   }
 }

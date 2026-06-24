@@ -1,0 +1,278 @@
+<title>每年提示词内容走向梳理</title>
+
+<h1>每年提示词内容走向梳理</h1>
+
+<callout emoji="📌" background-color="light-blue" border-color="blue">
+  <p>范围：只整理影响故事走向、角色关系、年度事件和选项方向的提示词。第 1 年为预置开局卡，不按年度生成提示词整理；未包含系统提示词、JSON 字段格式、长度限制和纯输出格式要求。</p>
+</callout>
+
+<h2>全年通用内容走向</h2>
+
+<ul>
+  <li>正式流程第 1 年由专业匹配预置开局卡；年度生成从第 2 年开始。</li>
+  <li>每张卡只拍一个具体事件；每年是一年后的新大事，不写上一年同一事件续集。</li>
+  <li>约三分之一为低压正反馈；正反馈卡先给明确好结果，选项承接收获。</li>
+  <li>可见文案用常见口语；少专业词，不写生僻简称，不强行缩写。</li>
+  <li>只有固定伴侣有姓名；伴侣首次出场用“上一年打过交道的同学 + 姓名”。</li>
+  <li>lifeTrack 写本年新状态；relationshipTrack 只写背景信号。</li>
+  <li>非关系主线不把伴侣写进 scene.body、A/B 或 consequence；关系主线写共同生活选择。</li>
+  <li>新恋情阶段只在关系主线写新关系信号，不生成姓名。</li>
+  <li>未选择生小孩时，只写是否进入育儿线；已选择生小孩后，才写孩子生病、照护、教育。</li>
+  <li>第 18 年按 closingFrame 收尾，不开新事件。</li>
+  <li>上一年余波只进 summary；scene.body 写本年新事件。</li>
+  <li>A/B 是完整互斥动作；只处理当前事件，A 对第一个选择轴，B 对第二个选择轴。</li>
+</ul>
+
+<h2>正反馈年份分布</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th background-color="light-gray">年份</th>
+      <th background-color="light-gray">正反馈信号</th>
+      <th background-color="light-gray">核心落点</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>第 2 年</td><td>第一次被认可</td><td>校园开放日被看见，决定做成教程或休息复盘。</td></tr>
+    <tr><td>第 5 年</td><td>做成小项目</td><td>毕业前项目跑通，被外部机会转发。</td></tr>
+    <tr><td>第 8 年</td><td>关系变稳定</td><td>不用救火的周末出现，共同日常开始成形。</td></tr>
+    <tr><td>第 11 年</td><td>获得新技能</td><td>能力被正式邀请，不是被催救火。</td></tr>
+    <tr><td>第 13 年</td><td>收到感谢</td><td>成年责任里出现被家人认真感谢的时刻。</td></tr>
+    <tr><td>第 16 年</td><td>前几年的人回来帮忙</td><td>早年同伴回援，团队不再只靠主角单打独斗。</td></tr>
+    <tr><td>第 18 年</td><td>发现真正喜欢什么</td><td>回收前文，决定未来五年更愿意怎样生活。</td></tr>
+  </tbody>
+</table>
+
+<h2>年度总表</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th background-color="light-gray">年份</th>
+      <th background-color="light-gray">阶段</th>
+      <th background-color="light-gray">主线</th>
+      <th background-color="light-gray">内容方向</th>
+      <th background-color="light-gray">A/B 选择</th>
+      <th background-color="light-gray">回收点</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>预置开局</td><td>预置</td><td>按专业匹配固定开局卡，不走年度生成提示词。</td><td>由预置卡决定</td><td>开局关系角色和选择后果进入后续 history</td></tr>
+    <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂，有认可感。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
+    <tr><td>3</td><td>异地表态</td><td>关系</td><td>实习和城市机会第一次分岔。</td><td>说清异地 / 拿下窗口</td><td>暑期实习、异地约定、第一次表态</td></tr>
+    <tr><td>4</td><td>毕业分流</td><td>生活</td><td>考研、项目、实习二选一。</td><td>锁定考研窗口 / 放弃备考抢项目</td><td>考研群、保研绩点、校外项目</td></tr>
+    <tr><td>5</td><td>项目跑通</td><td>生活</td><td>做成一件小事，被看见。</td><td>讲出成果 / 打磨质量</td><td>项目跑通、外部转发、毕业后第一关</td></tr>
+    <tr><td>6</td><td>生活落地</td><td>生活</td><td>学生身份转向工作身份。</td><td>理顺生活 / 先保工作</td><td>租房合同、试用期考核、生活底盘</td></tr>
+    <tr><td>7</td><td>职场入口</td><td>生活</td><td>转正、客户和收入第一次压身。</td><td>公开承担 / 动手补救</td><td>客户会点名、交付材料出错、两头夹击</td></tr>
+    <tr><td>8</td><td>关系稳定</td><td>关系</td><td>不用救火的共同日常。</td><td>排进日常 / 说清节奏</td><td>稳定周末、城市续约、共同日常</td></tr>
+    <tr><td>9</td><td>口碑危机</td><td>生活</td><td>一次职业失误影响后续机会。</td><td>动手补锅 / 拉人协作</td><td>群聊截图、第一次翻车、口碑危机</td></tr>
+    <tr><td>10</td><td>首付换城</td><td>关系</td><td>钱、城市和长期关系一起落地。</td><td>落钱落城市 / 先定边界</td><td>首付预算、换城市、长期落点</td></tr>
+    <tr><td>11</td><td>技能成型</td><td>生活</td><td>被正式邀请，不是被催救火。</td><td>接试跑窗口 / 算清条件</td><td>新技能、试跑邀请、能力筹码</td></tr>
+    <tr><td>12</td><td>搬家截稿</td><td>生活</td><td>家庭任务和工作节点撞上。</td><td>共同承担 / 摊开边界</td><td>搬家任务、项目截稿、现实责任</td></tr>
+    <tr><td>13</td><td>收到感谢</td><td>生活</td><td>成年责任里有正反馈。</td><td>补回陪伴 / 写清分工</td><td>收到感谢、陪伴补回、责任分摊</td></tr>
+    <tr><td>14</td><td>低谷验账</td><td>生活</td><td>升职落空、项目被砍或客户撤单。</td><td>重写证据 / 做新筹码</td><td>升职落空、项目被砍、低谷被看见</td></tr>
+    <tr><td>15</td><td>家庭责任</td><td>关系</td><td>是否进入育儿线、照护或房贷重新排位。</td><td>说清育儿计划 / 先稳现有生活</td><td>育儿选择、照护分工、成年责任</td></tr>
+    <tr><td>16</td><td>早年回援</td><td>生活</td><td>前文人物带回帮助。</td><td>拆清账本 / 讲成故事</td><td>早年回援、团队扩张、合伙账本</td></tr>
+    <tr><td>17</td><td>责任结算</td><td>生活</td><td>养老、共同事业，或已选育儿线后的教育问题给出答案。</td><td>争取同队 / 各自路线</td><td>长期责任、各自路线、最后表态</td></tr>
+    <tr><td>18</td><td>回顾收尾</td><td>生活</td><td>回收开局、关键选择、职业代价和关系结果。</td><td>摊开账本 / 体面收住</td><td>最终落点、未来五年、关系收束</td></tr>
+  </tbody>
+</table>
+
+<h2>第 1 年：预置开局卡</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">来源</td><td>正式流程调用 /api/game/start，由 opening-cards-data.js 按专业返回固定开局卡。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>预置卡自带场景、关系角色、A/B 选项和后果；不调用年度模型提示词。</td></tr>
+    <tr><td background-color="light-gray">影响后续</td><td>openingRelationName、openingRelationGender、openingRelationIntro 和第 1 年选择后果进入 history，供后续年份承接。</td></tr>
+    <tr><td background-color="light-gray">伴侣称呼</td><td>后续年份统一使用“上一年打过交道的同学 + 姓名”，如“上一年打过交道的同学晚晴”。</td></tr>
+    <tr><td background-color="light-gray">备注</td><td>deepseek-prompt-vnext.js 里仍保留第 1 年 outline/openingFrame，用于实验、批量或兜底路径；不是正式开局卡生成口径。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 2 年：校园开放日</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>把专业小事讲给高中生听懂，有认可感。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>大二校园开放日，主角把专业体验摊上的小任务讲清楚，来参观的高中生听懂，老师当场夸。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>第一次被认可：第一落点写被看见，而不是危机压身。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>高中生/新生、老师、同伴；同伴开始把主角当成能把复杂事讲明白的人。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：做成教程；B：休息复盘。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 3 年：异地表态</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>实习和城市机会第一次分岔。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>暑期实习名单出来，本地项目和外地平台同时招手；关系线第一次认真谈异地。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>异地表态：实习名单出来，关系第一次从顺手帮忙变成异地约定。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣/关系线核心角色、室友/同伴；关系第一次从顺手帮忙变成异地约定。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：说清异地；B：拿下窗口。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 4 年：毕业分流</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>考研、项目、实习二选一。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>考研群、保研绩点和校外项目同一天冒泡；主角第一次认真面对是否考研。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>群聊制造焦虑：三个群同时冒泡，手机像在替主角开人生股东会。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>学长/前辈、导师/老师、项目同伴；主角开始为长期路线做取舍。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：锁定考研窗口；B：放弃备考抢项目。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 5 年：项目跑通</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：做成一件小事，被看见。若继续读研：研一开局，导师、课题和同门分工成为主压力。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>毕业前的小作品/项目真的跑通，还被外部机会转发；主角决定把成果讲出去，还是先打磨质量。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>做成小项目：第一落点写项目跑通和被转发。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>外部机会角色、学长/前辈、团队群像；主角第一次尝到做成一件事的踏实感。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：讲出成果；B：打磨质量。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 6 年：生活落地</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：学生身份转向工作身份。若继续读研：研二拉扯，论文、实验/作品和实习预备同时挤压。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>租房合同、通勤成本和试用期考核同一天摆上桌；主角决定先理顺生活底盘，还是先保住工作。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>租房合约见真章：合同空格不多，每个都像人生选择题。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>外部机会角色、朋友群像；工作身份第一次压过学生身份。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：理顺生活；B：先保工作。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 7 年：职场入口</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：转正、客户和收入第一次压身。若继续读研：研三分流，毕业论文、校招/读博和城市落点一起拍板。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>主管让主角在客户会上解释方案，交付材料同时出错；主角决定先公开承担，还是今晚动手补救。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>两头夹击：客户要体面，项目要交付，时间表开始报警。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>主管/客户、外部项目群、同事/朋友；朋友开始发现主角习惯一个人硬扛。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：公开承担；B：动手补救。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 8 年：关系稳定</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：不用救火的共同日常。若继续读研：研究生毕业第一站，入职、读博或规培落点定下来。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>转正答辩结束，出现一个不用救火的周末，城市续约也有初步答案；主角决定把共同生活排进日常，还是先说清各自节奏。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>关系变稳定：稳定感第一次超过误会感。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣/关系线核心角色、朋友群像；关系线写共同日常，不写伴侣拖事业后腿。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：排进日常；B：说清节奏。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 9 年：口碑危机</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>一次职业失误影响后续机会。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>一次交付失误被客户群截图放大，再硬扛会影响口碑；主角决定自己修，还是拉人一起收拾。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>低成本社死：一次小失误被截图，客户群开始放大问题。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>同事/朋友、客户群像；身边人重新判断主角是可靠还是封闭。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：动手补锅；B：拉人协作。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 10 年：首付换城</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>钱、城市和长期关系一起落地。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>首付预算、换城市机会和双方家里意见同时压来；主角决定把未来落到钱和城市上，还是先把生活边界说清。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>首付和城市二选一：钱和城市一落地，未来立刻开始算小数点。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣/关系线核心角色、家庭型角色、朋友群像；生活选择开始和职业选择绑定。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：落钱落城市；B：先定边界。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 11 年：技能成型</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>被正式邀请，不是被催救火。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>主角靠前几年的交付长出一项新技能，新平台正式邀请试一段；主角决定接试跑窗口，还是先算清条件再换挡。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>获得新技能：新机会不是来催命，是承认主角已经会了。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>家庭型角色、外部机会角色、朋友群像；能力第一次变成可谈的筹码。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：接试跑窗口；B：算清条件。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 12 年：搬家截稿</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>家庭任务和工作节点撞上。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>搬家、家里临时任务或正式退场撞上项目截稿；主角决定共同承担现实责任，还是把边界摊开。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>搬家和截稿撞车：搬家不等项目排期，项目也不懂生活账单。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>家庭型角色、群像环境压力；主角的现实身份已经变重。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：共同承担；B：摊开边界。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 13 年：收到感谢</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>成年责任里有正反馈。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>一次家里或照护安排被主角处理顺，家人第一次认真说谢谢；主角决定补回陪伴时间，还是把责任分工写清。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>收到感谢：成年责任不是只有收账，也会有人认真感谢。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>家庭型角色、朋友群像；身边人看到主角不是只会硬扛。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：补回陪伴；B：写清分工。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 14 年：低谷验账</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>升职落空、项目被砍或客户撤单。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>升职没轮到主角、项目被砍或客户撤单，体面第一次明显掉价；主角决定重写证据争下一轮，还是做出新筹码。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>职业低谷验账：体面掉价那天，最先响的是生活账单。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>行业前辈、朋友群像；朋友第一次看见主角的职业低谷。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：重写证据；B：做新筹码。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 15 年：家庭责任</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>是否进入育儿线、照护或房贷重新排位。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>父母照护、房贷或未来几年生活安排摆到桌面；主角和伴侣要把要不要生小孩说清，或先把现有现实排稳。</td></tr>
+    <tr><td background-color="light-gray">关键分支</td><td>本卡选择决定是否进入育儿线；未选择前不写孩子生病、照护、教育。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣/关系线核心角色、家庭型角色；成年责任上桌。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：说清育儿计划；B：先稳现有生活。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 16 年：早年回援</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>前文人物带回帮助。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>前几年一起扛过事的人回来帮主角牵线，团队扩张不再只靠主角单打独斗。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>前几年的人回来帮忙：早年种下的人情第一次正向回援。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>早年同伴、新人/后辈、家庭型角色；只写最后结算前夜的一个具体信号。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：拆清账本；B：讲成故事。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 17 年：责任结算</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>养老、共同事业，或已选育儿线后的教育问题给出答案。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>父母养老或共同事业把长期责任推到最后一张账单；主角决定继续同队，还是承认各自路线更好。</td></tr>
+    <tr><td background-color="light-gray">关键分支</td><td>只有第 15 年已选择生小孩，才可写孩子教育问题；否则回到养老、共同事业或长期责任。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>家庭型角色、主角自己；现实状态给出最后定位，不铺新冲突。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：争取同队；B：各自路线。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 18 年：回顾收尾</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">阶段约束</td><td>回收开局、关键选择、职业代价和关系结果；像最后一张牌，不开新坑。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>不写金句，而是发现主角更愿意过哪种未来五年：扩张团队、回到稳定组织，或给家庭留出位置。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>发现真正喜欢什么：把收获和代价收束成未来五年的活法。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>家庭型角色、前辈/主管、朋友群像、主角自己；人际关系只收束，不制造新误会。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：摊开账本；B：体面收住。</td></tr>
+  </tbody>
+</table>

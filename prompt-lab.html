@@ -783,7 +783,6 @@
       }
       if (relationshipMentionText(summary) && !relationshipStageText(summary)) add("warn", "summary 提到关系但没有明确阶段");
       if (card.relationshipTrack && !relationshipStageText(card.relationshipTrack)) add("warn", "relationshipTrack 没有明确阶段");
-      if (String(card.sceneTitle || "").length > 10) add("soft", "sceneTitle 超 10 字，主程序卡面标题可能换行");
       const repeated = run?.cards?.slice(0, index).some(prev => {
         const prevText = [prev.card.sceneTitle, prev.card.sceneBody || prev.card.prompt].filter(Boolean).join("");
         const nowText = [card.sceneTitle, card.sceneBody || card.prompt].filter(Boolean).join("");
@@ -899,7 +898,7 @@
           </div>
           ${rawDebugHTML(item)}
           <div class="qa-row">${cardChecks(item)}${issueBadges(issues)}</div>
-          ${outline ? `<div class="outline"><b>题纲意图</b>：${esc(outline.conflict || "")}<br/><b>abType</b>：${esc(outline.abType || "—")} ｜ <b>主线</b>：${outline.mainTrack} ｜ <b>回收</b>：${(outline.callbacks || []).join("、")}</div>` : ""}
+          ${outline ? `<div class="outline"><b>题纲意图</b>：${esc(outline.conflict || "")}<br/><b>choiceContrast</b>：${esc(outline.choiceContrast || "—")} ｜ <b>主线</b>：${outline.mainTrack} ｜ <b>回收</b>：${(outline.callbacks || []).join("、")}</div>` : ""}
           ${index > 0 ? `
           <div class="note-pair">
             <div class="from"><b>上一张所选 consequence</b><br/>${esc(prevCons || "（上一张未选）")}</div>

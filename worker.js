@@ -17,7 +17,7 @@ const defaultMiniMaxBaseUrl = "https://api.minimax.io/v1";
 const defaultLlmStream = true;
 const defaultLlmTimeoutMs = 26000;
 const totalGameYears = 18;
-const finalResultAge = 36;
+const finalResultAge = 35;
 const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
@@ -132,6 +132,7 @@ function compactHistory(history = []) {
     year: item.year,
     scene: item.scene,
     sceneTitle: item.sceneTitle,
+    sceneBody: item.sceneBody,
     summary: item.summary,
     phase: item.phase,
     mainTrack: item.mainTrack,
@@ -460,12 +461,13 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
     : [];
   normalized.callbackSeeds = modelCallbacks.length ? modelCallbacks : (Array.isArray(outline?.callbacks) ? outline.callbacks.slice(0, 3) : []);
   normalized.scene = normalizeSceneData(data.scene);
+  if (!normalized.scene.title) normalized.scene.title = fallbackSceneTitle(normalized.year, outline);
   normalized.a = normalizeChoiceData(data.a, "A");
   normalized.b = normalizeChoiceData(data.b, "B");
   applyOutlineRiasec(normalized);
   const yearNumber = normalized.year;
   normalized.summary = yearNumber === 1 ? "" : optionalCleanText(normalized.summary);
-  if (!normalized.scene.title || !normalized.scene.body || !normalized.a.title || !normalized.b.title) {
+  if (!normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
   return normalized;
@@ -499,9 +501,9 @@ function mergeFeedbackParts(consequence, offstage) {
 
 function optionalCleanText(value) {
   return String(value || "")
-    .replace(/关系线核心角色/g, "总坐靠窗位、笔记写得像攻略的同班女生知夏")
-    .replace(/室友\/同伴/g, "总在上课路上边走边吃早餐的吃货舍友浩然")
-    .replace(/导师\/老师|辅导员\/导师背景声/g, "专业课老师子豪")
+    .replace(/关系线核心角色/g, "伴侣")
+    .replace(/室友\/同伴/g, "室友")
+    .replace(/导师\/老师|辅导员\/导师背景声/g, "专业课老师")
     .replace(/外部机会角色背景压力|外部机会角色/g, "合作方")
     .replace(/家庭型角色/g, "家里")
     .replace(/团队群像/g, "项目群")
@@ -533,6 +535,10 @@ function normalizeSceneData(value) {
     title: optionalCleanText(sentenceMatch?.[1]?.replace(/[。！？!?]$/g, "") || "这一年的岔路口"),
     body: cleanSceneBody(sentenceMatch?.[2] || raw)
   };
+}
+
+function fallbackSceneTitle(year, outline = null) {
+  return optionalCleanText(outline?.phase || outline?.comedyDevice) || `第 ${year} 年事件`;
 }
 
 function cleanSceneBody(value) {
@@ -721,7 +727,7 @@ function normalizeSceneCardBlock(item, index) {
 }
 
 function normalizeTimelineBlock(item, index) {
-  const fallbackTitles = ["18-22 岁：大学四年", "22-30 岁：毕业第一站", "30-36 岁：沉浮与名场面"];
+  const fallbackTitles = ["18-22 岁：大学四年", "22-30 岁：毕业第一站", "30-35 岁：沉浮与名场面"];
   if (item && typeof item === "object" && !Array.isArray(item)) {
     const title = optionalCleanText(item.title || item.headline || item.name);
     const body = optionalCleanText(item.body || item.desc || item.text);
@@ -857,7 +863,7 @@ function mockResponse(messages) {
       timelineBlocks: [
         { title: "18-22 岁：大学四年", body: "你一边试方向一边认人，专业没有立刻锁死你，反而逼着你更早想清楚自己适合哪种节奏。" },
         { title: "22-30 岁：毕业第一站", body: "你先在现实里练基本功，再慢慢找到更像自己的位置。看上去像绕路，其实是在补未来会用上的底子。" },
-        { title: "30-36 岁：沉浮与名场面", body: "前面的选择开始一起回响，高光和社死都变得更有分量，你也终于学会把离谱日子过成自己的版本。" }
+        { title: "30-35 岁：沉浮与名场面", body: "前面的选择开始一起回响，高光和社死都变得更有分量，你也终于学会把离谱日子过成自己的版本。" }
       ],
       choiceHabit: {
         title: "你习惯先算后果，再决定要不要冲",
@@ -884,6 +890,7 @@ function mockResponse(messages) {
   if (content.includes("\"batchCount\"")) {
     const parsed = parseJsonFromPrompt(content);
     const relationName = mockRelationName(parsed);
+    const relationLabel = mockRelationLabel(parsed, relationName);
     const startYear = Number(parsed?.gameMeta?.startYear || 1);
     const count = Number(parsed?.gameMeta?.batchCount || 5);
     return {
@@ -895,17 +902,17 @@ function mockResponse(messages) {
           year,
           phase: outlineCard?.phase || "试播阶段",
           mainTrack: outlineCard?.mainTrack || (year % 3 === 0 ? "relationship" : "life"),
-          summary: mockSummary(year, parsed?.history, `暧昧升温，${relationName}开始给你留座`),
+          summary: mockSummary(year, parsed?.history, `暧昧升温，${relationLabel}开始给你留座`),
           question: `第 ${year} 年 / ${totalGameYears}`,
           lifeTrack: "项目节奏更紧了，老师和同学开始把难活往你这里递",
-          relationshipTrack: `暧昧升温：${relationName}开始固定留座`,
+          relationshipTrack: `暧昧升温：${relationLabel}开始固定留座`,
           callbacks: outlineCard?.callbacks?.slice(0, 3) || ["朋友群新梗"],
           scene: {
             title: mockSceneTitle(year, outlineCard),
-            body: outlineCard?.conflict || `你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。${relationName}刚问你晚上有没有空，机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。`
+            body: outlineCard?.conflict || "你在一次普通会议里被点名，项目负责人把一个看起来很香的机会推到你面前。机会写着成长，代价写着加班，旁边同事小声说这题像人生强制更新。"
           },
           a: { title: "先接下来", desc: "边做边摸清真实代价", tag: "机会试探", consequence: "你把活接住后，学长直接把你推上汇报位，后面一周的空闲也跟着清零了", riasec: mockRiasec(axis[0]) },
-          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: `你把时间从杂活里抢了回来，${relationName}却开始认真记你到底在躲什么`, riasec: mockRiasec(axis[1]) }
+          b: { title: "当场拒绝", desc: "把时间留给确定方向", tag: "边界清晰", consequence: "你把时间从杂活里抢了回来，手头节奏终于稳住一点", riasec: mockRiasec(axis[1]) }
         };
       })
     };
@@ -922,7 +929,7 @@ function mockRelationName(parsed) {
   const explicit = optionalCleanText(parsed?.storyCast?.relationName);
   if (explicit) return explicit;
   const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
-  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "知夏";
+  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "关系对象";
 }
 
 function mockSceneTitle(year, outlineCard) {
@@ -931,9 +938,12 @@ function mockSceneTitle(year, outlineCard) {
 }
 
 function mockAnnualCard(parsed, year, outlineCard, relationName, axis) {
-  const [leftText, rightText] = String(outlineCard?.abType || "争取机会 / 稳住底盘").split(/\s*\/\s*/);
-  const relationTrack = mockRelationshipTrack(parsed, year, relationName);
+  const [leftText, rightText] = String(outlineCard?.choiceContrast || "争取机会 / 稳住底盘").split(/\s*\/\s*/);
+  const relationLabel = mockRelationLabel(parsed, relationName);
+  const relationTrack = mockRelationshipTrack(parsed, year, relationLabel);
   const incident = mockIncidentText(parsed, outlineCard);
+  const isRelief = outlineCard?.pressureMode === "relief";
+  const isRelationshipCard = outlineCard?.mainTrack === "relationship";
   return {
     year,
     phase: outlineCard?.phase || "年度推进",
@@ -945,15 +955,35 @@ function mockAnnualCard(parsed, year, outlineCard, relationName, axis) {
     callbacks: outlineCard?.callbacks?.slice(0, 3) || [incident],
     scene: {
       title: mockSceneTitle(year, outlineCard),
-      body: mockSceneBody(parsed, outlineCard, relationName, incident)
+      body: mockSceneBody(parsed, outlineCard, relationLabel, incident)
     },
-    a: mockChoice(leftText, `先处理${incident}，把局面往前推`, leftText, `你把${incident}推进一步，代价也马上追上来`, axis[0]),
-    b: mockChoice(rightText, `先稳住节奏，再决定下一步`, rightText, `你守住眼前节奏，${relationName}把期待往回收`, axis[1])
+    a: mockChoice(
+      leftText,
+      isRelief ? `先承接${incident}，把成果往前推` : `先处理${incident}，把局面往前推`,
+      leftText,
+      isRelief ? "你顺势把这次成果接住，身边人也更愿意把下一步交给你" : `你把${incident}推进一步，代价也马上追上来`,
+      axis[0]
+    ),
+    b: mockChoice(
+      rightText,
+      isRelief ? "先稳住节奏，把收获消化清楚" : "先稳住节奏，再决定下一步",
+      rightText,
+      isRelationshipCard
+        ? (isRelief ? `你把节奏稳住后，${relationLabel}第一次觉得这段路能一起走久一点` : `你守住眼前节奏，${relationLabel}把期待往回收`)
+        : (isRelief ? "你把节奏稳住后，这次收获终于没有立刻变成新压力" : "你守住眼前节奏，手头局面没有继续扩散"),
+      axis[1]
+    )
   };
 }
 
+function mockRelationLabel(parsed, relationName) {
+  const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
+  const historyText = JSON.stringify(parsed?.history || []);
+  return intro && relationName && !historyText.includes(intro) ? intro : relationName;
+}
+
 function mockIncidentText(parsed, outlineCard) {
-  return optionalCleanText(parsed?.stateHints?.currentIncident).replace(/^本年事故：/, "")
+  return optionalCleanText(parsed?.stateHints?.currentIncident).replace(/^本年(?:事故|专业事件)：/, "")
     || outlineCard?.callbacks?.[0]
     || outlineCard?.phase
     || "年度大事";
@@ -961,19 +991,19 @@ function mockIncidentText(parsed, outlineCard) {
 
 function mockLifeTrack(parsed, year, incident) {
   const timeFrame = optionalCleanText(parsed?.stateHints?.timeFrame) || `${Math.min(35, 17 + year)}岁左右`;
-  return `${timeFrame}，${incident}压到台面`;
+  return `${timeFrame}，${incident}落到台面`;
 }
 
 function mockRelationshipTrack(parsed, year, relationName) {
   const stage = optionalCleanText(parsed?.stateHints?.relationshipStage) || (year <= 2 ? "暧昧升温" : "订婚结婚");
-  const fact = optionalCleanText(parsed?.stateHints?.relationshipBeat).replace(/^关系事实：/, "");
+  const fact = optionalCleanText(parsed?.stateHints?.relationshipBeat).replace(/^关系(?:事实|背景)：/, "");
   return `${stage}：${relationName}${fact || "主动问你下一步"}`;
 }
 
 function mockSceneBody(parsed, outlineCard, relationName, incident) {
-  const last = optionalCleanText(parsed?.stateHints?.lastYear).replace(/^上一年：/, "");
   const conflict = outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`;
-  return `${last ? `${last}。` : ""}${conflict}${relationName}在旁边等你给一句准话。`;
+  const relationTail = outlineCard?.mainTrack === "relationship" ? `${relationName}在旁边等你给一句准话。` : "";
+  return `${conflict}${relationTail}`;
 }
 
 function mockChoice(source, desc, tag, consequence, mainType) {

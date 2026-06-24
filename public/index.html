@@ -2228,15 +2228,6 @@
       color: rgba(255, 255, 255, 0.82);
     }
     .share-viewer-tip { flex: 1; min-width: 0; font-size: 14px; }
-    .share-viewer-save {
-      flex: none;
-      color: #fff;
-      font-size: 14px;
-      text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.16);
-    }
     .share-viewer-close {
       flex: none;
       width: 34px;
@@ -2705,7 +2696,6 @@
     <div class="share-viewer" id="shareViewer" hidden>
       <div class="share-viewer-bar">
         <span class="share-viewer-tip">长按图片保存到相册</span>
-        <a class="share-viewer-save" id="shareViewerSave" download style="display:none">下载</a>
         <button class="share-viewer-close" id="shareViewerClose" type="button" aria-label="关闭">✕</button>
       </div>
       <div class="share-viewer-body" id="shareViewerBody"></div>
@@ -9190,8 +9180,6 @@
     function openShareViewer() {
       const body = document.querySelector("#shareViewerBody");
       if (body) body.innerHTML = `<div class="share-viewer-loading">正在生成图片…</div>`;
-      const save = document.querySelector("#shareViewerSave");
-      if (save) { save.style.display = "none"; save.removeAttribute("href"); }
       const viewer = document.querySelector("#shareViewer");
       if (viewer) viewer.hidden = false;
     }
@@ -9254,8 +9242,6 @@
         shareViewerUrl = URL.createObjectURL(blob);
         const body = document.querySelector("#shareViewerBody");
         if (body) body.innerHTML = `<img src="${shareViewerUrl}" alt="${escapeHTML(title)}" />`;
-        const save = document.querySelector("#shareViewerSave");
-        if (save) { save.href = shareViewerUrl; save.setAttribute("download", `${title}.png`); save.style.display = ""; }
       } catch (error) {
         console.error("share image failed", error);
         const body = document.querySelector("#shareViewerBody");

@@ -1289,11 +1289,9 @@
        RESULT
        ============================================================ */
     .result-sheet {
-      position: fixed;
-      inset: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      /* 渐变固定在一屏内，不随滚动变化 */
+      position: relative;
+      min-height: var(--screen-h);
+      overflow: visible;
       background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
       z-index: 40;
     }
@@ -1302,7 +1300,7 @@
       width: 100%;
       max-width: var(--shell-w);
       margin: 0 auto;
-      padding: 64px 24px 24px;
+      padding: 64px 24px calc(24px + env(safe-area-inset-bottom, 0px));
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -8447,7 +8445,7 @@
     function renderResultLoading() {
       const card = document.querySelector(".result-card");
       card?.classList.add("is-loading");
-      card?.classList.remove("is-revealed");
+      card?.classList.remove("is-revealed", "is-streaming");
       els.resultHero?.classList.remove("is-img-ready");
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears}张牌后的你`;

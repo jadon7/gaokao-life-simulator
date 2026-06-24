@@ -2392,7 +2392,17 @@
       text-align: center;
       padding: 0 12px calc(40px + env(safe-area-inset-bottom));
     }
-    .share-viewer-body img { width: 100%; max-width: 480px; height: auto; display: block; margin: 0 auto; border-radius: 12px; }
+    .share-viewer-body img {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 12px;
+      -webkit-touch-callout: default;
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
     .share-viewer-loading { color: rgba(255, 255, 255, 0.7); font-size: 15px; padding: 48px 16px; }
 
     /* process viewer */
@@ -9466,8 +9476,6 @@
       ]);
     }
 
-    let shareViewerUrl = "";
-
     function openShareViewer() {
       const body = document.querySelector("#shareViewerBody");
       if (body) body.innerHTML = `<div class="share-viewer-loading">正在生成图片…</div>`;
@@ -9480,7 +9488,6 @@
       if (viewer) viewer.hidden = true;
       const body = document.querySelector("#shareViewerBody");
       if (body) body.innerHTML = "";
-      if (shareViewerUrl) { URL.revokeObjectURL(shareViewerUrl); shareViewerUrl = ""; }
     }
 
     async function captureShare(mode) {
@@ -9534,12 +9541,18 @@
         const options = { cacheBust: true, pixelRatio: Math.min(2, window.devicePixelRatio || 2), backgroundColor: "#ffffff", skipFonts: true };
         // 预热渲染一帧：让布局/图片先稳定，避免下一帧换行变化导致文字被裁切
         await mod.toPng(clone, options);
-        const blob = await mod.toBlob(clone, options);
-        if (!blob) throw new Error("生成结果为空");
-        if (shareViewerUrl) URL.revokeObjectURL(shareViewerUrl);
-        shareViewerUrl = URL.createObjectURL(blob);
+        const dataUrl = await mod.toPng(clone, options);
+        if (!dataUrl || !dataUrl.startsWith("data:image/png")) throw new Error("生成结果为空");
         const body = document.querySelector("#shareViewerBody");
-        if (body) body.innerHTML = `<img src="${shareViewerUrl}" alt="${escapeHTML(title)}" />`;
+        if (body) {
+          body.innerHTML = "";
+          const img = document.createElement("img");
+          img.src = dataUrl;
+          img.alt = title;
+          img.decoding = "sync";
+          img.loading = "eager";
+          body.appendChild(img);
+        }
       } catch (error) {
         console.error("share image failed", error);
         const body = document.querySelector("#shareViewerBody");

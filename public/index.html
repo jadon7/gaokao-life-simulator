@@ -1050,10 +1050,10 @@
       min-height: 52px;
       display: grid;
       align-items: center;
-      justify-items: stretch;
+      justify-items: center;
       padding: 11px 14px;
       border-radius: 22px;
-      text-align: left;
+      text-align: center;
       transition: transform 0.18s ease, background-color 0.26s ease, color 0.26s ease;
     }
 
@@ -1065,7 +1065,6 @@
     .choice-pill.right {
       background: rgba(46, 185, 150, 0.1);
       color: #2eb996;
-      text-align: right;
     }
 
     .choice-pill b {
@@ -10260,6 +10259,28 @@
               text: card?.textContent.replace(/\s+/g, "") || ""
             });
           }, 120);
+        },
+        choiceAlign() {
+          showFlow("play");
+          els.cardStack.innerHTML = `
+            <article class="life-card">
+              <div class="choice-preview">
+                <button class="choice-pill left" type="button"><b class="choice-title">向左选择</b></button>
+                <button class="choice-pill right" type="button"><b class="choice-title">向右选择</b></button>
+              </div>
+            </article>
+          `;
+          const left = document.querySelector(".choice-pill.left");
+          const right = document.querySelector(".choice-pill.right");
+          const leftTitle = left?.querySelector(".choice-title");
+          const rightTitle = right?.querySelector(".choice-title");
+          emit({
+            test: "choiceAlign",
+            leftAlign: left ? getComputedStyle(left).textAlign : "",
+            rightAlign: right ? getComputedStyle(right).textAlign : "",
+            leftTitleAlign: leftTitle ? getComputedStyle(leftTitle).textAlign : "",
+            rightTitleAlign: rightTitle ? getComputedStyle(rightTitle).textAlign : ""
+          });
         }
       };
       (tests[selfTest] || (() => emit({ error: "unknown selftest: " + selfTest })))();

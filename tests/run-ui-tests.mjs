@@ -49,6 +49,10 @@ const suites = {
     ["维护态标题明确", d.title === "模型服务临时维护中"],
     ["维护态按钮不暗示立即成功", d.buttonText === "稍后重试"],
     ["说明前面选择不会丢", /前面7次选择已经保存/.test(d.text || "")]
+  ],
+  choiceAlign: d => [
+    ["左选项居中", d.leftAlign === "center" && d.leftTitleAlign === "center"],
+    ["右选项居中", d.rightAlign === "center" && d.rightTitleAlign === "center"]
   ]
 };
 

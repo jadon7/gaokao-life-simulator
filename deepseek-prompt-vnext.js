@@ -489,7 +489,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；育儿问题换着写，默认不用发烧/生病。
+- 按 stateHints.childRoute 写育儿线：未出生前只写是否生小孩；先出生，再婴幼儿照护；不提前写托育、幼儿园、班主任。
 - 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：{{PHASE_PROMPT}}
@@ -555,7 +555,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；育儿问题换着写，默认不用发烧/生病。
+- 按 stateHints.childRoute 写育儿线：未出生前只写是否生小孩；先出生，再婴幼儿照护；不提前写托育、幼儿园、班主任。
 - 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
@@ -2396,11 +2396,9 @@ function routeChoiceFromHistory(history = [], positivePattern, negativePattern) 
 }
 
 const childDecisionPositivePattern = /生小孩|要小孩|要孩子|备孕|育儿计划|进入育儿|开始育儿/;
-const childEventPositivePattern = /生儿育女|孩子出生|宝宝|产检|托育|孩子(?:生病|发烧|夜醒|照护)|小孩(?:生病|发烧|照护)|哄娃|育儿分工|儿科|婴幼儿|新生儿/;
 const childRouteNegativePattern = /不要小孩|不生小孩|暂不生|暂时不生|先不生|先不要孩子|不进入育儿|不走育儿|没有决定.*生小孩|没决定.*生小孩|没有要孩子|没要孩子|没有进入育儿|不打算要孩子|丁克|先稳现有生活|现有生活排稳|暂缓育儿|推迟要孩子/;
 
-function childRouteChoice(history = []) {
-  let eventYear = 0;
+export function childRouteChoice(history = []) {
   for (const item of [...history].reverse()) {
     const text = [
       item?.scene,
@@ -2417,9 +2415,7 @@ function childRouteChoice(history = []) {
     ].filter(Boolean).join(" ");
     if (childRouteNegativePattern.test(text)) return { state: "no", year: Number(item?.year || 0) || 0 };
     if (childDecisionPositivePattern.test(text)) return { state: "yes", year: Number(item?.year || 0) || 0 };
-    if (!eventYear && childEventPositivePattern.test(text)) eventYear = Number(item?.year || 0) || 0;
   }
-  if (eventYear) return { state: "yes", year: Math.max(1, eventYear - 1) };
   return { state: "", year: 0 };
 }
 
@@ -2435,7 +2431,7 @@ function hasChosenChildRoute(history = []) {
   return childRouteChoice(history).state === "yes";
 }
 
-function childTimelineStage(history = [], year = 1) {
+export function childTimelineStage(history = [], year = 1) {
   const choice = childRouteChoice(history);
   if (choice.state !== "yes" || !choice.year) return "";
   const delta = Number(year || 1) - choice.year;

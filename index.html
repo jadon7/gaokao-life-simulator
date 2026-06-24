@@ -1346,6 +1346,28 @@
     /* 截图时隐藏按钮 */
     .result-card.is-capturing .result-actions { display: none; }
 
+    .result-card.is-capturing,
+    .result-card.is-capturing * {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .result-card.is-capturing .glass-section {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+      box-shadow: 0 10px 24px rgba(52, 68, 98, 0.08);
+    }
+
+    .result-card.is-capturing .ability-section {
+      filter: none;
+      box-shadow: 0 10px 24px rgba(52, 68, 98, 0.08);
+    }
+
+    .result-card.is-capturing .ability-art {
+      filter: none;
+    }
+
     /* 流式生成期间隐藏操作按钮，避免分享到不完整结果 */
     .result-card.is-streaming .result-actions { display: none; }
 

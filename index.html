@@ -4884,6 +4884,8 @@
     const stackSize = 3;
     const lowWatermark = 5;
     const keepFutureAfterChoice = 4;
+    const analyticsSessionStorageKey = "gaokao_life_session_id";
+    const analyticsDisabled = runtimeFlags.pilot || Boolean(urlParams.get("selfTest") || urlParams.get("selftest"));
 
     const state = {
       index: 0,
@@ -4926,7 +4928,15 @@
       streamFields: {},
       streamNewFields: {},
       streamRenderPending: false,
-      debugTrace: []
+      debugTrace: [],
+      analyticsSessionId: getAnalyticsSessionId(),
+      analyticsRunId: createAnalyticsId(),
+      analyticsStartedAt: Date.now(),
+      analyticsEngaged: false,
+      analyticsCompleted: false,
+      analyticsLastCardViewKey: "",
+      analyticsLastFlow: "",
+      analyticsLastExitAt: 0
     };
 
     const els = {
@@ -4973,6 +4983,160 @@
       copyProcessDebug: document.querySelector("#copyProcessDebug"),
       closeProcessDebug: document.querySelector("#closeProcessDebug")
     };
+
+    function createAnalyticsId() {
+      if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+      return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function getAnalyticsSessionId() {
+      try {
+        const existing = window.localStorage?.getItem(analyticsSessionStorageKey);
+        if (existing) return existing;
+        const next = createAnalyticsId();
+        window.localStorage?.setItem(analyticsSessionStorageKey, next);
+        return next;
+      } catch {
+        return createAnalyticsId();
+      }
+    }
+
+    function analyticsScoreBand(score) {
+      const value = Number(String(score || "").match(/\d+/)?.[0] || NaN);
+      if (!Number.isFinite(value)) return "unknown";
+      if (value < 300) return "<300";
+      if (value < 450) return "300-449";
+      if (value < 600) return "450-599";
+      return "600+";
+    }
+
+    function analyticsText(value, max = 80) {
+      return String(value || "").replace(/\s+/g, " ").trim().slice(0, max);
+    }
+
+    function analyticsProfileFields() {
+      let profile = state.profile || {};
+      if (!profile.major && !profile.majorLabel) {
+        try {
+          profile = readProfile();
+        } catch {}
+      }
+      return {
+        score_band: analyticsScoreBand(profile.score),
+        major_label: analyticsText(profile.majorLabel || profile.major || "", 40)
+      };
+    }
+
+    function topRiasecCode(scores = {}) {
+      return Object.entries(scores || {})
+        .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+        .map(([code]) => code)[0] || "";
+    }
+
+    function analyticsCardText(card = {}) {
+      return [
+        card.scene,
+        card.eventTitle,
+        card.prompt,
+        card.lifeTrack,
+        card.relationshipTrack,
+        card.left?.label,
+        card.right?.label
+      ].filter(Boolean).join(" ");
+    }
+
+    function analyticsCardFields(card = {}) {
+      const text = analyticsCardText(card);
+      return {
+        year: Number(card.yearNumber || state.index + 1) || undefined,
+        scene_title: analyticsText(card.eventTitle || card.scene || "", 80),
+        phase: analyticsText(card.phase || "", 40),
+        main_track: analyticsText(card.mainTrack || "", 32),
+        is_postgrad: /考研|保研|研究生|备考/.test(text),
+        child_birth: /孩子出生|宝宝出生|生下孩子|生产|出生第一夜/.test(text),
+        child_care: /育儿|照护|托班|幼儿园|家长群|班主任|孩子发烧|发烧/.test(text),
+        positive_scene: /认可|感谢|做成|稳定|回正|推荐|夸|掌声|感谢信/.test(text),
+        pressure_scene: /突然|催|危机|冲突|出事|爆炸|必须|发烧|截止/.test(text)
+      };
+    }
+
+    function analyticsChoiceFields(direction, card = {}) {
+      const choice = card[direction] || {};
+      return {
+        choice_side: direction === "right" ? "right" : "left",
+        choice_tag: analyticsText(choice.tag || choice.title || "", 40),
+        choice_riasec_top: topRiasecCode(choice.riasec)
+      };
+    }
+
+    function analyticsCommonFields(extra = {}) {
+      let hollandPrimary = "";
+      try {
+        if (state.history.length) hollandPrimary = getHollandSummaryData().primary;
+      } catch {}
+      return {
+        session_id: state.analyticsSessionId,
+        run_id: state.analyticsRunId,
+        timestamp: new Date().toISOString(),
+        flow: document.body.dataset.flow || "entry",
+        history_count: state.history.length,
+        completed: Boolean(state.analyticsCompleted || state.result),
+        holland_primary: extra.holland_primary || hollandPrimary || undefined,
+        ...analyticsProfileFields(),
+        ...extra
+      };
+    }
+
+    function trackAnalytics(event, data = {}, options = {}) {
+      if (analyticsDisabled || !event) return;
+      if (!["page_view", "flow_view", "session_exit"].includes(event)) state.analyticsEngaged = true;
+      const payload = analyticsCommonFields({ event, ...data });
+      Object.keys(payload).forEach(key => payload[key] === undefined || payload[key] === "" ? delete payload[key] : null);
+      let body = "";
+      try {
+        body = JSON.stringify(payload);
+      } catch {
+        return;
+      }
+      if (options.beacon && navigator.sendBeacon) {
+        navigator.sendBeacon("/api/analytics", new Blob([body], { type: "application/json" }));
+        return;
+      }
+      fetch("/api/analytics", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+        keepalive: options.keepalive !== false
+      }).catch(() => {});
+    }
+
+    function resetAnalyticsRun() {
+      state.analyticsRunId = createAnalyticsId();
+      state.analyticsStartedAt = Date.now();
+      state.analyticsCompleted = false;
+      state.analyticsLastCardViewKey = "";
+    }
+
+    function trackCardView(card) {
+      if (!card) return;
+      const key = `${state.analyticsRunId}:${card.yearNumber || state.index + 1}:${card.eventTitle || card.scene || ""}:${state.history.length}`;
+      if (state.analyticsLastCardViewKey === key) return;
+      state.analyticsLastCardViewKey = key;
+      trackAnalytics("card_view", analyticsCardFields(card));
+    }
+
+    function trackSessionExit(reason) {
+      const now = Date.now();
+      if (now - state.analyticsLastExitAt < 1500) return;
+      state.analyticsLastExitAt = now;
+      trackAnalytics("session_exit", {
+        exit_reason: reason,
+        duration_ms: now - state.analyticsStartedAt,
+        year: Math.min(state.index + 1, state.totalYears),
+        bounced: !state.analyticsEngaged,
+        completed: Boolean(state.analyticsCompleted || state.result)
+      }, { beacon: true });
+    }
 
     const NAME_MAX_LENGTH = 8;
     const PROVINCE_MAX_LENGTH = 8;
@@ -6153,6 +6317,10 @@
       syncThemeColor();
       scrollViewportToTop();
       if (flow === "entry" || flow === "setup") refreshGateButtons();
+      if (state.analyticsLastFlow !== flow) {
+        state.analyticsLastFlow = flow;
+        trackAnalytics("flow_view", { flow });
+      }
     }
 
     function keepPlayViewport() {
@@ -6194,6 +6362,7 @@
       state.feedbackByYear = {};
       state.result = null;
       state.debugTrace = [];
+      resetAnalyticsRun();
       state.profile = { ...state.profile, relationName: "", relationGender: "", relationIntro: "" };
       state.loadError = "";
       state.values = {
@@ -6219,6 +6388,7 @@
 
     function enterSetupFromCover() {
       if (!isEntryReady()) { refreshEntryGate(); return; }
+      state.analyticsEngaged = true;
       const { entryName } = normalizeSetupInputs();
       const setupNameInput = document.querySelector("#studentName");
       if (entryName && setupNameInput && !setupNameInput.value.trim()) {
@@ -6242,6 +6412,7 @@
       showSetupError("");
       setSetupPending(true);
       try {
+        resetAnalyticsRun();
         state.index = 0;
         state.history = [];
         state.deck = [];
@@ -6269,9 +6440,11 @@
         state.isLoading = true;
         resetStreamState();
         applyProfile(readProfile());
+        trackAnalytics("profile_submit", { flow: "setup" });
         showFlow("play");
         render();
         await loadAnnualCard(1);
+        trackAnalytics("game_start_success", { year: 1 });
         state.loadError = "";
         state.isLoading = false;
         render();
@@ -6312,10 +6485,24 @@
       renderTags();
     }
 
+    function trackApiRequest(path, payload = {}, data = {}) {
+      if (!String(path || "").startsWith("/api/game/")) return;
+      trackAnalytics("api_request", {
+        endpoint: path,
+        year: payload?.year || payload?.startYear || (String(path).includes("/result") ? "result" : undefined),
+        duration_ms: data.duration_ms,
+        status: data.status,
+        error_type: data.error_type,
+        transport: data.transport,
+        degraded: Boolean(data.degraded)
+      });
+    }
+
     async function apiPost(path, payload, options = {}) {
       if (runtimeFlags.pilot) {
         return handlePilotApi(path, payload);
       }
+      const startedAt = performance.now();
       const controller = new AbortController();
       const externalSignal = options.signal;
       const abortFromExternal = () => controller.abort();
@@ -6335,15 +6522,45 @@
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) {
           const ray = response.headers.get("cf-ray");
-          throw apiResponseError(data, response.status, ray);
+          trackApiRequest(path, payload, {
+            transport: "fetch",
+            status: response.status,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: data.maintenance ? "maintenance" : "api_error"
+          });
+          const error = apiResponseError(data, response.status, ray);
+          error.analyticsLogged = true;
+          throw error;
         }
         logApiModel(path, payload, data, "fetch");
+        trackApiRequest(path, payload, {
+          transport: "fetch",
+          status: response.status,
+          duration_ms: Math.round(performance.now() - startedAt),
+          degraded: data?.degraded || data?.result?.degraded
+        });
         return data;
       } catch (error) {
-        if (error.name === "AbortError") throw new Error(options.abortMessage || "生成超时，请重试");
+        if (error.name === "AbortError") {
+          trackApiRequest(path, payload, {
+            transport: "fetch",
+            status: 0,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: "timeout"
+          });
+          throw new Error(options.abortMessage || "生成超时，请重试");
+        }
         if (isNetworkFetchError(error)) {
           if (externalSignal?.aborted) throw new Error(options.abortMessage || "请求已取消");
           return apiPostXHR(path, payload, options);
+        }
+        if (!error?.analyticsLogged) {
+          trackApiRequest(path, payload, {
+            transport: "fetch",
+            status: error?.status || 0,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: error?.maintenance ? "maintenance" : "request_error"
+          });
         }
         throw normalizedApiError(error, "请求失败");
       } finally {
@@ -6355,6 +6572,7 @@
     async function apiPostStream(path, payload, onDelta) {
       if (runtimeFlags.pilot || !window.ReadableStream) return apiPost(path, payload);
       const streamPath = `${path}/stream`;
+      const startedAt = performance.now();
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 55000);
       try {
@@ -6367,7 +6585,15 @@
         if (!response.ok || !response.body) {
           const data = await response.json().catch(() => ({}));
           const ray = response.headers.get("cf-ray");
-          throw apiResponseError(data, response.status, ray);
+          trackApiRequest(path, payload, {
+            transport: "stream",
+            status: response.status,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: data.maintenance ? "maintenance" : "api_error"
+          });
+          const error = apiResponseError(data, response.status, ray);
+          error.analyticsLogged = true;
+          throw error;
         }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -6391,12 +6617,42 @@
         const trailing = parseStreamLine(buffer);
         if (trailing?.type === "done") finalData = trailing;
         if (!finalData?.ok) {
-          throw new Error(finalData?.error || "生成没有完成，请重试");
+          trackApiRequest(path, payload, {
+            transport: "stream",
+            status: finalData?.status || 0,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: "stream_incomplete"
+          });
+          const error = new Error(finalData?.error || "生成没有完成，请重试");
+          error.analyticsLogged = true;
+          throw error;
         }
         logApiModel(path, payload, finalData, "stream");
+        trackApiRequest(path, payload, {
+          transport: "stream",
+          status: 200,
+          duration_ms: Math.round(performance.now() - startedAt),
+          degraded: finalData?.degraded || finalData?.result?.degraded
+        });
         return finalData;
       } catch (error) {
-        if (error.name === "AbortError") throw new Error("生成超时，请重试");
+        if (error.name === "AbortError") {
+          trackApiRequest(path, payload, {
+            transport: "stream",
+            status: 0,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: "timeout"
+          });
+          throw new Error("生成超时，请重试");
+        }
+        if (!error?.analyticsLogged) {
+          trackApiRequest(path, payload, {
+            transport: "stream",
+            status: error?.status || 0,
+            duration_ms: Math.round(performance.now() - startedAt),
+            error_type: error?.maintenance ? "maintenance" : "request_error"
+          });
+        }
         throw normalizedApiError(error, "请求失败");
       } finally {
         window.clearTimeout(timeout);
@@ -6421,6 +6677,7 @@
 
     function apiPostXHR(path, payload, options = {}) {
       return new Promise((resolve, reject) => {
+        const startedAt = performance.now();
         if (options.signal?.aborted) {
           reject(new Error(options.abortMessage || "请求已取消"));
           return;
@@ -6453,15 +6710,36 @@
           }
           if (xhr.status < 200 || xhr.status >= 300 || !data.ok) {
             const ray = xhr.getResponseHeader && xhr.getResponseHeader("cf-ray");
+            trackApiRequest(path, payload, {
+              transport: "xhr",
+              status: xhr.status,
+              duration_ms: Math.round(performance.now() - startedAt),
+              error_type: data.maintenance ? "maintenance" : "api_error"
+            });
             finish(() => reject(apiResponseError(data, xhr.status, ray)));
             return;
           }
           logApiModel(path, payload, data, "xhr");
+          trackApiRequest(path, payload, {
+            transport: "xhr",
+            status: xhr.status,
+            duration_ms: Math.round(performance.now() - startedAt),
+            degraded: data?.degraded || data?.result?.degraded
+          });
           finish(() => resolve(data));
         };
-        xhr.onerror = () => finish(() => reject(new Error("XHR 网络连接失败")));
-        xhr.ontimeout = () => finish(() => reject(new Error("生成超时，请重试")));
-        xhr.onabort = () => finish(() => reject(new Error(options.abortMessage || "请求已取消")));
+        xhr.onerror = () => {
+          trackApiRequest(path, payload, { transport: "xhr", status: 0, duration_ms: Math.round(performance.now() - startedAt), error_type: "network" });
+          finish(() => reject(new Error("XHR 网络连接失败")));
+        };
+        xhr.ontimeout = () => {
+          trackApiRequest(path, payload, { transport: "xhr", status: 0, duration_ms: Math.round(performance.now() - startedAt), error_type: "timeout" });
+          finish(() => reject(new Error("生成超时，请重试")));
+        };
+        xhr.onabort = () => {
+          trackApiRequest(path, payload, { transport: "xhr", status: 0, duration_ms: Math.round(performance.now() - startedAt), error_type: "aborted" });
+          finish(() => reject(new Error(options.abortMessage || "请求已取消")));
+        };
         xhr.send(JSON.stringify(payload));
       });
     }
@@ -7118,20 +7396,41 @@
     async function loadAnnualCard(yearNumber) {
       if (yearNumber < 1 || yearNumber > state.totalYears) return null;
       const path = yearNumber === 1 ? "/api/game/start" : "/api/game/next";
+      const startedAt = performance.now();
+      trackAnalytics("card_load_start", { endpoint: path, year: yearNumber });
       resetStreamState();
       const payload = {
         profile: apiProfile(),
         history: yearNumber === 1 ? [] : apiHistory(false),
         year: yearNumber
       };
-      const data = await apiPostStream(path, payload, updateStreamPreview);
-      if (!data.card) throw new Error(`第 ${yearNumber} 年生成失败：接口没有返回卡片`);
-      const card = normalizeRemoteCard(data.card);
-      applyOpeningRelationFromCard(card);
-      applyPreviousInfoToCard(card);
-      state.deck[yearNumber - 1] = card;
-      resetStreamState();
-      return card;
+      try {
+        const data = await apiPostStream(path, payload, updateStreamPreview);
+        if (!data.card) throw new Error(`第 ${yearNumber} 年生成失败：接口没有返回卡片`);
+        const card = normalizeRemoteCard(data.card);
+        applyOpeningRelationFromCard(card);
+        applyPreviousInfoToCard(card);
+        state.deck[yearNumber - 1] = card;
+        resetStreamState();
+        trackAnalytics("card_load_success", {
+          endpoint: path,
+          year: yearNumber,
+          duration_ms: Math.round(performance.now() - startedAt),
+          status: 200,
+          degraded: Boolean(data.degraded),
+          ...analyticsCardFields(card)
+        });
+        return card;
+      } catch (error) {
+        trackAnalytics("card_load_fail", {
+          endpoint: path,
+          year: yearNumber,
+          duration_ms: Math.round(performance.now() - startedAt),
+          status: error?.status || 0,
+          error_type: error?.maintenance ? "maintenance" : (error?.name === "AbortError" ? "timeout" : "request_error")
+        });
+        throw error;
+      }
     }
 
     function applyOpeningRelationFromCard(card) {
@@ -7739,6 +8038,7 @@
         renderLoadingCard();
         return;
       }
+      trackCardView(card);
       // 只有顶牌渲染真实内容，后面的牌一律用空白骨架垫底，避免滑动时剧透
       const article = document.createElement("article");
       article.className = "life-card";
@@ -7950,6 +8250,10 @@
 
     async function retryCurrentStep() {
       if (state.isLoading || state.index >= state.totalYears) return;
+      trackAnalytics("card_retry_click", {
+        year: state.index + 1,
+        error_type: state.loadError ? "card_load_fail" : ""
+      });
       state.loadError = "";
       state.isLoading = true;
       clearBranchPrefetch();
@@ -7976,6 +8280,10 @@
       const currentEl = els.cardStack.querySelector(".life-card:not(.behind-one):not(.behind-two)");
       const currentYear = Number(card.yearNumber || state.index + 1);
       const isFinalChoice = state.index >= state.totalYears - 1 || currentYear >= state.totalYears;
+      trackAnalytics("choice_click", {
+        ...analyticsCardFields(card),
+        ...analyticsChoiceFields(direction, card)
+      });
       const prefetchedBranch = isFinalChoice ? null : takeBranchPrefetch(direction, card);
       if (isFinalChoice) clearBranchPrefetch();
       state.isAnimating = true;
@@ -8748,6 +9056,7 @@
     }
 
     async function showResult() {
+      const resultStartedAt = performance.now();
       els.progressFill.style.width = "100%";
       // API 等待期间只预载 RIASEC 公仔图，等结果文案一起亮相
       const hollandSummary = getHollandSummaryData();
@@ -8756,6 +9065,11 @@
       showFlow("result");
       renderResultLoading();
       renderResultStreaming({});
+      trackAnalytics("result_load_start", {
+        endpoint: "/api/game/result",
+        year: "result",
+        holland_primary: hollandSummary.primary
+      });
       try {
         const payload = { profile: apiProfile(), history: apiHistory(true) };
         let data;
@@ -8783,7 +9097,35 @@
         }
         state.result = data.result;
         renderResult(data.result);
+        state.analyticsCompleted = true;
+        trackAnalytics("result_load_success", {
+          endpoint: "/api/game/result",
+          year: "result",
+          duration_ms: Math.round(performance.now() - resultStartedAt),
+          status: 200,
+          holland_primary: hollandSummary.primary,
+          degraded: Boolean(data.degraded || data.result?.degraded)
+        });
+        trackAnalytics("result_view", {
+          year: "result",
+          holland_primary: hollandSummary.primary,
+          completed: true
+        });
+        trackAnalytics("game_complete", {
+          year: "result",
+          duration_ms: Math.round(Date.now() - state.analyticsStartedAt),
+          holland_primary: hollandSummary.primary,
+          completed: true
+        });
       } catch (error) {
+        trackAnalytics("result_load_fail", {
+          endpoint: "/api/game/result",
+          year: "result",
+          duration_ms: Math.round(performance.now() - resultStartedAt),
+          status: error?.status || 0,
+          error_type: error?.maintenance ? "maintenance" : "request_error",
+          holland_primary: hollandSummary.primary
+        });
         renderResultError(error.message || "最终结果生成失败");
       }
       renderTimeline();
@@ -9451,6 +9793,10 @@
 
     function openShareSheet() {
       if (!state.result) return;
+      trackAnalytics("share_click", {
+        share_mode: "sheet",
+        holland_primary: getHollandSummaryData().primary
+      });
       const sheet = document.querySelector("#shareSheet");
       if (sheet) sheet.hidden = false;
     }
@@ -9471,6 +9817,9 @@
     }
 
     function openShareViewer() {
+      trackAnalytics("save_share_page_view", {
+        holland_primary: getHollandSummaryData().primary
+      });
       const body = document.querySelector("#shareViewerBody");
       if (body) body.innerHTML = `<div class="share-viewer-loading">正在生成图片…</div>`;
       const viewer = document.querySelector("#shareViewer");
@@ -9488,6 +9837,11 @@
       closeShareSheet();
       const live = document.querySelector(".result-card");
       if (!live) return;
+      const shareStartedAt = performance.now();
+      trackAnalytics("share_click", {
+        share_mode: mode,
+        holland_primary: getHollandSummaryData().primary
+      });
       const title = (String(state.result?.title || "人生扭蛋机结果").replace(/[\\/:*?"<>|\s]+/g, " ").trim().slice(0, 40)) || "人生扭蛋机";
       openShareViewer();
       // 离屏克隆截图：绝不改动正在显示的结果页（避免二维码/裁剪残留到原页面）
@@ -9547,8 +9901,19 @@
           img.loading = "eager";
           body.appendChild(img);
         }
+        trackAnalytics("share_image_generated", {
+          share_mode: mode,
+          duration_ms: Math.round(performance.now() - shareStartedAt),
+          holland_primary: getHollandSummaryData().primary
+        });
       } catch (error) {
         console.error("share image failed", error);
+        trackAnalytics("share_image_fail", {
+          share_mode: mode,
+          duration_ms: Math.round(performance.now() - shareStartedAt),
+          error_type: "render_error",
+          holland_primary: getHollandSummaryData().primary
+        });
         const body = document.querySelector("#shareViewerBody");
         if (body) body.innerHTML = `<div class="share-viewer-loading">图片生成失败，请重试</div>`;
       } finally {
@@ -10093,10 +10458,24 @@
       if (!card) return;
       selectAvatarById(card.dataset.avatar || avatarOptions[0].id, true);
     });
-    document.querySelector("#randomTop")?.addEventListener("click", () => resetGame(false, "setup"));
-    document.querySelector("#restartTop").addEventListener("click", () => resetGame(true, "entry"));
-    document.querySelector("#restartResult").addEventListener("click", () => resetGame(true, "entry"));
+    document.querySelector("#randomTop")?.addEventListener("click", () => {
+      trackAnalytics("restart_click", { source: "random_top" });
+      resetGame(false, "setup");
+    });
+    document.querySelector("#restartTop").addEventListener("click", () => {
+      trackAnalytics("restart_click", { source: "top" });
+      resetGame(true, "entry");
+    });
+    document.querySelector("#restartResult").addEventListener("click", () => {
+      trackAnalytics("restart_click", { source: "result", completed: Boolean(state.result) });
+      resetGame(true, "entry");
+    });
     document.querySelector("#saveResult").addEventListener("click", openShareSheet);
+    document.querySelector(".author-cta")?.addEventListener("click", () => {
+      trackAnalytics("author_cta_click", {
+        holland_primary: state.history.length ? getHollandSummaryData().primary : ""
+      }, { beacon: true });
+    });
     document.querySelector("#shareSheetMask")?.addEventListener("click", closeShareSheet);
     document.querySelector("#shareCancel")?.addEventListener("click", closeShareSheet);
     document.querySelector("#shareFull")?.addEventListener("click", () => captureShare("full"));
@@ -10123,6 +10502,16 @@
         if (event.key === "ArrowRight") choose("right");
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") undo();
       }
+    });
+    window.addEventListener("pagehide", () => trackSessionExit("pagehide"));
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") trackSessionExit("hidden");
+    });
+    trackAnalytics("page_view", {
+      path: window.location.pathname,
+      referrer_host: document.referrer ? (() => {
+        try { return new URL(document.referrer).host; } catch { return ""; }
+      })() : ""
     });
 
     function fitEntryTitle() {

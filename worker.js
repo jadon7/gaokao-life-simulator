@@ -264,6 +264,94 @@ function logApiEvent(level, evt, context = {}, error = null, extra = {}) {
   else console.log(line);
 }
 
+const analyticsEventNames = new Set([
+  "page_view",
+  "flow_view",
+  "profile_submit",
+  "game_start_success",
+  "card_view",
+  "choice_click",
+  "card_load_start",
+  "card_load_success",
+  "card_load_fail",
+  "card_retry_click",
+  "result_load_start",
+  "result_load_success",
+  "result_load_fail",
+  "result_view",
+  "game_complete",
+  "restart_click",
+  "share_click",
+  "share_image_generated",
+  "share_image_fail",
+  "author_cta_click",
+  "save_share_page_view",
+  "api_request",
+  "session_exit"
+]);
+
+function cleanAnalyticsText(value, max = 80) {
+  return truncateLogText(redactSensitiveText(value), max);
+}
+
+function cleanAnalyticsNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function cleanAnalyticsBoolean(value) {
+  return value === true || value === "true" ? true : value === false || value === "false" ? false : undefined;
+}
+
+function analyticsBodySummary(body = {}, meta = {}) {
+  const event = analyticsEventNames.has(String(body.event || "")) ? String(body.event) : "unknown";
+  const payload = {
+    evt: "analytics",
+    level: "info",
+    event,
+    session_id: cleanAnalyticsText(body.session_id, 64),
+    run_id: cleanAnalyticsText(body.run_id, 64),
+    timestamp: cleanAnalyticsText(body.timestamp, 40),
+    flow: cleanAnalyticsText(body.flow, 20),
+    year: cleanAnalyticsText(body.year, 16),
+    history_count: cleanAnalyticsNumber(body.history_count),
+    completed: cleanAnalyticsBoolean(body.completed),
+    bounced: cleanAnalyticsBoolean(body.bounced),
+    duration_ms: cleanAnalyticsNumber(body.duration_ms),
+    endpoint: cleanAnalyticsText(body.endpoint, 48),
+    status: cleanAnalyticsNumber(body.status),
+    error_type: cleanAnalyticsText(body.error_type, 40),
+    transport: cleanAnalyticsText(body.transport, 16),
+    score_band: cleanAnalyticsText(body.score_band, 16),
+    major_label: cleanAnalyticsText(body.major_label, 40),
+    holland_primary: cleanAnalyticsText(body.holland_primary, 4),
+    scene_title: cleanAnalyticsText(body.scene_title, 80),
+    phase: cleanAnalyticsText(body.phase, 40),
+    main_track: cleanAnalyticsText(body.main_track, 32),
+    choice_side: cleanAnalyticsText(body.choice_side, 12),
+    choice_tag: cleanAnalyticsText(body.choice_tag, 40),
+    choice_riasec_top: cleanAnalyticsText(body.choice_riasec_top, 4),
+    is_postgrad: cleanAnalyticsBoolean(body.is_postgrad),
+    child_birth: cleanAnalyticsBoolean(body.child_birth),
+    child_care: cleanAnalyticsBoolean(body.child_care),
+    positive_scene: cleanAnalyticsBoolean(body.positive_scene),
+    pressure_scene: cleanAnalyticsBoolean(body.pressure_scene),
+    degraded: cleanAnalyticsBoolean(body.degraded),
+    share_mode: cleanAnalyticsText(body.share_mode, 16),
+    source: cleanAnalyticsText(body.source, 32),
+    exit_reason: cleanAnalyticsText(body.exit_reason, 20),
+    path: cleanAnalyticsText(body.path, 80),
+    referrer_host: cleanAnalyticsText(body.referrer_host, 80),
+    ua: cleanAnalyticsText(meta.ua, 120)
+  };
+  Object.keys(payload).forEach(key => payload[key] === undefined || payload[key] === "" ? delete payload[key] : null);
+  return payload;
+}
+
+function logAnalyticsEvent(body = {}, meta = {}) {
+  console.log(JSON.stringify(analyticsBodySummary(body, meta)));
+}
+
 function attachModelError(error, metadata = {}) {
   if (!error || typeof error !== "object") return error;
   if (metadata.status && !error.status) error.status = metadata.status;
@@ -516,6 +604,7 @@ async function readChatStream(response, onDelta = null) {
 }
 
 function annualStreamResponse({ pathname, profile, history, body, env, model, debug = false, clientSignal = null, logContext = null }) {
+  const startedAt = Date.now();
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -524,6 +613,7 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
       try {
         if (pathname === "/api/game/start/stream") {
           const data = buildOpeningCard(profile, totalGameYears);
+          logApiEvent("info", "api_success", logContext || {}, null, { status: 200, ms: Date.now() - startedAt, stream: true, preset: true });
           send({ type: "done", ok: true, model, preset: true, card: annualCardFromData(data) });
           return;
         }
@@ -539,6 +629,7 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
           clientSignal,
           logContext
         );
+        logApiEvent("info", "api_success", logContext || {}, null, { status: 200, ms: Date.now() - startedAt, stream: true, degraded: !!data.degraded });
         send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data), ...debugField(data) });
       } catch (error) {
         logApiEvent(error?.status === 499 ? "warn" : "error", "api_stream_failed", logContext || {}, error, { status: error?.status || 500 });
@@ -558,6 +649,7 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
 }
 
 function resultStreamResponse({ profile, history, env, model, debug = false, clientSignal = null, logContext = null }) {
+  const startedAt = Date.now();
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -575,6 +667,7 @@ function resultStreamResponse({ profile, history, env, model, debug = false, cli
           clientSignal,
           logContext
         );
+        logApiEvent("info", "api_success", logContext || {}, null, { status: 200, ms: Date.now() - startedAt, stream: true, degraded: !!result.degraded });
         send({ type: "done", ok: true, model, degraded: !!result.degraded, result, ...debugField(result) });
       } catch (error) {
         logApiEvent(error?.status === 499 ? "warn" : "error", "api_stream_failed", logContext || {}, error, { status: error?.status || 500 });
@@ -1282,11 +1375,33 @@ async function handleApi(request, env, pathname) {
     });
   }
 
+  if (pathname === "/api/analytics") {
+    try {
+      const body = await readJson(request);
+      logAnalyticsEvent(body, { ua: request.headers.get("user-agent") || "" });
+    } catch (error) {
+      console.warn(JSON.stringify({
+        evt: "analytics_parse_failed",
+        level: "warn",
+        error: truncateLogText(error?.message || error, 120)
+      }));
+    }
+    return sendJson(200, { ok: true });
+  }
+
   let body = {};
   let profile = normalizeProfile();
   let history = [];
   let model = currentModel(env);
   let logContext = buildApiLogContext({ pathname, body, profile, history, model });
+  const apiStartedAt = Date.now();
+  const logApiSuccess = (status = 200, extra = {}) => {
+    logApiEvent("info", "api_success", logContext, null, {
+      status,
+      ms: Date.now() - apiStartedAt,
+      ...extra
+    });
+  };
   const promptLabDebug = isPromptLabDebugRequest(request);
   try {
     body = await readJson(request);
@@ -1315,15 +1430,18 @@ async function handleApi(request, env, pathname) {
 
     if (pathname === "/api/game/start") {
       const data = buildOpeningCard(profile, totalGameYears);
+      logApiSuccess(200, { preset: true });
       return sendJson(200, { ok: true, model, preset: true, card: annualCardFromData(data) });
     }
     if (pathname === "/api/game/next") {
       const requestedYear = Number(body.year || history.length + 1);
       if (requestedYear > totalGameYears || history.length >= totalGameYears) {
+        logApiEvent("warn", "api_rejected", logContext, null, { status: 409, ms: Date.now() - apiStartedAt, reason: "game_finished" });
         return sendJson(409, { ok: false, error: "游戏已结束" });
       }
       const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
       const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year, profile), env, model, null, promptLabDebug, null, request.signal, logContext);
+      logApiSuccess(200, { degraded: !!data.degraded });
       return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/batch") {
@@ -1340,10 +1458,12 @@ async function handleApi(request, env, pathname) {
         request.signal,
         logContext
       );
+      logApiSuccess(200, { count, degraded: !!data.degraded });
       return sendJson(200, { ok: true, model, cards: data.cards.map(annualCardFromData), ...debugField(data) });
     }
     if (pathname === "/api/game/result") {
       const result = await callModel(buildResultMessages({ profile, history }), validateResult, env, model, null, promptLabDebug, null, request.signal, logContext);
+      logApiSuccess(200, { degraded: !!result.degraded });
       return sendJson(200, { ok: true, model, result, ...debugField(result) });
     }
     return sendJson(404, { ok: false, error: "API route not found" });
@@ -1356,6 +1476,7 @@ async function handleApi(request, env, pathname) {
     try {
       if (pathname === "/api/game/start") {
         const data = buildOpeningCard(profile, totalGameYears);
+        logApiEvent("warn", "api_degraded_success", logContext, null, { status: 200, ms: Date.now() - apiStartedAt, preset: true });
         return sendJson(200, { ok: true, model, preset: true, card: annualCardFromData(data) });
       }
       if (pathname === "/api/game/next") {
@@ -1365,16 +1486,19 @@ async function handleApi(request, env, pathname) {
         }
         const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
         const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history, history, year, profile);
+        logApiEvent("warn", "api_degraded_success", logContext, null, { status: 200, ms: Date.now() - apiStartedAt, degraded: true });
         return sendJson(200, { ok: true, model, degraded: true, card: annualCardFromData(data) });
       }
       if (pathname === "/api/game/batch") {
         const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
         const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
         const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history, profile);
+        logApiEvent("warn", "api_degraded_success", logContext, null, { status: 200, ms: Date.now() - apiStartedAt, degraded: true, count });
         return sendJson(200, { ok: true, model, degraded: true, cards: data.cards.map(annualCardFromData) });
       }
       if (pathname === "/api/game/result") {
         const result = validateResult(mockResponse(buildResultMessages({ profile, history })));
+        logApiEvent("warn", "api_degraded_success", logContext, null, { status: 200, ms: Date.now() - apiStartedAt, degraded: true });
         return sendJson(200, { ok: true, model, degraded: true, result: { ...result, degraded: true } });
       }
     } catch (fallbackError) {

@@ -1275,6 +1275,72 @@
       }
     }
 
+    .load-error-card .card-illustration {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 82px;
+      background: linear-gradient(135deg, rgba(255, 238, 232, 0.96), rgba(232, 241, 255, 0.86));
+    }
+
+    .card-error-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #253041;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 10px 22px rgba(37, 48, 65, 0.18);
+    }
+
+    .card-error-copy {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: #182235;
+      line-height: 1.5;
+    }
+
+    .card-error-copy b {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .card-error-copy span {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(24, 34, 53, 0.72);
+    }
+
+    .card-error-copy small {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(24, 34, 53, 0.45);
+      overflow-wrap: anywhere;
+    }
+
+    .load-error-card .choice-preview {
+      gap: 0;
+    }
+
+    .load-error-card .choice-pill.left {
+      justify-items: center;
+      min-height: 58px;
+      background: #1a91ff;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .load-error-card .choice-pill span {
+      color: rgba(255, 255, 255, 0.82);
+    }
+
     /* 占位骨架卡：内容未加载时垫在牌堆后面 */
     .ghost-card {
       pointer-events: none;
@@ -7615,10 +7681,35 @@
         els.cardStack.appendChild(back);
       });
       const article = document.createElement("article");
-      article.className = `life-card ${state.loadError ? "" : "loading-card"}`;
+      article.className = `life-card ${state.loadError ? "load-error-card" : "loading-card"}`;
       const stream = state.streamFields || {};
       const now = performance.now();
       const isNew = key => Number(state.streamNewFields?.[key] || 0) > now ? " is-stream-new" : "";
+      if (state.loadError) {
+        const savedCount = Math.min(state.history.length, state.totalYears);
+        article.innerHTML = `
+          <div class="card-illustration" aria-hidden="true">
+            <div class="card-error-mark">!</div>
+          </div>
+          <p class="card-error-copy">
+            <b>这一题没生成出来</b>
+            <span>前面 ${savedCount} 次选择已经保存，重试后继续当前年份。</span>
+            <small>${escapeHTML(state.loadError)}</small>
+          </p>
+          <div class="choice-preview">
+            <button class="choice-pill left retry-current-step" type="button">
+              <b class="choice-title">重试这一题</b>
+              <span>不用重新开始</span>
+            </button>
+          </div>
+        `;
+        article.querySelector(".retry-current-step").addEventListener("click", retryCurrentStep);
+        els.cardStack.appendChild(article);
+        fitCardContent(article);
+        els.leftChoiceText.textContent = "重试";
+        els.rightChoiceText.textContent = "等待";
+        return;
+      }
       const titleHTML = stream.sceneTitle
         ? `<span class="stream-field${isNew("sceneTitle")}">${escapeHTML(stream.sceneTitle)}</span>`
         : `<span class="stream-placeholder" aria-label="标题生成中"></span>`;
@@ -7636,27 +7727,22 @@
       article.innerHTML = `
         ${streamPreviousFeedbackHTML(stream, isNew)}
         <div class="card-illustration" aria-hidden="true">
-          ${state.loadError ? "" : `<div class="card-loading-orbit"><i></i><i></i><i></i></div>`}
+          <div class="card-loading-orbit"><i></i><i></i><i></i></div>
         </div>
-        <p class="card-prompt">${state.loadError ? escapeHTML(state.loadError) : bodyHTML}</p>
+        <p class="card-prompt">${bodyHTML}</p>
         <div class="choice-preview">
-          <button class="choice-pill left" type="button" ${state.loadError ? "" : "disabled"}>
-            <b class="choice-title">${state.loadError ? "重试" : leftLabelHTML}</b>
+          <button class="choice-pill left" type="button" disabled>
+            <b class="choice-title">${leftLabelHTML}</b>
           </button>
-          <button class="choice-pill right" type="button" ${state.loadError ? "" : "disabled"}>
-            <b class="choice-title">${state.loadError ? "返回" : rightLabelHTML}</b>
+          <button class="choice-pill right" type="button" disabled>
+            <b class="choice-title">${rightLabelHTML}</b>
           </button>
         </div>
       `;
-      if (state.loadError) {
-        article.querySelector(".choice-pill.left").addEventListener("click", retryCurrentStep);
-        article.querySelector(".choice-pill.right").disabled = false;
-        article.querySelector(".choice-pill.right").addEventListener("click", () => showFlow("setup"));
-      }
       els.cardStack.appendChild(article);
       fitCardContent(article);
-      els.leftChoiceText.textContent = state.loadError ? "重试" : "A";
-      els.rightChoiceText.textContent = state.loadError ? "等待" : "B";
+      els.leftChoiceText.textContent = "A";
+      els.rightChoiceText.textContent = "B";
     }
 
     const playTopPalette = ["#5fecd4", "#5fd9ec", "#6fc1ff", "#8da8ff", "#b596ff", "#f0a4d8", "#ff9fae", "#ffc465"];
@@ -9964,6 +10050,37 @@
               nowrap: el ? el.scrollWidth <= el.clientWidth + 1 : false
             });
           }, 1200);
+        },
+        retryError() {
+          showFlow("play");
+          state.index = 7;
+          state.history = Array.from({ length: 7 }, (_, index) => ({
+            index,
+            delta: {},
+            sceneTitle: `第${index + 1}题`,
+            choiceText: "已选择"
+          }));
+          state.deck = [];
+          state.loadError = "请求失败：500";
+          state.isLoading = false;
+          render();
+          window.setTimeout(() => {
+            const card = document.querySelector(".load-error-card");
+            const buttons = card ? [...card.querySelectorAll("button")].map(button => ({
+              text: button.textContent.replace(/\s+/g, ""),
+              disabled: button.disabled
+            })) : [];
+            const text = card ? card.textContent.replace(/\s+/g, "") : "";
+            emit({
+              test: "retryError",
+              hasErrorCard: !!card,
+              buttonCount: buttons.length,
+              buttonText: buttons[0]?.text || "",
+              retryEnabled: buttons[0]?.disabled === false,
+              mentionsSaved: text.includes("前面7次选择已经保存"),
+              noReturn: !text.includes("返回")
+            });
+          }, 120);
         }
       };
       (tests[selfTest] || (() => emit({ error: "unknown selftest: " + selfTest })))();

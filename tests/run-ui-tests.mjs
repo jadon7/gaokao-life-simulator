@@ -28,6 +28,14 @@ const suites = {
     [`年龄主字号 > 年份小字号（age=${d.ageFont} / count=${d.countFont}）`, d.fontOk === true],
     ["文案不换行、不溢出容器", d.nowrap === true],
     [`实际文案=${d.text}`, /^\d+岁·\d+\/\d+年$/.test(d.text || "")]
+  ],
+  retryError: d => [
+    ["失败态渲染错误卡", d.hasErrorCard === true],
+    ["只出现一个操作按钮", d.buttonCount === 1],
+    [`按钮是重试当前题：${d.buttonText}`, /^重试这一题/.test(d.buttonText || "")],
+    ["重试按钮可点击", d.retryEnabled === true],
+    ["文案说明前面选择已保存", d.mentionsSaved === true],
+    ["不出现返回开局入口", d.noReturn === true]
   ]
 };
 

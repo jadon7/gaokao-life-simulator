@@ -4916,7 +4916,15 @@
       if (Array.isArray(item.appearedRoles) && item.appearedRoles.length) {
         out.appearedRoles = item.appearedRoles.slice(0, 8);
       }
-      if (includeHolland) out.holland = normalizeRiasecScores(item.holland);
+      if (includeHolland) {
+        out.holland = normalizeRiasecScores(item.holland);
+        if (item.offeredHolland) {
+          out.offeredHolland = {
+            left: normalizeRiasecScores(item.offeredHolland.left),
+            right: normalizeRiasecScores(item.offeredHolland.right)
+          };
+        }
+      }
       return out;
     }
 
@@ -6620,7 +6628,11 @@
         consequence: chosen.consequence || chosen.feedback || "",
         delta: chosen.delta,
         tag: chosen.tag,
-        holland: normalizeRiasecScores(chosen.riasec) || inferChoiceHolland(chosen, direction)
+        holland: normalizeRiasecScores(chosen.riasec) || inferChoiceHolland(chosen, direction),
+        offeredHolland: {
+          left: normalizeRiasecScores(card.left?.riasec) || inferChoiceHolland(card.left, "left"),
+          right: normalizeRiasecScores(card.right?.riasec) || inferChoiceHolland(card.right, "right")
+        }
       };
       item.appearedRoles = appearedRolesForHistoryItem(item, card);
       return item;
@@ -8253,7 +8265,25 @@
       });
       const total = Object.values(scores).reduce((sum, value) => sum + value, 0);
       if (!total) Object.keys(scores).forEach(code => { scores[code] = 1; });
-      return scores;
+      return normalizeHollandScoresByOffer(scores);
+    }
+
+    function normalizeHollandScoresByOffer(scores) {
+      const keys = ["R", "I", "A", "S", "E", "C"];
+      const offered = Object.fromEntries(keys.map(key => [key, 0]));
+      state.history.forEach(item => {
+        const choices = item.offeredHolland
+          ? [item.offeredHolland.left, item.offeredHolland.right]
+          : [item.holland];
+        choices.forEach(choiceScores => mergeHollandScores(offered, choiceScores));
+      });
+      const offeredTotal = Object.values(offered).reduce((sum, value) => sum + value, 0);
+      if (!offeredTotal) return scores;
+      const averageOffer = offeredTotal / keys.length;
+      return Object.fromEntries(keys.map(key => {
+        const availability = Math.max(Number(offered[key]) || 0, averageOffer * 0.45);
+        return [key, scores[key] * (averageOffer / availability)];
+      }));
     }
 
     function getHollandRank(scores = getHollandScoresFromHistory()) {

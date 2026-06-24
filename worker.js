@@ -144,7 +144,8 @@ function compactHistory(history = []) {
     choiceText: item.choiceText,
     consequence: item.consequence,
     tag: item.tag,
-    holland: item.holland
+    holland: item.holland,
+    offeredHolland: item.offeredHolland
   }));
 }
 

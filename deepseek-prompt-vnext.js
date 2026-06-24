@@ -489,7 +489,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；育儿问题换着写，不连续复用发烧/生病。
+- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；育儿问题换着写，默认不用发烧/生病。
 - 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：{{PHASE_PROMPT}}
@@ -555,7 +555,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；育儿问题换着写，不连续复用发烧/生病。
+- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；育儿问题换着写，默认不用发烧/生病。
 - 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
@@ -750,11 +750,11 @@ const childBirthCard = {
   comedyDevice: "生下小孩",
   pressureMode: "relief",
   reliefSignal: "孩子出生",
-  riasecAxis: ["S", "C"],
-  conflict: "前一年说清育儿计划后，孩子真的出生了。你们第一次把新成员抱回家，要先一起扛住夜里照护，还是马上把分工和支援排稳。",
+  riasecAxis: ["S", "R"],
+  conflict: "前一年说清育儿计划后，孩子真的出生了。你们第一次把新成员抱回家，要先一起扛住夜里照护，还是动手把夜间用品和支援跑顺。",
   sideBeat: "育儿线从计划变成现实生活",
   characters: ["关系线核心角色", "家庭型角色"],
-  abType: "一起扛夜里 / 排稳照护分工",
+  abType: "一起扛夜里 / 动手跑顺照护",
   callbacks: ["孩子出生", "夜里照护", "照护分工"]
 };
 
@@ -765,11 +765,11 @@ const childInfantCareCard = {
   phase: "婴幼儿照护",
   routePhase: "婴幼儿照护",
   comedyDevice: "托育和陪诊",
-  riasecAxis: ["S", "C"],
-  conflict: "孩子还在婴幼儿阶段，夜醒、托育适应和临时照护挤进日程。你要先把照护接住，还是把工作和家庭支援排成固定表。",
+  riasecAxis: ["R", "A"],
+  conflict: "孩子还在婴幼儿阶段，夜醒、托育适应和临时照护挤进日程。你要动手把接送和睡前流程跑顺，还是用故事和仪式帮孩子适应托育。",
   sideBeat: "育儿压力停留在婴幼儿照护和家庭支援",
   characters: ["关系线核心角色", "家庭型角色"],
-  abType: "先接住照护 / 排稳支援表",
+  abType: "跑顺照护流程 / 做托育适应仪式",
   callbacks: ["婴幼儿照护", "托育适应", "照护分工"]
 };
 
@@ -780,7 +780,7 @@ const childDecisionCard = {
   phase: "育儿选择",
   routePhase: "育儿选择",
   comedyDevice: "成年责任上桌",
-  riasecAxis: ["S", "C"],
+  riasecAxis: ["S", "I"],
   conflict: "父母照护、房贷或未来几年生活安排摆到桌面。你要和伴侣把要不要生小孩说清，还是先把现有现实排稳。",
   sideBeat: "本卡选择决定是否进入育儿线",
   characters: ["关系线核心角色", "家庭型角色"],
@@ -1233,6 +1233,15 @@ function storyCardMarkers(card = {}) {
   ].map(cleanPromptText).filter(Boolean);
 }
 
+const riasecSupplyBias = {
+  R: -2600,
+  A: -2200,
+  I: -800,
+  E: -600,
+  S: 700,
+  C: 900
+};
+
 function storyCardScore(card = {}, year = 1, history = [], profile = {}) {
   const recent = history.slice(-2);
   const recentText = recentIncidentText(history, 3);
@@ -1243,6 +1252,9 @@ function storyCardScore(card = {}, year = 1, history = [], profile = {}) {
   storyCardMarkers(card).forEach(marker => {
     if (recentText.includes(marker)) penalty += 80000;
     else if (usedText.includes(marker)) penalty += 30000;
+  });
+  (Array.isArray(card.riasecAxis) ? card.riasecAxis : []).forEach(axis => {
+    penalty += riasecSupplyBias[axis] || 0;
   });
   const seed = `${profileSeed(profile)}:${storyChoiceSeed(history)}:${year}:${card.id}`;
   return penalty + (hashString(seed) % 10000);
@@ -2428,8 +2440,8 @@ function childTimelineStage(history = [], year = 1) {
   if (choice.state !== "yes" || !choice.year) return "";
   const delta = Number(year || 1) - choice.year;
   if (delta === 1) return "出生";
-  if (delta >= 2 && delta <= 4) return "婴幼儿";
-  if (delta > 4) return "成长";
+  if (delta === 2) return "婴幼儿";
+  if (delta > 2) return "成长";
   return "计划";
 }
 
@@ -2437,7 +2449,7 @@ function childRouteHint(history = [], year = 1, profile = {}) {
   const currentYear = Number(year || 1);
   const stage = childTimelineStage(history, year);
   if (stage === "出生") return "育儿状态：已选择生小孩；本年只写孩子出生或生下小孩，以及新生儿照护。";
-  if (stage === "婴幼儿") return "育儿状态：婴幼儿阶段；只写夜醒、托育适应、照护分工、家庭支援。";
+  if (stage === "婴幼儿") return "育儿状态：婴幼儿阶段；只写夜醒、托育适应、照护分工、家庭支援；不写发烧/儿科。";
   if (stage === "成长") return "育儿状态：孩子成长中；按年龄顺推，只写符合年龄的照护问题。";
   if (currentYear < childDecisionYear(profile) && !stage) return "";
   return "育儿状态：未选择生小孩，不把孩子写成既成事实；只写是否进入育儿线。";
@@ -2728,14 +2740,33 @@ function castIntroHint(storyCast = defaultStoryCast, history = []) {
   return "";
 }
 
-function topHollandCode(history = []) {
+function hollandScoresFromHistory(history = []) {
   const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+  const offered = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
   history.forEach(item => {
     const holland = item?.holland || {};
     Object.keys(scores).forEach(key => {
       scores[key] += Number(holland[key] || 0);
     });
+    const choices = item?.offeredHolland ? [item.offeredHolland.left, item.offeredHolland.right] : [holland];
+    choices.forEach(choiceScores => {
+      Object.keys(offered).forEach(key => {
+        offered[key] += Number(choiceScores?.[key] || 0);
+      });
+    });
   });
+  const offeredTotal = Object.values(offered).reduce((sum, value) => sum + value, 0);
+  if (!offeredTotal) return scores;
+  const keys = Object.keys(scores);
+  const averageOffer = offeredTotal / keys.length;
+  return Object.fromEntries(keys.map(key => {
+    const availability = Math.max(Number(offered[key]) || 0, averageOffer * 0.45);
+    return [key, scores[key] * (averageOffer / availability)];
+  }));
+}
+
+function topHollandCode(history = []) {
+  const scores = hollandScoresFromHistory(history);
   return Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key]) => key).join("") || "ICE";
 }
 
@@ -2945,13 +2976,7 @@ export function buildResultInput({ profile, history, totalGameYears = 18, finalR
     evidence: buildResultEvidence(history, redactionTerms),
     hollandSummary: {
       code: topHollandCode(history),
-      scores: history.reduce((acc, item) => {
-        const holland = item?.holland || {};
-        Object.keys(acc).forEach(key => {
-          acc[key] += Number(holland[key] || 0);
-        });
-        return acc;
-      }, { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 })
+      scores: hollandScoresFromHistory(history)
     },
     yearningStats: buildYearningStats(history, redactionTerms),
     resultHints: {

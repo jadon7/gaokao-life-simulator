@@ -49,7 +49,7 @@
 - 不复用 stateHints.recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
 - 不写 stateHints.recentSceneObjects 里的道具。
 - 有 stateHints.choiceBalance 时，A/B 按它分属两端。
-- A/B 只处理 scene.body 的当前事件，不引入新场景、新邀约或非关键角色；工作题只给工作动作，考研题只给考研/项目/实习动作。
+- A/B 只处理 scene.body 的当前事件，不引入新场景、新邀约或非关键角色。
 - A/B 只用 label 写具体动作，不写类型名；A 对 outlineCard.riasecAxis[0]，B 对 outlineCard.riasecAxis[1]；两个选项必须排他。
 
 输入数据：
@@ -67,6 +67,7 @@
 | 第 2 年 | 阶段约束：校园开放日：把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。 |
 | 第 3 年 | 阶段约束：异地表态：实习和城市机会第一次分岔。 |
 | 第 4 年 | 阶段约束：毕业分流：考研、项目、实习二选一。 |
+| 第 4 年，分数低于 300 | 阶段约束：就业分流：只写实习、校园招聘、第一份工作三类选择。 |
 | 第 5 年 | 阶段约束：项目跑通：做成一件小事，被看见。 |
 | 第 5 年，读研分支 | 阶段约束：读研开局：导师、课题和同门分工成为主压力。 |
 | 第 6 年 | 阶段约束：生活落地：学生身份转向工作身份。 |
@@ -124,6 +125,17 @@
 - sideBeat：你开始为长期路线做取舍
 - choiceContrast：锁定考研窗口 / 放弃备考抢项目
 - callbacks：考研群、保研绩点、校外项目
+
+### 第 4 年，分数低于 300 分支
+
+- mainTrack：life
+- phase：就业分流
+- comedyDevice：提前就业
+- riasecAxis：E / C
+- conflict：实习面试、校园招聘群和第一份工作机会同时摆上桌。你要先争取能入职的岗位，还是先把简历和投递节奏排稳。
+- sideBeat：你开始把现实路线从校园转向就业
+- choiceContrast：争取入职机会 / 排稳投递节奏
+- callbacks：实习面试、校园招聘群、第一份工作
 
 ### 第 5 年
 

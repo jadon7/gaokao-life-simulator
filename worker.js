@@ -162,15 +162,16 @@ function buildAnnualMessages({ profile, history, year }) {
     { role: "system", content: systemPrompt() },
     {
       role: "user",
-      content: taskPromptWithInput(annualTaskPromptForYear(year, historyDigest), input)
+      content: taskPromptWithInput(annualTaskPromptForYear(year, historyDigest, normalizeProfile(profile)), input)
     }
   ];
 }
 
 function buildBatchMessages({ profile, history, startYear, count }) {
+  const normalizedProfile = normalizeProfile(profile);
   const historyDigest = compactHistory(history);
   const input = buildBatchInput({
-    profile: normalizeProfile(profile),
+    profile: normalizedProfile,
     history: historyDigest,
     startYear,
     count,
@@ -180,7 +181,7 @@ function buildBatchMessages({ profile, history, startYear, count }) {
     { role: "system", content: systemPrompt() },
     {
       role: "user",
-      content: taskPromptWithInput(batchTaskPromptForStartYear(startYear, count, historyDigest).replaceAll("{{count}}", String(count)), input)
+      content: taskPromptWithInput(batchTaskPromptForStartYear(startYear, count, historyDigest, normalizedProfile).replaceAll("{{count}}", String(count)), input)
     }
   ];
 }
@@ -451,7 +452,7 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   const fallbackYear = Math.min(Math.max(Number(expectedYear || (Array.isArray(history) ? history.length + 1 : 1)) || 1, 1), totalGameYears);
   normalized.year = fallbackYear;
   normalized.question = `第 ${fallbackYear} 年 / ${totalGameYears}`;
-  const outline = getOutlineCard(normalized.year);
+  const outline = getOutlineCard(normalized.year, { profile, history });
   normalized.phase = optionalCleanText(data.phase) || optionalCleanText(outline?.phase);
   normalized.mainTrack = outline?.mainTrack || (/relationship/i.test(String(data.mainTrack || "").trim()) ? "relationship" : "life");
   normalized.lifeTrack = optionalCleanText(data.lifeTrack);
@@ -464,7 +465,7 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   if (!normalized.scene.title) normalized.scene.title = fallbackSceneTitle(normalized.year, outline);
   normalized.a = normalizeChoiceData(data.a, "A");
   normalized.b = normalizeChoiceData(data.b, "B");
-  applyOutlineRiasec(normalized);
+  applyOutlineRiasec(normalized, profile, history);
   const yearNumber = normalized.year;
   normalized.summary = yearNumber === 1 ? "" : optionalCleanText(normalized.summary);
   if (!normalized.scene.body || !normalized.a.title || !normalized.b.title) {
@@ -511,8 +512,9 @@ function enforceSecondYearRelationEntry(card, profile = {}) {
   return card;
 }
 
-function applyOutlineRiasec(card) {
-  const axis = Array.isArray(getOutlineCard(card.year)?.riasecAxis) ? getOutlineCard(card.year).riasecAxis : [];
+function applyOutlineRiasec(card, profile = {}, history = []) {
+  const outline = getOutlineCard(card.year, { profile, history });
+  const axis = Array.isArray(outline?.riasecAxis) ? outline.riasecAxis : [];
   if (axis[0]) card.a.riasec = mockRiasec(axis[0], "");
   if (axis[1]) card.b.riasec = mockRiasec(axis[1], "");
 }
@@ -934,7 +936,7 @@ function mockResponse(messages) {
     return {
       cards: Array.from({ length: count }, (_, index) => {
         const year = startYear + index;
-        const outlineCard = getOutlineCard(year);
+        const outlineCard = Array.isArray(parsed?.outlineCards) ? parsed.outlineCards[index] : getOutlineCard(year);
         const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
         return {
           year,
@@ -958,7 +960,7 @@ function mockResponse(messages) {
   const parsed = parseJsonFromPrompt(content);
   const relationName = mockRelationName(parsed);
   const year = Number(parsed?.gameMeta?.currentYear || 1);
-  const outlineCard = getOutlineCard(year);
+  const outlineCard = parsed?.outlineCard || getOutlineCard(year);
   const axis = Array.isArray(outlineCard?.riasecAxis) ? outlineCard.riasecAxis : ["E", "C"];
   return mockAnnualCard(parsed, year, outlineCard, relationName, axis);
 }

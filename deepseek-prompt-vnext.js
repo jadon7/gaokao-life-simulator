@@ -504,7 +504,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 不复用 stateHints.recentSceneTitles / recentIncidents / usedIncidents；相邻卡换压力源和人物关系。
 - 不写 stateHints.recentSceneObjects 里的道具。
 - 有 stateHints.choiceBalance 时，A/B 按它分属两端。
-- A/B 只处理 scene.body 的当前事件，不引入新场景、新邀约或非关键角色；工作题只给工作动作，考研题只给考研/项目/实习动作。
+- A/B 只处理 scene.body 的当前事件，不引入新场景、新邀约或非关键角色。
 - A/B 只用 label 写具体动作，不写类型名；A 对 outlineCard.riasecAxis[0]，B 对 outlineCard.riasecAxis[1]；两个选项必须排他。
 
 输入数据：
@@ -570,7 +570,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 每张卡使用对应 outlineCard；A/B 对应 riasecAxis[0]/[1]，不要输出 riasec。
 - summary 写上一年余波；scene.body 写本年事件；选项用 label 写完整互斥动作；consequence 写选择后的直接后果。
 - stateHints.lastYear / history / repeatGuard 只用于 summary 和避重，不进入 scene.body/A/B。
-- A/B 只处理 scene.body 的当前事件，不引入新场景、新邀约或非关键角色；工作题只给工作动作，考研题只给考研/项目/实习动作。
+- A/B 只处理 scene.body 的当前事件，不引入新场景、新邀约或非关键角色。
 
 输入数据：
 {{INPUT_JSON}}
@@ -619,9 +619,23 @@ function closingFrameHint(history = []) {
   return `收尾：回看${firstTitle || "开局"}、${lastTitle || "最后一步"}和这一路的关键选择${keyChoices ? `（${keyChoices}）` : ""}；给开局时的自己一句真话，再决定未来五年活法`;
 }
 
-function phasePromptForYear(year = 1, history = []) {
+function profileScoreNumber(profile = {}) {
+  const matched = String(profile?.score ?? "").match(/\d+(?:\.\d+)?/);
+  return matched ? Number(matched[0]) : NaN;
+}
+
+function isDirectWorkProfile(profile = {}) {
+  const score = profileScoreNumber(profile);
+  return Number.isFinite(score) && score < 300;
+}
+
+function phasePromptForYear(year = 1, history = [], profile = {}) {
   const currentYear = Number(year || 1);
-  const educationState = educationStateHint(history);
+  const directWork = isDirectWorkProfile(profile);
+  const educationState = educationStateHint(history, profile);
+  if (directWork && currentYear === 4) {
+    return "就业分流：只写实习、校园招聘、第一份工作三类选择。";
+  }
   const prompts = {
     1: "开学入场：专业第一件事和关键角色入场。",
     2: "校园开放日：把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。",
@@ -645,29 +659,29 @@ function phasePromptForYear(year = 1, history = []) {
   return prompts[currentYear] || "年度推进：一年后的新大事。";
 }
 
-function withAnnualPromptVars(template, year, history = []) {
+function withAnnualPromptVars(template, year, history = [], profile = {}) {
   return template
     .replaceAll("{{OPENING_PROMPT}}", openingPromptForYear(year))
-    .replaceAll("{{PHASE_PROMPT}}", phasePromptForYear(year, history))
+    .replaceAll("{{PHASE_PROMPT}}", phasePromptForYear(year, history, profile))
     .replaceAll("{{CAST_INTRO_PROMPT}}", castIntroPromptForRange(year, 1));
 }
 
-export function annualTaskPromptForYear(year, history = []) {
-  return withAnnualPromptVars(vNextAnnualTaskPrompt, year, history);
+export function annualTaskPromptForYear(year, history = [], profile = {}) {
+  return withAnnualPromptVars(vNextAnnualTaskPrompt, year, history, profile);
 }
 
-function phasePromptForRange(startYear = 1, count = 1, history = []) {
+function phasePromptForRange(startYear = 1, count = 1, history = [], profile = {}) {
   const total = Math.max(1, Math.min(Number(count || 1), 5));
-  if (total === 1) return phasePromptForYear(startYear, history);
+  if (total === 1) return phasePromptForYear(startYear, history, profile);
   return Array.from({ length: total }, (_, index) => {
     const year = Number(startYear || 1) + index;
-    return `第${year}年：${phasePromptForYear(year, history)}`;
+    return `第${year}年：${phasePromptForYear(year, history, profile)}`;
   }).join("；");
 }
 
-export function batchTaskPromptForStartYear(startYear, count = 1, history = []) {
+export function batchTaskPromptForStartYear(startYear, count = 1, history = [], profile = {}) {
   return vNextBatchTaskPrompt
-    .replaceAll("{{PHASE_PROMPT}}", phasePromptForRange(startYear, count, history))
+    .replaceAll("{{PHASE_PROMPT}}", phasePromptForRange(startYear, count, history, profile))
     .replaceAll("{{CAST_INTRO_PROMPT}}", castIntroPromptForRange(startYear, count));
 }
 
@@ -732,6 +746,21 @@ const outlineCards = outlineData.acts.flatMap(act => act.cards.map(card => ({
   act: act.name,
   ...card
 })));
+
+const directWorkYear4Card = {
+  act: "第二幕：第一次上头",
+  year: 4,
+  mainTrack: "life",
+  phase: "就业分流",
+  routePhase: "就业分流",
+  comedyDevice: "提前就业",
+  riasecAxis: ["E", "C"],
+  conflict: "实习面试、校园招聘群和第一份工作机会同时摆上桌。你要先争取能入职的岗位，还是先把简历和投递节奏排稳。",
+  sideBeat: "你开始把现实路线从校园转向就业",
+  characters: ["学长学姐", "招聘方", "项目同伴"],
+  abType: "争取入职机会 / 排稳投递节奏",
+  callbacks: ["实习面试", "校园招聘群", "第一份工作"]
+};
 
 const yearBeats = {
   1: "专业入场",
@@ -1050,7 +1079,7 @@ function compactOutlineCard(card, storyCast = defaultStoryCast) {
   if (!enriched) return null;
   return {
     year: enriched.year,
-    phase: yearBeatForYear(enriched.year),
+    phase: enriched.routePhase || yearBeatForYear(enriched.year),
     mainTrack: enriched.mainTrack,
     pressureMode: enriched.pressureMode,
     reliefSignal: enriched.reliefSignal,
@@ -1275,10 +1304,11 @@ function compactStoryCast(profile = {}, existingCast = null) {
   return out;
 }
 
-function supportRolesForYear(year = 1, history = []) {
+function supportRolesForYear(year = 1, history = [], profile = {}) {
   const currentYear = Number(year || 1);
-  const educationState = educationStateHint(history);
+  const educationState = educationStateHint(history, profile);
   if (currentYear <= 3) return ["同学", "室友", "专业课老师", "学长学姐"];
+  if (educationState === "已直接就业" && currentYear === 4) return ["学长学姐", "招聘方", "实习负责人", "项目同伴"];
   if (currentYear === 4) return ["学长学姐", "老师", "项目同伴", "行业前辈"];
   if (educationState === "继续读研" && currentYear <= 7) return ["导师", "同门", "实习负责人", "师兄师姐"];
   if (currentYear <= 8) return ["同事", "主管", "客户", "老同学"];
@@ -1310,7 +1340,7 @@ function relationIntroForHistory(storyCast = defaultStoryCast, history = []) {
 function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, history = [], relationshipStage = "", includeRelation = false) {
   const cast = compactStoryCast(profile, existingCast);
   const currentYear = Number(year || 1);
-  const supportRoles = supportRolesForYear(currentYear, history);
+  const supportRoles = supportRolesForYear(currentYear, history, profile);
   const familyRoles = familyRolesForYear(currentYear, history);
   const baseCast = {
     supportRoles: includeRelation ? supportRoles : withoutRelationRoles(supportRoles),
@@ -1322,6 +1352,7 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, hi
     baseCast.relationName = cast.relationName;
     baseCast.relationIntro = relationIntroForHistory(cast, history) || cast.relationIntro;
   }
+  const educationState = educationStateHint(history, profile);
   if (currentYear <= 3) {
     return {
       ...baseCast,
@@ -1331,7 +1362,7 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, hi
   if (currentYear <= 4) {
     return {
       ...baseCast,
-      campusRoles: ["老师", "项目同伴", "行业前辈"]
+      campusRoles: educationState === "已直接就业" ? ["招聘方", "实习负责人", "项目同伴"] : ["老师", "项目同伴", "行业前辈"]
     };
   }
   return { ...baseCast };
@@ -1684,6 +1715,7 @@ const professionalIncidentRules = [
 function stageBucketForYear(year = 1, educationState = "") {
   const currentYear = Number(year || 1);
   if (educationState === "继续读研" && currentYear <= 7) return "early";
+  if (educationState === "已直接就业" && currentYear >= 4) return currentYear <= 12 ? "work" : "mature";
   if (educationState === "已放弃考研" && currentYear >= 5) return currentYear <= 12 ? "work" : "mature";
   if (currentYear <= 6) return "early";
   if (currentYear <= 12) return "work";
@@ -1693,7 +1725,7 @@ function stageBucketForYear(year = 1, educationState = "") {
 function filterAnchorsForStage(anchors = [], year = 1, educationState = "") {
   const currentYear = Number(year || 1);
   if (educationState === "继续读研" && currentYear <= 7) return anchors;
-  if (currentYear >= 7 || (currentYear >= 5 && educationState === "已放弃考研")) {
+  if (currentYear >= 7 || (currentYear >= 5 && ["已放弃考研", "已直接就业"].includes(educationState))) {
     const filtered = anchors.filter(anchor => !schoolContextPattern.test(anchor));
     return filtered.length ? filtered : anchors;
   }
@@ -1706,14 +1738,14 @@ function majorAnchorHint(profile = {}, year = 1, history = []) {
   const currentYear = Number(year || 1);
   if (currentYear === 18) return "";
   const matched = majorAnchorRules.find(([pattern]) => pattern.test(text));
-  const educationState = educationStateHint(history);
+  const educationState = educationStateHint(history, profile);
   const stagedItems = professionalIncidentItems(profile, year, educationState).map(item => item.label);
   const anchors = stagedItems.length ? stagedItems : (matched?.[1] || ["专业课程", "实习现场", "作品/项目证据", "导师评审", "行业机会", "岗位选择"]);
   const pool = filterAnchorsForStage(anchors, year, educationState);
   const start = (hashString(`${text}:${year}`) || 0) % pool.length;
   const recentText = recentIncidentText(history, 2);
-  const previousIncident = currentIncidentHint(profile, currentYear - 1, history.slice(0, -1), getOutlineCard(currentYear - 1)).replace(/^本年(?:事故|专业事件)：/, "");
-  const nextIncident = currentIncidentHint(profile, currentYear + 1, history, getOutlineCard(currentYear + 1)).replace(/^本年(?:事故|专业事件)：/, "");
+  const previousIncident = currentIncidentHint(profile, currentYear - 1, history.slice(0, -1), getOutlineCard(currentYear - 1, { profile, history: history.slice(0, -1) })).replace(/^本年(?:事故|专业事件)：/, "");
+  const nextIncident = currentIncidentHint(profile, currentYear + 1, history, getOutlineCard(currentYear + 1, { profile, history })).replace(/^本年(?:事故|专业事件)：/, "");
   const ordered = pool.slice(start).concat(pool.slice(0, start));
   const anchor = ordered.find(item => item !== previousIncident && item !== nextIncident && !recentText.includes(item)) || ordered[0];
   return currentYear >= 4 ? `专业锚点：${major}；本年落到${anchor}` : "";
@@ -1758,7 +1790,7 @@ function currentIncidentHint(profile = {}, year = 1, history = [], outlineCard =
   if (!professionalIncidentYears.has(currentYear)) return "";
   if (outlineCard?.mainTrack && outlineCard.mainTrack !== "life") return "";
   if (outlineCard?.pressureMode === "relief") return "";
-  const items = professionalIncidentItems(profile, currentYear, educationStateHint(history));
+  const items = professionalIncidentItems(profile, currentYear, educationStateHint(history, profile));
   if (!items.length) return "";
   const recentText = recentIncidentText(history, 2);
   const usedText = recentIncidentText(history, Math.max(2, history.length));
@@ -1999,9 +2031,10 @@ function newRelationHint(storyCast = defaultStoryCast, relationshipStage = "") {
   return "新关系信号：新认识的人只作阶段变化，不给姓名";
 }
 
-function careerArcHint(year = 1, history = []) {
+function careerArcHint(year = 1, history = [], profile = {}) {
   const currentYear = Number(year || 1);
-  const educationState = educationStateHint(history);
+  const educationState = educationStateHint(history, profile);
+  if (educationState === "已直接就业" && currentYear >= 4 && currentYear <= 6) return "人生阶段：就业起步";
   if (educationState === "继续读研" && currentYear >= 5 && currentYear <= 7) return "人生阶段：研究生阶段";
   if (educationState === "继续读研" && currentYear === 8) return "人生阶段：研究生毕业";
   if (currentYear <= 3) return "人生阶段：大学早期";
@@ -2012,11 +2045,12 @@ function careerArcHint(year = 1, history = []) {
   return "人生阶段：前辈收束";
 }
 
-function lifeStageHint(year = 1, history = []) {
-  return `${careerArcHint(year, history)}；${relationshipArcHint(history, year)}`;
+function lifeStageHint(year = 1, history = [], profile = {}) {
+  return `${careerArcHint(year, history, profile)}；${relationshipArcHint(history, year)}`;
 }
 
-function educationStateHint(history = []) {
+function educationStateHint(history = [], profile = {}) {
+  if (isDirectWorkProfile(profile)) return "已直接就业";
   const text = history.map(item => [
     item?.sceneTitle,
     item?.summary,
@@ -2034,18 +2068,20 @@ function educationStateHint(history = []) {
   return "";
 }
 
-function visibleEducationStateHint(history = [], year = 1) {
-  const state = educationStateHint(history);
+function visibleEducationStateHint(history = [], year = 1, profile = {}) {
+  const state = educationStateHint(history, profile);
   const currentYear = Number(year || 1);
+  if (state === "已直接就业" && currentYear >= 4) return "直接就业路线";
   if (!state) return "";
   if (currentYear <= 6) return state;
   if (state === "继续读研" && currentYear <= 8) return state;
   return "";
 }
 
-function careerRouteHint(history = [], year = 1) {
-  const state = educationStateHint(history);
+function careerRouteHint(history = [], year = 1, profile = {}) {
+  const state = educationStateHint(history, profile);
   const currentYear = Number(year || 1);
+  if (state === "已直接就业" && currentYear >= 4) return "直接就业";
   if (state === "已放弃考研" && currentYear >= 5) return "已毕业工作";
   if (state === "继续读研" && currentYear >= 5 && currentYear <= 7) return "继续读研";
   if (state === "继续读研" && currentYear >= 8) return "研究生毕业";
@@ -2091,9 +2127,10 @@ function lastYearText(history = [], redactionTerms = []) {
   return `上一年：你选了${choice || "一个方向"}；${outcome}；只写进 summary`;
 }
 
-function lifeStatusHint(history = [], year = 1) {
-  const educationState = educationStateHint(history);
+function lifeStatusHint(history = [], year = 1, profile = {}) {
+  const educationState = educationStateHint(history, profile);
   const currentYear = Number(year || 1);
+  if (educationState === "已直接就业" && currentYear >= 4) return "直接进入就业线，现实压力转向实习、岗位和收入";
   if (educationState === "已放弃考研" && currentYear >= 7) return "初入职场，现实压力转向工作和收入";
   if (educationState === "已放弃考研" && currentYear >= 5) return "已退出考研线，项目/实习成为主路";
   if (educationState === "继续读研" && currentYear === 5) return "读研开局，课题和导师成为主压力";
@@ -2103,9 +2140,9 @@ function lifeStatusHint(history = [], year = 1) {
   return describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳");
 }
 
-function storySoFarText(history = [], year = 1) {
+function storySoFarText(history = [], year = 1, profile = {}) {
   if (!history.length) return "";
-  const life = lifeStatusHint(history, year);
+  const life = lifeStatusHint(history, year, profile);
   const relationship = relationshipStageHint(history, year);
   return `过去${history.length}年：现实=${life || "继续推进"}；关系=${relationship || "继续推进"}`;
 }
@@ -2130,11 +2167,13 @@ function routeStateHint(history = []) {
   return top ? `选择惯性：${top.label}` : "";
 }
 
-function timeFrameHint(year = 1, history = []) {
+function timeFrameHint(year = 1, history = [], profile = {}) {
   const currentYear = Number(year || 1);
-  const educationState = educationStateHint(history);
+  const educationState = educationStateHint(history, profile);
   let stage = "大学早期";
   if (currentYear <= 3) stage = "大学早期";
+  else if (educationState === "已直接就业" && currentYear === 4) stage = "就业分流";
+  else if (educationState === "已直接就业" && currentYear <= 6) stage = "就业起步";
   else if (currentYear === 4) stage = "毕业分流";
   else if (currentYear === 5) stage = educationState === "继续读研" ? "读研开局" : "毕业初期";
   else if (currentYear === 6) stage = educationState === "继续读研" ? "读研推进" : "毕业初期";
@@ -2183,27 +2222,28 @@ function dominantTheme(history = []) {
   return "一路修正，一路把自己长出来";
 }
 
-export function getOutlineCard(year) {
+export function getOutlineCard(year, context = {}) {
+  if (Number(year) === 4 && isDirectWorkProfile(context?.profile)) return { ...directWorkYear4Card };
   const card = outlineCards.find(item => Number(item.year) === Number(year));
   return card ? { ...card, phase: yearBeatForYear(card.year) } : null;
 }
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
-  const rawOutlineCard = getOutlineCard(year);
-  const educationState = educationStateHint(history);
+  const rawOutlineCard = getOutlineCard(year, { profile, history });
+  const educationState = educationStateHint(history, profile);
   const compactBaseOutlineCard = compactOutlineCardWithChildRoute(
     compactOutlineCardWithEducation(rawOutlineCard, storyCast, educationState, year),
     history
   );
-  const visibleEducationState = visibleEducationStateHint(history, year);
+  const visibleEducationState = visibleEducationStateHint(history, year, profile);
   const currentIncident = currentIncidentHint(profile, year, history, compactBaseOutlineCard);
   const closingFrame = Number(year) === 18 ? closingFrameHint(history) : "";
   const relationshipStage = relationshipStageHint(history, year);
   const relationshipBeat = relationshipBeatHint(history, year);
   const relationshipPressure = relationshipPressureHint(history, year);
   const childRoute = childRouteHint(history, year);
-  const careerRoute = careerRouteHint(history, year);
+  const careerRoute = careerRouteHint(history, year, profile);
   const choiceBalance = choiceBalanceHint(compactBaseOutlineCard, relationshipBeat, currentIncident);
   const outlineCard = closingFrame
     ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
@@ -2215,14 +2255,14 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const redactionTerms = relationRedactionTerms(storyCast);
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = redactRelationList(getRecentCallbacks(history, 4), redactionTerms)
-    .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
+    .filter(seed => !["已放弃考研", "已直接就业"].includes(educationState) || !/考研|保研|复习|绩点|备考/.test(seed));
   const stateHints = {
     recentCallbacks,
     recentSceneTitles: sequelSafeRecentSceneTitles(redactRelationList(getRecentSceneTitles(history, 6), redactionTerms)),
     repeatGuard: repeatGuard(history, redactionTerms),
     stageGuard: stageGuard(history),
-    timeFrame: timeFrameHint(year, history),
-    lifeStage: lifeStageHint(year, history),
+    timeFrame: timeFrameHint(year, history, profile),
+    lifeStage: lifeStageHint(year, history, profile),
     routeState: routeStateHint(history),
     relationshipStage,
     relationshipBeat
@@ -2232,7 +2272,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   }
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history, redactionTerms);
-  const storySoFar = storySoFarText(history, year);
+  const storySoFar = storySoFarText(history, year, profile);
   if (careerRoute) stateHints.careerRoute = careerRoute;
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
@@ -2270,14 +2310,14 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
 
 export function buildBatchInput({ profile, history, startYear, count, totalGameYears = 18 }) {
   const storyCast = buildStoryCast(profile);
-  const educationState = educationStateHint(history);
-  const visibleEducationState = visibleEducationStateHint(history, startYear);
+  const educationState = educationStateHint(history, profile);
+  const visibleEducationState = visibleEducationStateHint(history, startYear, profile);
   const relationshipStage = relationshipStageHint(history, startYear);
   const relationshipBeat = relationshipBeatHint(history, startYear);
   const relationshipPressure = relationshipPressureHint(history, startYear);
   const childRoute = childRouteHint(history, startYear);
-  const careerRoute = careerRouteHint(history, startYear);
-  const firstRawOutlineCard = getOutlineCard(startYear);
+  const careerRoute = careerRouteHint(history, startYear, profile);
+  const firstRawOutlineCard = getOutlineCard(startYear, { profile, history });
   const firstOutlineCard = compactOutlineCardWithChildRoute(
     compactOutlineCardWithEducation(firstRawOutlineCard, storyCast, educationState, startYear),
     history
@@ -2285,9 +2325,9 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
   const choiceBalance = choiceBalanceHint(firstOutlineCard, relationshipBeat, currentIncident);
   const closingFrame = Number(startYear) === 18 ? closingFrameHint(history) : "";
-  const outlineCardsForBatch = outlineCards
-    .filter(card => card.year >= startYear && card.year < startYear + count)
-    .map(card => {
+  const outlineCardsForBatch = Array.from({ length: Math.max(1, Number(count || 1)) }, (_, index) => {
+      const year = Number(startYear || 1) + index;
+      const card = getOutlineCard(year, { profile, history });
       const compactCard = compactOutlineCardWithChildRoute(
         compactOutlineCardWithEducation(card, storyCast, educationState, card.year),
         history
@@ -2305,14 +2345,14 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const redactionTerms = relationRedactionTerms(storyCast);
   const newRelation = newRelationHint(storyCast, relationshipStage);
   const recentCallbacks = redactRelationList(getRecentCallbacks(history, 4), redactionTerms)
-    .filter(seed => educationState !== "已放弃考研" || !/考研|保研|复习|绩点/.test(seed));
+    .filter(seed => !["已放弃考研", "已直接就业"].includes(educationState) || !/考研|保研|复习|绩点|备考/.test(seed));
   const stateHints = {
     recentCallbacks,
     recentSceneTitles: sequelSafeRecentSceneTitles(redactRelationList(getRecentSceneTitles(history, 6), redactionTerms)),
     repeatGuard: repeatGuard(history, redactionTerms),
     stageGuard: stageGuard(history),
-    timeFrame: timeFrameHint(startYear, history),
-    lifeStage: lifeStageHint(startYear, history),
+    timeFrame: timeFrameHint(startYear, history, profile),
+    lifeStage: lifeStageHint(startYear, history, profile),
     routeState: routeStateHint(history),
     relationshipStage,
     relationshipBeat,
@@ -2323,7 +2363,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   }
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history, redactionTerms);
-  const storySoFar = storySoFarText(history, startYear);
+  const storySoFar = storySoFarText(history, startYear, profile);
   if (careerRoute) stateHints.careerRoute = careerRoute;
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;

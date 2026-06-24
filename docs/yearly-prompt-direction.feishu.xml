@@ -22,6 +22,7 @@
   <li>第 18 年按 closingFrame 收尾，不开新事件。</li>
   <li>上一年余波只进 summary；scene.body 写本年新事件。</li>
   <li>A/B 是完整互斥动作；只处理当前事件，A 对第一个选择轴，B 对第二个选择轴。</li>
+  <li>填写分数低于 300 时，第 4 年进入直接就业路线。</li>
 </ul>
 
 <h2>正反馈年份分布</h2>
@@ -63,6 +64,7 @@
     <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂；固定伴侣在场。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
     <tr><td>3</td><td>异地表态</td><td>关系</td><td>实习和城市机会第一次分岔。</td><td>说清异地 / 拿下窗口</td><td>暑期实习、异地约定、第一次表态</td></tr>
     <tr><td>4</td><td>毕业分流</td><td>生活</td><td>考研、项目、实习二选一。</td><td>锁定考研窗口 / 放弃备考抢项目</td><td>考研群、保研绩点、校外项目</td></tr>
+    <tr><td>4（低于300分）</td><td>就业分流</td><td>生活</td><td>实习、校园招聘、第一份工作三类选择。</td><td>争取入职机会 / 排稳投递节奏</td><td>实习面试、校园招聘群、第一份工作</td></tr>
     <tr><td>5</td><td>项目跑通</td><td>生活</td><td>做成一件小事，被看见。</td><td>讲出成果 / 打磨质量</td><td>项目跑通、外部转发、毕业后第一关</td></tr>
     <tr><td>6</td><td>生活落地</td><td>生活</td><td>学生身份转向工作身份。</td><td>理顺生活 / 先保工作</td><td>租房合同、试用期考核、生活底盘</td></tr>
     <tr><td>7</td><td>职场入口</td><td>生活</td><td>转正、客户和收入第一次压身。</td><td>公开承担 / 动手补救</td><td>客户会点名、交付材料出错、两头夹击</td></tr>
@@ -121,6 +123,18 @@
     <tr><td background-color="light-gray">轻喜剧装置</td><td>群聊制造焦虑：三个群同时冒泡，手机像在替主角开人生股东会。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>学长/前辈、导师/老师、项目同伴；主角开始为长期路线做取舍。</td></tr>
     <tr><td background-color="light-gray">选择结构</td><td>A：锁定考研窗口；B：放弃备考抢项目。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 4 年：低于300分就业分流</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">触发条件</td><td>用户填写分数低于 300。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>只写实习、校园招聘、第一份工作三类选择。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>实习面试、校园招聘群和第一份工作机会同时摆上桌；主角开始把现实路线从校园转向就业。</td></tr>
+    <tr><td background-color="light-gray">轻喜剧装置</td><td>提前就业：入职机会和投递节奏同时压到眼前。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>学长学姐、招聘方、实习负责人、项目同伴。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：争取入职机会；B：排稳投递节奏。</td></tr>
   </tbody>
 </table>
 

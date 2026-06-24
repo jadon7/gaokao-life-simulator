@@ -13,9 +13,10 @@
   <li>每张卡只拍一个具体事件；每年是一年后的新大事，不写上一年同一事件续集。</li>
   <li>约三分之一为低压正反馈；正反馈卡先给明确好结果，选项承接收获。</li>
   <li>可见文案用常见口语；少专业词，不写生僻简称，不强行缩写。</li>
-  <li>只有固定伴侣有姓名；伴侣首次出场用“上一年打过交道的同学 + 姓名”。</li>
+  <li>只有固定伴侣有姓名；第二年伴侣必须出场，用“第一年有过相处的同学 + 姓名”。</li>
   <li>lifeTrack 写本年新状态；relationshipTrack 只写背景信号。</li>
-  <li>非关系主线不把伴侣写进 scene.body、A/B 或 consequence；关系主线写共同生活选择。</li>
+  <li>除第二年外，非关系主线不把伴侣写进 scene.body、A/B 或 consequence；关系主线写共同生活选择。</li>
+  <li>题面只写事件，不写当前年份或当前年龄。</li>
   <li>新恋情阶段只在关系主线写新关系信号，不生成姓名。</li>
   <li>未选择生小孩时，只写是否进入育儿线；已选择生小孩后，才写孩子生病、照护、教育。</li>
   <li>第 18 年按 closingFrame 收尾，不开新事件。</li>
@@ -34,7 +35,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr><td>第 2 年</td><td>第一次被认可</td><td>校园开放日被看见，决定做成教程或休息复盘。</td></tr>
+    <tr><td>第 2 年</td><td>第一次被认可</td><td>校园开放日被看见；第一年有过相处的伴侣在场。</td></tr>
     <tr><td>第 5 年</td><td>做成小项目</td><td>毕业前项目跑通，被外部机会转发。</td></tr>
     <tr><td>第 8 年</td><td>关系变稳定</td><td>不用救火的周末出现，共同日常开始成形。</td></tr>
     <tr><td>第 11 年</td><td>获得新技能</td><td>能力被正式邀请，不是被催救火。</td></tr>
@@ -59,7 +60,7 @@
   </thead>
   <tbody>
     <tr><td>1</td><td>预置开局</td><td>预置</td><td>按专业匹配固定开局卡，不走年度生成提示词。</td><td>由预置卡决定</td><td>开局关系角色和选择后果进入后续 history</td></tr>
-    <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂，有认可感。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
+    <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂；固定伴侣在场。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
     <tr><td>3</td><td>异地表态</td><td>关系</td><td>实习和城市机会第一次分岔。</td><td>说清异地 / 拿下窗口</td><td>暑期实习、异地约定、第一次表态</td></tr>
     <tr><td>4</td><td>毕业分流</td><td>生活</td><td>考研、项目、实习二选一。</td><td>锁定考研窗口 / 放弃备考抢项目</td><td>考研群、保研绩点、校外项目</td></tr>
     <tr><td>5</td><td>项目跑通</td><td>生活</td><td>做成一件小事，被看见。</td><td>讲出成果 / 打磨质量</td><td>项目跑通、外部转发、毕业后第一关</td></tr>
@@ -85,7 +86,7 @@
     <tr><td background-color="light-gray">来源</td><td>正式流程调用 /api/game/start，由 opening-cards-data.js 按专业返回固定开局卡。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>预置卡自带场景、关系角色、A/B 选项和后果；不调用年度模型提示词。</td></tr>
     <tr><td background-color="light-gray">影响后续</td><td>openingRelationName、openingRelationGender、openingRelationIntro 和第 1 年选择后果进入 history，供后续年份承接。</td></tr>
-    <tr><td background-color="light-gray">伴侣称呼</td><td>后续年份统一使用“上一年打过交道的同学 + 姓名”，如“上一年打过交道的同学晚晴”。</td></tr>
+    <tr><td background-color="light-gray">伴侣称呼</td><td>第二年使用“第一年有过相处的同学 + 姓名”，后续关系主线按最近关系承接。</td></tr>
     <tr><td background-color="light-gray">备注</td><td>deepseek-prompt-vnext.js 里仍保留第 1 年 outline/openingFrame，用于实验、批量或兜底路径；不是正式开局卡生成口径。</td></tr>
   </tbody>
 </table>
@@ -93,10 +94,10 @@
 <h2>第 2 年：校园开放日</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">阶段约束</td><td>把专业小事讲给高中生听懂，有认可感。</td></tr>
-    <tr><td background-color="light-gray">内容方向</td><td>大二校园开放日，主角把专业体验摊上的小任务讲清楚，来参观的高中生听懂，老师当场夸。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>校园开放日，主角把专业体验摊上的小任务讲清楚，来参观的高中生听懂，老师当场夸。</td></tr>
     <tr><td background-color="light-gray">正反馈</td><td>第一次被认可：第一落点写被看见，而不是危机压身。</td></tr>
-    <tr><td background-color="light-gray">角色与关系信号</td><td>高中生/新生、老师、同伴；同伴开始把主角当成能把复杂事讲明白的人。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>高中生/新生、老师、固定伴侣；题面必须出现“第一年有过相处的同学 + 姓名”。</td></tr>
     <tr><td background-color="light-gray">选择结构</td><td>A：做成教程；B：休息复盘。</td></tr>
   </tbody>
 </table>
@@ -126,7 +127,7 @@
 <h2>第 5 年：项目跑通</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">阶段约束</td><td>默认：做成一件小事，被看见。若继续读研：研一开局，导师、课题和同门分工成为主压力。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：做成一件小事，被看见。若继续读研：读研开局，导师、课题和同门分工成为主压力。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>毕业前的小作品/项目真的跑通，还被外部机会转发；主角决定把成果讲出去，还是先打磨质量。</td></tr>
     <tr><td background-color="light-gray">正反馈</td><td>做成小项目：第一落点写项目跑通和被转发。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>外部机会角色、学长/前辈、团队群像；主角第一次尝到做成一件事的踏实感。</td></tr>
@@ -137,7 +138,7 @@
 <h2>第 6 年：生活落地</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">阶段约束</td><td>默认：学生身份转向工作身份。若继续读研：研二拉扯，论文、实验/作品和实习预备同时挤压。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：学生身份转向工作身份。若继续读研：课题推进，论文、实验/作品和实习预备同时挤压。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>租房合同、通勤成本和试用期考核同一天摆上桌；主角决定先理顺生活底盘，还是先保住工作。</td></tr>
     <tr><td background-color="light-gray">轻喜剧装置</td><td>租房合约见真章：合同空格不多，每个都像人生选择题。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>外部机会角色、朋友群像；工作身份第一次压过学生身份。</td></tr>
@@ -148,7 +149,7 @@
 <h2>第 7 年：职场入口</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">阶段约束</td><td>默认：转正、客户和收入第一次压身。若继续读研：研三分流，毕业论文、校招/读博和城市落点一起拍板。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>默认：转正、客户和收入第一次压身。若继续读研：毕业分流，毕业论文、校招/读博和城市落点一起拍板。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>主管让主角在客户会上解释方案，交付材料同时出错；主角决定先公开承担，还是今晚动手补救。</td></tr>
     <tr><td background-color="light-gray">轻喜剧装置</td><td>两头夹击：客户要体面，项目要交付，时间表开始报警。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>主管/客户、外部项目群、同事/朋友；朋友开始发现主角习惯一个人硬扛。</td></tr>

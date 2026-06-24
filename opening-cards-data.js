@@ -2060,7 +2060,7 @@ function sanitizeSupportRoles(value) {
 }
 
 function relationIntroFromCard(card, relationName) {
-  return relationName ? `上一年打过交道的同学${relationName}` : "";
+  return relationName ? `第一年有过相处的同学${relationName}` : "";
 }
 
 function mainRiasecType(choice = {}) {

@@ -24,7 +24,7 @@
 - pressureMode=relief 时：第一句给明确好结果；选项只承接收获，如继续/休整、放大/打磨、稳定/边界。
 - 有 stateHints.reliefMode 时，scene 第一落点写被认可、关系稳定、做成事、收到感谢、获得技能或发现喜欢方向。
 【第 1 年才会插入：- 使用 stateHints.openingFrame，和 profile.major 明确联动。正式游戏第 1 年不走这里。第 2-18 年为空。】
-- 按 stateHints.timeFrame / careerRoute 写年龄和人生阶段；有 stateHints.educationState 就承接。
+- 按 stateHints.timeFrame / careerRoute 判断阶段；题面不写当前年份、当前年龄。
 - 按 stateHints.routeState 承接选择惯性。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 有 stateHints.currentIncident 时，scene.body 以它为本年事件。
@@ -37,10 +37,12 @@
 - stateHints.childRoute=未选择生小孩 时，只写是否进入育儿线；=已选择生小孩 时，才写孩子生病/照护/教育。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：【见下方每年原文】
+- 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
 - 每年是一年后的新大事，不写上一年同一事件续集。
 - scene.body 只写本年新事件，不把上一年消息、电话、邀约写成下集。
 - scene.body 只出现本卡主事件的关键角色；非关键角色放 relationshipTrack 或 summary。
 - 只有固定伴侣有姓名；有 stateHints.castIntroRule 时，scene/relationshipTrack 首次写伴侣用完整称呼；其他角色只用关系称呼。
+- 有 stateHints.year2RelationEntry 时，题面和 relationshipTrack 必须出现该称呼。
 - summary 写上一年余波；scene.body 写本年事件。
 - stateHints.lastYear / history / repeatGuard 只用于 summary 和避重，不进入 scene.body/A/B。
 - relationshipTrack 换具体信号。
@@ -62,15 +64,15 @@
 | 年份 | 阶段约束原文 |
 | --- | --- |
 | 第 1 年 | 正式流程不走年度 user prompt；走预置开局卡。 |
-| 第 2 年 | 阶段约束：校园开放日：把专业小事讲给高中生听懂，有认可感。 |
+| 第 2 年 | 阶段约束：校园开放日：把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。 |
 | 第 3 年 | 阶段约束：异地表态：实习和城市机会第一次分岔。 |
 | 第 4 年 | 阶段约束：毕业分流：考研、项目、实习二选一。 |
 | 第 5 年 | 阶段约束：项目跑通：做成一件小事，被看见。 |
-| 第 5 年，读研分支 | 阶段约束：研一开局：导师、课题和同门分工成为主压力。 |
+| 第 5 年，读研分支 | 阶段约束：读研开局：导师、课题和同门分工成为主压力。 |
 | 第 6 年 | 阶段约束：生活落地：学生身份转向工作身份。 |
-| 第 6 年，读研分支 | 阶段约束：研二拉扯：论文、实验/作品和实习预备同时挤压。 |
+| 第 6 年，读研分支 | 阶段约束：课题推进：论文、实验/作品和实习预备同时挤压。 |
 | 第 7 年 | 阶段约束：职场入口：转正、客户和收入第一次压身。 |
-| 第 7 年，读研分支 | 阶段约束：研三分流：毕业论文、校招/读博和城市落点一起拍板。 |
+| 第 7 年，读研分支 | 阶段约束：毕业分流：毕业论文、校招/读博和城市落点一起拍板。 |
 | 第 8 年 | 阶段约束：关系稳定：不用救火的共同日常。 |
 | 第 8 年，读研分支 | 阶段约束：研究生毕业第一站：入职、读博或规培落点定下来。 |
 | 第 9 年 | 阶段约束：口碑危机：一次职业失误影响后续机会。 |
@@ -96,8 +98,8 @@
 - pressureMode：relief
 - reliefSignal：第一次被认可
 - riasecAxis：R / I
-- conflict：大二校园开放日，你把专业体验摊上的小任务讲清楚，来参观的高中生真的听懂了，老师也当场夸你。你要把讲法整理成入门小教程，还是先和同伴休息复盘。
-- sideBeat：同伴开始把你当成能把复杂事讲明白的人
+- conflict：校园开放日，你把专业体验摊上的小任务讲清楚，来参观的高中生真的听懂了，老师也当场夸你。第一年有过相处的同学也在现场，你要把讲法整理成入门小教程，还是先一起休息复盘。
+- sideBeat：关系线核心角色确认自己和你有了稳定默契
 - choiceContrast：做成教程 / 休息复盘
 - callbacks：校园开放日、高中生听懂、第一次被看见
 
@@ -296,7 +298,7 @@
 - profile：玩家姓名、性别、省份、分数、目标、专业、开局关系角色。
 - storyCast：关系主线才带固定伴侣姓名和完整称呼；没有固定姓名时不生成新姓名。
 - history：之前每年卡片的 scene、sceneBody、summary、choiceText、consequence、relationshipTrack 等。
-- stateHints.timeFrame：年龄和人生阶段。
+- stateHints.timeFrame：阶段判断，不直接写进题面。
 - stateHints.routeState：根据历史选择生成的路线惯性。
 - stateHints.relationshipStage / relationshipBeat：关系阶段和本年关系信号。
 - stateHints.majorAnchor / currentIncident：按专业和年份生成的专业事件。

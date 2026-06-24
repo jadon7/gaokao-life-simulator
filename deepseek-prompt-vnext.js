@@ -37,12 +37,12 @@ const outlineData = {
             "R",
             "I"
           ],
-          "conflict": "大二校园开放日，你把专业体验摊上的小任务讲清楚，来参观的高中生真的听懂了，老师也当场夸你。你要把讲法整理成入门小教程，还是先和同伴休息复盘。",
-          "sideBeat": "同伴开始把你当成能把复杂事讲明白的人",
+          "conflict": "校园开放日，你把专业体验摊上的小任务讲清楚，来参观的高中生真的听懂了，老师也当场夸你。第一年有过相处的同学也在现场，你要把讲法整理成入门小教程，还是先一起休息复盘。",
+          "sideBeat": "关系线核心角色确认自己和你有了稳定默契",
           "characters": [
             "高中生/新生",
             "老师",
-            "同伴"
+            "关系线核心角色"
           ],
           "abType": "做成教程 / 休息复盘",
           "callbacks": [
@@ -478,7 +478,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - pressureMode=relief 时：第一句给明确好结果；选项只承接收获，如继续/休整、放大/打磨、稳定/边界。
 - 有 stateHints.reliefMode 时，scene 第一落点写被认可、关系稳定、做成事、收到感谢、获得技能或发现喜欢方向。
 {{OPENING_PROMPT}}
-- 按 stateHints.timeFrame / careerRoute 写年龄和人生阶段；有 stateHints.educationState 就承接。
+- 按 stateHints.timeFrame / careerRoute 判断阶段；题面不写当前年份、当前年龄。
 - 按 stateHints.routeState 承接选择惯性。
 - 按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
 - 有 stateHints.currentIncident 时，scene.body 以它为本年事件。
@@ -491,10 +491,12 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - stateHints.childRoute=未选择生小孩 时，只写是否进入育儿线；=已选择生小孩 时，才写孩子生病/照护/教育。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：{{PHASE_PROMPT}}
+- 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
 - 每年是一年后的新大事，不写上一年同一事件续集。
 - scene.body 只写本年新事件，不把上一年消息、电话、邀约写成下集。
 - scene.body 只出现本卡主事件的关键角色；非关键角色放 relationshipTrack 或 summary。
 - 只有固定伴侣有姓名；有 stateHints.castIntroRule 时，scene/relationshipTrack 首次写伴侣用完整称呼；其他角色只用关系称呼。
+- 有 stateHints.year2RelationEntry 时，题面和 relationshipTrack 必须出现该称呼。
 {{CAST_INTRO_PROMPT}}
 - summary 写上一年余波；scene.body 写本年事件。
 - stateHints.lastYear / history / repeatGuard 只用于 summary 和避重，不进入 scene.body/A/B。
@@ -541,7 +543,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 可见文案：常见口语、专业词少、无生僻简称、无强行缩写。
 - pressureMode=relief 时：第一句给明确好结果；选项只承接收获，如继续/休整、放大/打磨、稳定/边界。
 - 有 stateHints.reliefMode 时，scene 第一落点写被认可、关系稳定、做成事、收到感谢、获得技能或发现喜欢方向。
-- 每张卡按 stateHints.timeFrame / careerRoute 推进；有 stateHints.educationState 就承接。
+- 每张卡按 stateHints.timeFrame / careerRoute 判断阶段；题面不写当前年份、当前年龄。
 - 每张卡按 stateHints.routeState 承接选择惯性。
 - lifeTrack 写本年新状态。
 - 每张卡按 stateHints.majorAnchor / stateHints.currentIncident 落专业语境。
@@ -556,12 +558,14 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
 - 阶段约束：{{PHASE_PROMPT}}
+- 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
 - 每年是一年后的新大事，不写上一年同一事件续集。
 - scene.body 只写本年新事件，不把上一年消息、电话、邀约写成下集。
 - relationshipTrack 换具体信号。
 - scene.body 只出现本卡主事件的关键角色；非关键角色放 relationshipTrack 或 summary。
 - 不复用 recentSceneTitles / recentIncidents / usedIncidents；相邻卡换事件和人物关系。
 - 不写 recentSceneObjects 里的道具；只有固定伴侣有姓名；有 stateHints.castIntroRule 时，scene/relationshipTrack 首次写伴侣用完整称呼；其他角色只用关系称呼。
+- 有 stateHints.year2RelationEntry 时，题面和 relationshipTrack 必须出现该称呼。
 {{CAST_INTRO_PROMPT}}
 - 每张卡使用对应 outlineCard；A/B 对应 riasecAxis[0]/[1]，不要输出 riasec。
 - summary 写上一年余波；scene.body 写本年事件；选项用 label 写完整互斥动作；consequence 写选择后的直接后果。
@@ -612,7 +616,7 @@ function closingFrameHint(history = []) {
     .map(item => cleanPromptText(item.choiceText || item.consequence))
     .filter(Boolean)
     .join("、");
-  return `第18年收尾：回看${firstTitle || "开局"}、${lastTitle || "最后一年"}和这一路的关键选择${keyChoices ? `（${keyChoices}）` : ""}；给18岁一句真话，再决定未来五年活法`;
+  return `收尾：回看${firstTitle || "开局"}、${lastTitle || "最后一步"}和这一路的关键选择${keyChoices ? `（${keyChoices}）` : ""}；给开局时的自己一句真话，再决定未来五年活法`;
 }
 
 function phasePromptForYear(year = 1, history = []) {
@@ -620,12 +624,12 @@ function phasePromptForYear(year = 1, history = []) {
   const educationState = educationStateHint(history);
   const prompts = {
     1: "开学入场：专业第一件事和关键角色入场。",
-    2: "校园开放日：把专业小事讲给高中生听懂，有认可感。",
+    2: "校园开放日：把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。",
     3: "异地表态：实习和城市机会第一次分岔。",
     4: "毕业分流：考研、项目、实习二选一。",
-    5: educationState === "继续读研" ? "研一开局：导师、课题和同门分工成为主压力。" : "项目跑通：做成一件小事，被看见。",
-    6: educationState === "继续读研" ? "研二拉扯：论文、实验/作品和实习预备同时挤压。" : "生活落地：学生身份转向工作身份。",
-    7: educationState === "继续读研" ? "研三分流：毕业论文、校招/读博和城市落点一起拍板。" : "职场入口：转正、客户和收入第一次压身。",
+    5: educationState === "继续读研" ? "读研开局：导师、课题和同门分工成为主压力。" : "项目跑通：做成一件小事，被看见。",
+    6: educationState === "继续读研" ? "课题推进：论文、实验/作品和实习预备同时挤压。" : "生活落地：学生身份转向工作身份。",
+    7: educationState === "继续读研" ? "毕业分流：毕业论文、校招/读博和城市落点一起拍板。" : "职场入口：转正、客户和收入第一次压身。",
     8: educationState === "继续读研" ? "研究生毕业第一站：入职、读博或规培落点定下来。" : "关系稳定：不用救火的共同日常。",
     9: "口碑危机：一次职业失误影响后续机会。",
     10: "首付换城：钱、城市和长期关系一起落地。",
@@ -951,7 +955,7 @@ function buildStoryCast(profile = {}) {
   const relationGenderKey = genderKey(profile.relationGender) || oppositeGenderKey(profile);
   const relationGender = String(profile.relationGender || "").trim() || genderLabelFromKey(relationGenderKey);
   if (relationName) {
-    const relationIntro = `上一年打过交道的同学${relationName}`;
+    const relationIntro = cleanPromptText(profile.relationIntro) || `第一年有过相处的同学${relationName}`;
     return {
       ...defaultStoryCast,
       relationName,
@@ -1067,23 +1071,23 @@ function compactOutlineCardWithEducation(card, storyCast = defaultStoryCast, edu
   if (!compact || educationState !== "继续读研") return compact;
   const gradFrames = {
     5: {
-      comedyDevice: "研一开题",
-      conflict: "研一开题、导师课题和同门分工一起落桌，你要先扎进课题，还是先把生活节奏理顺。",
-      hook: "研一不是延迟现实，是换一种现实",
+      comedyDevice: "读研开题",
+      conflict: "开题、导师课题和同门分工一起落桌，你要先扎进课题，还是先把生活节奏理顺。",
+      hook: "读研不是延迟现实，是换一种现实",
       sideBeat: "生活圈第一次认真讨论接下来怎么安排",
-      callbacks: ["研一开题", "导师课题", "同门分工"]
+      callbacks: ["开题", "导师课题", "同门分工"]
     },
     6: {
       comedyDevice: "论文和实习撞车",
-      conflict: "研二论文、实验/作品和实习预备同天挤压。你要先把课题推进稳，还是提前试探就业窗口。",
-      hook: "研二最挤的不是课表，是下一站入口",
+      conflict: "论文、实验/作品和实习预备同天挤压。你要先把课题推进稳，还是提前试探就业窗口。",
+      hook: "最挤的不是课表，是下一站入口",
       sideBeat: "导师课题和同门分工开始压过日常节奏",
-      callbacks: ["研二论文", "实习预备", "下一站入口"]
+      callbacks: ["论文", "实习预备", "下一站入口"]
     },
     7: {
-      comedyDevice: "研三分流",
-      conflict: "研三毕业论文、校招/读博和城市落点一起拍板。你要继续深造，还是先进入新城市。",
-      hook: "研三不是缓冲区，是下一站入口",
+      comedyDevice: "毕业分流",
+      conflict: "毕业论文、校招/读博和城市落点一起拍板。你要继续深造，还是先进入新城市。",
+      hook: "毕业不是缓冲区，是下一站入口",
       sideBeat: "毕业去向开始改变生活圈",
       callbacks: ["毕业论文", "校招读博", "城市落点"]
     }
@@ -1294,6 +1298,15 @@ function withoutRelationRoles(roles = []) {
   return roles.filter(role => !/伴侣|新恋情/.test(role));
 }
 
+function relationIntroForHistory(storyCast = defaultStoryCast, history = []) {
+  const relationName = storyCast?.relationName;
+  if (!relationName) return "";
+  const lastYear = Number(history.at(-1)?.year || history.length || 0);
+  return lastYear <= 1
+    ? `第一年有过相处的同学${relationName}`
+    : `上一年打过交道的同学${relationName}`;
+}
+
 function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, history = [], relationshipStage = "", includeRelation = false) {
   const cast = compactStoryCast(profile, existingCast);
   const currentYear = Number(year || 1);
@@ -1307,7 +1320,7 @@ function compactStoryCastForYear(profile = {}, existingCast = null, year = 1, hi
   };
   if (includeRelation) {
     baseCast.relationName = cast.relationName;
-    baseCast.relationIntro = cast.relationIntro;
+    baseCast.relationIntro = relationIntroForHistory(cast, history) || cast.relationIntro;
   }
   if (currentYear <= 3) {
     return {
@@ -2083,10 +2096,10 @@ function lifeStatusHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   if (educationState === "已放弃考研" && currentYear >= 7) return "初入职场，现实压力转向工作和收入";
   if (educationState === "已放弃考研" && currentYear >= 5) return "已退出考研线，项目/实习成为主路";
-  if (educationState === "继续读研" && currentYear === 5) return "研一开局，课题和导师成为主压力";
-  if (educationState === "继续读研" && currentYear === 6) return "研二推进，论文和实习预备开始挤压";
-  if (educationState === "继续读研" && currentYear === 7) return "研三分流，毕业论文和校招/读博一起落地";
-  if (educationState === "继续读研" && currentYear === 8) return "研究生毕业第一站，现实压力转向工作和城市";
+  if (educationState === "继续读研" && currentYear === 5) return "读研开局，课题和导师成为主压力";
+  if (educationState === "继续读研" && currentYear === 6) return "课题推进，论文和实习预备开始挤压";
+  if (educationState === "继续读研" && currentYear === 7) return "毕业分流，毕业论文和校招/读博一起落地";
+  if (educationState === "继续读研" && currentYear === 8) return "研究生毕业落点，现实压力转向工作和城市";
   return describeTrack(history, "lifeTrack", "现实状态刚开局，节奏还没完全站稳");
 }
 
@@ -2119,26 +2132,24 @@ function routeStateHint(history = []) {
 
 function timeFrameHint(year = 1, history = []) {
   const currentYear = Number(year || 1);
-  const age = Math.min(35, 17 + currentYear);
   const educationState = educationStateHint(history);
   let stage = "大学早期";
   if (currentYear <= 3) stage = "大学早期";
-  else if (currentYear === 4) stage = "大四分流";
-  else if (currentYear === 5) stage = educationState === "继续读研" ? "研一" : "毕业后一年";
-  else if (currentYear === 6) stage = educationState === "继续读研" ? "研二" : "毕业后两年";
-  else if (currentYear === 7 && educationState === "继续读研") stage = "研三/毕业分流";
-  else if (currentYear === 8 && educationState === "继续读研") stage = "研究生毕业第一年";
+  else if (currentYear === 4) stage = "毕业分流";
+  else if (currentYear === 5) stage = educationState === "继续读研" ? "读研开局" : "毕业初期";
+  else if (currentYear === 6) stage = educationState === "继续读研" ? "读研推进" : "毕业初期";
+  else if (currentYear === 7 && educationState === "继续读研") stage = "毕业分流";
+  else if (currentYear === 8 && educationState === "继续读研") stage = "研究生毕业后落点";
   else if (currentYear <= 9) stage = "初入职场";
   else if (currentYear <= 12) stage = "城市平台";
   else if (currentYear <= 15) stage = "成年压力";
   else stage = "前辈收束";
-  return `${age}岁左右，${stage}`;
+  return stage;
 }
 
 function relationIntroFromRecentStory(storyCast = defaultStoryCast, history = []) {
-  const relationName = storyCast?.relationName;
-  if (!relationName || !history.length) return "";
-  return `上一年打过交道的同学${relationName}`;
+  if (!history.length) return "";
+  return relationIntroForHistory(storyCast, history);
 }
 
 function castIntroHint(storyCast = defaultStoryCast, history = []) {
@@ -2198,7 +2209,8 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
     : compactOutlineCardWithIncident(rawOutlineCard, storyCast, currentIncident, compactBaseOutlineCard, choiceBalance);
   const majorAnchor = currentIncident || outlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, year, history);
-  const includeRelation = outlineCard?.mainTrack === "relationship" || /伴侣/.test(relationshipPressure);
+  const isYear2RelationEntry = Number(year) === 2 && Boolean(storyCast.relationName);
+  const includeRelation = isYear2RelationEntry || outlineCard?.mainTrack === "relationship" || /伴侣/.test(relationshipPressure);
   const compactCast = compactStoryCastForYear(profile, storyCast, year, history, relationshipStage, includeRelation);
   const redactionTerms = relationRedactionTerms(storyCast);
   const newRelation = newRelationHint(storyCast, relationshipStage);
@@ -2215,6 +2227,9 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     relationshipStage,
     relationshipBeat
   };
+  if (isYear2RelationEntry && compactCast.relationIntro) {
+    stateHints.year2RelationEntry = `伴侣出场：${compactCast.relationIntro}`;
+  }
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history, redactionTerms);
   const storySoFar = storySoFarText(history, year);
@@ -2284,7 +2299,8 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
       return compactOutlineCardWithIncident(card, storyCast, incident, compactCard, cardChoiceBalance);
     });
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
-  const includeRelation = firstOutlineCard?.mainTrack === "relationship" || /伴侣/.test(relationshipPressure);
+  const isYear2RelationEntry = Number(startYear) === 2 && Boolean(storyCast.relationName);
+  const includeRelation = isYear2RelationEntry || firstOutlineCard?.mainTrack === "relationship" || /伴侣/.test(relationshipPressure);
   const compactCast = compactStoryCastForYear(profile, storyCast, startYear, history, relationshipStage, includeRelation);
   const redactionTerms = relationRedactionTerms(storyCast);
   const newRelation = newRelationHint(storyCast, relationshipStage);
@@ -2302,6 +2318,9 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
     relationshipBeat,
     batchMode: "prefetch"
   };
+  if (isYear2RelationEntry && compactCast.relationIntro) {
+    stateHints.year2RelationEntry = `伴侣出场：${compactCast.relationIntro}`;
+  }
   if (majorAnchor) stateHints.majorAnchor = majorAnchor;
   const lastYear = lastYearText(history, redactionTerms);
   const storySoFar = storySoFarText(history, startYear);

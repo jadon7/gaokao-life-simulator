@@ -990,7 +990,7 @@ function mockIncidentText(parsed, outlineCard) {
 }
 
 function mockLifeTrack(parsed, year, incident) {
-  const timeFrame = optionalCleanText(parsed?.stateHints?.timeFrame) || `${Math.min(35, 17 + year)}岁左右`;
+  const timeFrame = optionalCleanText(parsed?.stateHints?.timeFrame) || "阶段推进";
   return `${timeFrame}，${incident}落到台面`;
 }
 
@@ -1001,7 +1001,9 @@ function mockRelationshipTrack(parsed, year, relationName) {
 }
 
 function mockSceneBody(parsed, outlineCard, relationName, incident) {
-  const conflict = outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`;
+  const relationEntry = optionalCleanText(parsed?.stateHints?.year2RelationEntry).replace(/^伴侣出场：/, "");
+  const conflict = (outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`)
+    .replace("第一年有过相处的同学", relationEntry || "第一年有过相处的同学");
   const relationTail = outlineCard?.mainTrack === "relationship" ? `${relationName}在旁边等你给一句准话。` : "";
   return `${conflict}${relationTail}`;
 }

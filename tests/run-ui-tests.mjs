@@ -44,6 +44,11 @@ const suites = {
     ["原结果操作按钮仍保留", JSON.stringify(d.buttonTexts) === JSON.stringify(["分享结果", "查看过程", "重新测试"])],
     ["分享图作者署名使用 @ 文案", d.footerText === "@大师的AI小灶"],
     ["分享图作者署名不可点击", d.footerClickable === false]
+  ],
+  maintenanceError: d => [
+    ["维护态标题明确", d.title === "模型服务临时维护中"],
+    ["维护态按钮不暗示立即成功", d.buttonText === "稍后重试"],
+    ["说明前面选择不会丢", /前面7次选择已经保存/.test(d.text || "")]
   ]
 };
 

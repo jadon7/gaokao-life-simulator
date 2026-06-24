@@ -9,6 +9,8 @@ enabled = true
 
 [vars]
 LLM_MODEL = "deepseek-v4-flash"
+MAINTENANCE_MODE = "0"
+MAINTENANCE_MESSAGE = "模型服务正在临时维护，前面的选择不会丢，请稍后再试。"
 
 [assets]
 directory = "./public"

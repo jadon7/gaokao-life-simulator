@@ -149,6 +149,138 @@ function compactHistory(history = []) {
   }));
 }
 
+function truncateLogText(value, max = 160) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+}
+
+function redactSensitiveText(value) {
+  return String(value ?? "")
+    .replace(/sk-[A-Za-z0-9_-]{8,}/g, "sk-***")
+    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, "Bearer ***")
+    .replace(/(["']?(?:api[_-]?key|authorization|token|secret)["']?\s*[:=]\s*["']?)[^"',}\s]+/gi, "$1***");
+}
+
+function safeLogValue(value, max = 1200) {
+  if (value == null || value === "") return "";
+  let text = "";
+  try {
+    text = typeof value === "string" ? value : JSON.stringify(value);
+  } catch {
+    text = String(value);
+  }
+  return truncateLogText(redactSensitiveText(text), max);
+}
+
+function profileLogSummary(profile = {}) {
+  const p = normalizeProfile(profile);
+  return {
+    name: truncateLogText(p.name, 32),
+    gender: p.gender,
+    province: p.province,
+    score: p.score,
+    major: p.majorLabel || p.major,
+    hope: p.hope,
+    keywords: truncateLogText(p.keywords, 80),
+    dream: truncateLogText(p.dream, 80),
+    relation: truncateLogText([p.relationIntro, p.relationName].filter(Boolean).join(" "), 80)
+  };
+}
+
+function historyLogSummary(history = []) {
+  const list = Array.isArray(history) ? history : [];
+  return {
+    count: list.length,
+    lastYear: list.length ? Number(list[list.length - 1]?.year || list.length) : 0,
+    recent: list.slice(-4).map(item => ({
+      year: Number(item?.year || 0) || undefined,
+      phase: truncateLogText(item?.phase, 40),
+      scene: truncateLogText(item?.sceneTitle || item?.scene, 80),
+      choice: truncateLogText(item?.choiceText || item?.choice || item?.tag, 80),
+      tag: truncateLogText(item?.tag, 40),
+      holland: item?.holland || undefined
+    }))
+  };
+}
+
+function apiYearFor(pathname, body = {}, history = []) {
+  const path = String(pathname || "");
+  const historyLength = Array.isArray(history) ? history.length : 0;
+  if (path.includes("/start")) return 1;
+  if (path.includes("/next")) return Math.min(Math.max(Number(body.year || historyLength + 1) || 1, 2), totalGameYears);
+  if (path.includes("/batch")) return Math.min(Math.max(Number(body.startYear || historyLength + 1) || 1, 1), totalGameYears);
+  if (path.includes("/result")) return "result";
+  return null;
+}
+
+function buildApiLogContext({ pathname, body, profile, history, model }) {
+  return {
+    pathname,
+    year: apiYearFor(pathname, body, history),
+    model,
+    profile: profileLogSummary(profile),
+    history: historyLogSummary(history)
+  };
+}
+
+function classifyApiError(error) {
+  const message = String(error?.message || error || "");
+  if (error?.status === 499) return "client_aborted";
+  if (/维护|暂停/.test(message)) return "maintenance";
+  if (/API Key|Secret|key/i.test(message)) return "model_config";
+  if (/timeout|超时|abort/i.test(message)) return "timeout";
+  if (/invalid JSON|Invalid .*JSON|Model returned invalid JSON/i.test(message)) return "model_output_invalid";
+  if (error?.status >= 500) return "upstream_5xx";
+  if (error?.status >= 400) return "upstream_4xx";
+  return "runtime_error";
+}
+
+function errorLogSummary(error) {
+  return {
+    name: error?.name || "Error",
+    status: error?.status || undefined,
+    reason: classifyApiError(error),
+    message: truncateLogText(redactSensitiveText(error?.message || error || ""), 300),
+    modelRawError: safeLogValue(error?.modelRawError || error?.rawError || "", 1200) || undefined
+  };
+}
+
+function logApiEvent(level, evt, context = {}, error = null, extra = {}) {
+  const payload = {
+    evt,
+    level,
+    api: context.pathname,
+    year: context.year,
+    model: context.model,
+    profile: context.profile,
+    history: context.history,
+    ...extra,
+    error: error ? errorLogSummary(error) : undefined
+  };
+  Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
+  const line = JSON.stringify(payload);
+  if (level === "error") console.error(line);
+  else if (level === "warn") console.warn(line);
+  else console.log(line);
+}
+
+function attachModelError(error, metadata = {}) {
+  if (!error || typeof error !== "object") return error;
+  if (metadata.status && !error.status) error.status = metadata.status;
+  if (metadata.modelRawError && !error.modelRawError) error.modelRawError = metadata.modelRawError;
+  if (metadata.provider && !error.modelProvider) error.modelProvider = metadata.provider;
+  if (metadata.model && !error.model) error.model = metadata.model;
+  return error;
+}
+
+function maintenanceMessage(env) {
+  return clean(env?.MAINTENANCE_MESSAGE, "模型服务正在临时维护，前面的选择不会丢，请稍后再试。");
+}
+
+function isMaintenanceMode(env) {
+  return String(env?.MAINTENANCE_MODE || "").trim() === "1";
+}
+
 function taskPromptWithInput(taskPrompt, input) {
   const inputJson = JSON.stringify(input);
   return taskPrompt.includes("{{INPUT_JSON}}")
@@ -209,7 +341,7 @@ function clientAbortError() {
   return error;
 }
 
-async function callModel(messages, validator, env, model = currentModel(env), onDelta = null, debug = false, onDiscard = null, clientSignal = null) {
+async function callModel(messages, validator, env, model = currentModel(env), onDelta = null, debug = false, onDiscard = null, clientSignal = null, logContext = null) {
   const config = resolveModelConfig(env, model);
   if (env?.LLM_MOCK === "1" || env?.DEEPSEEK_MOCK === "1") {
     const raw = mockResponse(messages);
@@ -252,9 +384,20 @@ async function callModel(messages, validator, env, model = currentModel(env), on
         body: JSON.stringify(body)
       });
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
+        const rawBody = await response.text().catch(() => "");
+        let payload = {};
+        try {
+          payload = rawBody ? JSON.parse(rawBody) : {};
+        } catch {
+          payload = rawBody;
+        }
         const error = new Error(payload?.error?.message || `${config.label} request failed: ${response.status}`);
         error.status = response.status;
+        attachModelError(error, {
+          provider: config.provider,
+          model: config.id,
+          modelRawError: payload || rawBody
+        });
         throw error;
       }
       const content = useStream
@@ -264,11 +407,30 @@ async function callModel(messages, validator, env, model = currentModel(env), on
           })
         : (await response.json().catch(() => ({})))?.choices?.[0]?.message?.content;
       if (!content) throw new Error(`${config.label} returned empty content`);
-      return attachModelDebug(validator(parseJsonContent(content)), debug, { request: body, rawOutput: content });
+      let parsed;
+      try {
+        parsed = parseJsonContent(content);
+      } catch (error) {
+        attachModelError(error, { provider: config.provider, model: config.id, modelRawError: content });
+        throw error;
+      }
+      try {
+        return attachModelDebug(validator(parsed), debug, { request: body, rawOutput: content });
+      } catch (error) {
+        attachModelError(error, { provider: config.provider, model: config.id, modelRawError: content });
+        throw error;
+      }
     } catch (error) {
       if (clientAborted || clientSignal?.aborted) throw clientAbortError();
       lastError = error;
-      console.error(`${config.label} attempt ${attempt + 1}/${maxAttempts} failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
+      attachModelError(error, { provider: config.provider, model: config.id });
+      logApiEvent("warn", "llm_attempt_failed", logContext || {}, error, {
+        provider: config.provider,
+        attempt: attempt + 1,
+        attempts: maxAttempts,
+        stream: useStream,
+        status: error?.status || undefined
+      });
       if (useStream && streamedAny) {
         onDiscard?.();
         continue;
@@ -278,7 +440,10 @@ async function callModel(messages, validator, env, model = currentModel(env), on
       clientSignal?.removeEventListener("abort", abortFromClient);
     }
   }
-  console.error(`${config.label} unavailable, using fallback content:`, lastError?.message || lastError);
+  logApiEvent("error", "llm_degraded_fallback", logContext || {}, lastError, {
+    provider: config.provider,
+    attempts: maxAttempts
+  });
   const raw = mockResponse(messages);
   const fallback = validator(raw);
   return attachModelDebug({ ...fallback, degraded: true }, debug, {
@@ -350,7 +515,7 @@ async function readChatStream(response, onDelta = null) {
   return content.trim();
 }
 
-function annualStreamResponse({ pathname, profile, history, body, env, model, debug = false, clientSignal = null }) {
+function annualStreamResponse({ pathname, profile, history, body, env, model, debug = false, clientSignal = null, logContext = null }) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -371,10 +536,12 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
           text => send({ type: "delta", text }),
           debug,
           () => send({ type: "reset" }),
-          clientSignal
+          clientSignal,
+          logContext
         );
         send({ type: "done", ok: true, model, degraded: !!data.degraded, card: annualCardFromData(data), ...debugField(data) });
       } catch (error) {
+        logApiEvent(error?.status === 499 ? "warn" : "error", "api_stream_failed", logContext || {}, error, { status: error?.status || 500 });
         send({ type: "error", ok: false, error: error.message || "Request failed" });
       } finally {
         controller.close();
@@ -390,7 +557,7 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
   });
 }
 
-function resultStreamResponse({ profile, history, env, model, debug = false, clientSignal = null }) {
+function resultStreamResponse({ profile, history, env, model, debug = false, clientSignal = null, logContext = null }) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -405,10 +572,12 @@ function resultStreamResponse({ profile, history, env, model, debug = false, cli
           text => send({ type: "delta", text }),
           debug,
           () => send({ type: "reset" }),
-          clientSignal
+          clientSignal,
+          logContext
         );
         send({ type: "done", ok: true, model, degraded: !!result.degraded, result, ...debugField(result) });
       } catch (error) {
+        logApiEvent(error?.status === 499 ? "warn" : "error", "api_stream_failed", logContext || {}, error, { status: error?.status || 500 });
         send({ type: "error", ok: false, error: error.message || "Request failed" });
       } finally {
         controller.close();
@@ -1105,6 +1274,8 @@ async function handleApi(request, env, pathname) {
       hasDeepSeekKey,
       hasMiniMaxKey,
       model,
+      maintenance: isMaintenanceMode(env),
+      maintenanceMessage: isMaintenanceMode(env) ? maintenanceMessage(env) : "",
       availableModels: modelOptions.map(option => option.id),
       modelOptions,
       time: new Date().toISOString()
@@ -1115,21 +1286,31 @@ async function handleApi(request, env, pathname) {
   let profile = normalizeProfile();
   let history = [];
   let model = currentModel(env);
+  let logContext = buildApiLogContext({ pathname, body, profile, history, model });
   const promptLabDebug = isPromptLabDebugRequest(request);
   try {
     body = await readJson(request);
     profile = normalizeProfile(body.profile);
     history = Array.isArray(body.history) ? body.history : [];
     model = resolveModelConfig(env, body.model).id;
+    logContext = buildApiLogContext({ pathname, body, profile, history, model });
   } catch {}
 
   try {
+    if (pathname.startsWith("/api/game/") && isMaintenanceMode(env)) {
+      const message = maintenanceMessage(env);
+      const error = new Error(message);
+      error.status = 503;
+      logApiEvent("warn", "api_maintenance", logContext, error, { status: 503 });
+      return sendJson(503, { ok: false, maintenance: true, retryable: true, error: message });
+    }
+
     if (pathname === "/api/game/start/stream" || pathname === "/api/game/next/stream") {
-      return annualStreamResponse({ pathname, profile, history, body, env, model, debug: promptLabDebug, clientSignal: request.signal });
+      return annualStreamResponse({ pathname, profile, history, body, env, model, debug: promptLabDebug, clientSignal: request.signal, logContext });
     }
 
     if (pathname === "/api/game/result/stream") {
-      return resultStreamResponse({ profile, history, env, model, debug: promptLabDebug, clientSignal: request.signal });
+      return resultStreamResponse({ profile, history, env, model, debug: promptLabDebug, clientSignal: request.signal, logContext });
     }
 
     if (pathname === "/api/game/start") {
@@ -1142,7 +1323,7 @@ async function handleApi(request, env, pathname) {
         return sendJson(409, { ok: false, error: "游戏已结束" });
       }
       const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
-      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year, profile), env, model, null, promptLabDebug, null, request.signal);
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year, profile), env, model, null, promptLabDebug, null, request.signal, logContext);
       return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/batch") {
@@ -1156,12 +1337,13 @@ async function handleApi(request, env, pathname) {
         null,
         promptLabDebug,
         null,
-        request.signal
+        request.signal,
+        logContext
       );
       return sendJson(200, { ok: true, model, cards: data.cards.map(annualCardFromData), ...debugField(data) });
     }
     if (pathname === "/api/game/result") {
-      const result = await callModel(buildResultMessages({ profile, history }), validateResult, env, model, null, promptLabDebug, null, request.signal);
+      const result = await callModel(buildResultMessages({ profile, history }), validateResult, env, model, null, promptLabDebug, null, request.signal, logContext);
       return sendJson(200, { ok: true, model, result, ...debugField(result) });
     }
     return sendJson(404, { ok: false, error: "API route not found" });
@@ -1170,7 +1352,7 @@ async function handleApi(request, env, pathname) {
       return sendJson(499, { ok: false, error: error.message || "请求已取消" });
     }
     // 兜底降级：任何异常都返回 200 + 本地模拟内容，避免把上游 5xx 透传给前端
-    console.error(`API degraded fallback for ${pathname}:`, error?.message || error);
+    logApiEvent("error", "api_degraded_fallback", logContext, error, { status: error?.status || 500 });
     try {
       if (pathname === "/api/game/start") {
         const data = buildOpeningCard(profile, totalGameYears);
@@ -1196,8 +1378,12 @@ async function handleApi(request, env, pathname) {
         return sendJson(200, { ok: true, model, degraded: true, result: { ...result, degraded: true } });
       }
     } catch (fallbackError) {
-      console.error("API fallback failed:", fallbackError?.message || fallbackError);
+      logApiEvent("error", "api_fallback_failed", logContext, fallbackError, {
+        status: fallbackError?.status || 500,
+        originalError: errorLogSummary(error)
+      });
     }
+    logApiEvent("error", "api_failed", logContext, error, { status: error?.status || 500 });
     return sendJson(error.status || 500, { ok: false, error: error.message || "Request failed" });
   }
 }
@@ -1214,6 +1400,7 @@ export default {
         const response = await handleApi(request, env, url.pathname);
         console.log(JSON.stringify({
           evt: "api",
+          level: "info",
           path: url.pathname,
           status: response.status,
           ms: Date.now() - startedAt,
@@ -1224,6 +1411,7 @@ export default {
         // handleApi 内部已有兜底，这里是最后防线
         console.error(JSON.stringify({
           evt: "api_crash",
+          level: "error",
           path: url.pathname,
           ms: Date.now() - startedAt,
           error: String(error?.message || error)

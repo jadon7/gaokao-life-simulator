@@ -6333,7 +6333,7 @@
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) {
           const ray = response.headers.get("cf-ray");
-          throw new Error(data.error || `请求失败：${response.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`);
+          throw apiResponseError(data, response.status, ray);
         }
         logApiModel(path, payload, data, "fetch");
         return data;
@@ -6343,7 +6343,7 @@
           if (externalSignal?.aborted) throw new Error(options.abortMessage || "请求已取消");
           return apiPostXHR(path, payload, options);
         }
-        throw new Error(normalizeFetchError(error, "请求失败"));
+        throw normalizedApiError(error, "请求失败");
       } finally {
         externalSignal?.removeEventListener("abort", abortFromExternal);
         window.clearTimeout(timeout);
@@ -6365,7 +6365,7 @@
         if (!response.ok || !response.body) {
           const data = await response.json().catch(() => ({}));
           const ray = response.headers.get("cf-ray");
-          throw new Error(data.error || `请求失败：${response.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`);
+          throw apiResponseError(data, response.status, ray);
         }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -6383,7 +6383,7 @@
             if (data.type === "delta" && data.text) onDelta?.(data.text);
             if (data.type === "reset") onDelta?.("", { reset: true });
             if (data.type === "done") finalData = data;
-            if (data.type === "error") throw new Error(data.error || "生成失败");
+            if (data.type === "error") throw apiResponseError(data, data.status || 500, "", "生成失败");
           }
         }
         const trailing = parseStreamLine(buffer);
@@ -6395,7 +6395,7 @@
         return finalData;
       } catch (error) {
         if (error.name === "AbortError") throw new Error("生成超时，请重试");
-        throw new Error(normalizeFetchError(error, "请求失败"));
+        throw normalizedApiError(error, "请求失败");
       } finally {
         window.clearTimeout(timeout);
       }
@@ -6451,7 +6451,7 @@
           }
           if (xhr.status < 200 || xhr.status >= 300 || !data.ok) {
             const ray = xhr.getResponseHeader && xhr.getResponseHeader("cf-ray");
-            finish(() => reject(new Error(data.error || `请求失败：${xhr.status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}`)));
+            finish(() => reject(apiResponseError(data, xhr.status, ray)));
             return;
           }
           logApiModel(path, payload, data, "xhr");
@@ -6471,6 +6471,23 @@
       if (!model) return;
       const degraded = data?.degraded || data?.result?.degraded;
       console.info(`[gaokao] ${path} model: ${model}${degraded ? " (degraded)" : ""}`, { transport });
+    }
+
+    function apiResponseError(data = {}, status = 0, ray = "", fallback = "请求失败") {
+      const suffix = status ? `：${status}${ray ? `（Ray: ${ray}）` : "（非 Cloudflare 响应）"}` : "";
+      const error = new Error(data.error || `${fallback}${suffix}`);
+      error.status = status;
+      error.maintenance = Boolean(data.maintenance);
+      error.retryable = Boolean(data.retryable);
+      return error;
+    }
+
+    function normalizedApiError(error, fallback) {
+      const next = new Error(normalizeFetchError(error, fallback));
+      next.status = error?.status;
+      next.maintenance = Boolean(error?.maintenance);
+      next.retryable = Boolean(error?.retryable);
+      return next;
     }
 
     function safeJsonClone(value) {
@@ -6709,6 +6726,10 @@
         return "请求没有连上当前页面服务。请确认地址是 127.0.0.1:8765，并按 Cmd+Shift+R 强刷新后重试。";
       }
       return message || fallback;
+    }
+
+    function isMaintenanceMessage(message) {
+      return /维护|暂停|稍后再试|服务异常/.test(String(message || ""));
     }
 
     async function loadPilotCards() {
@@ -7779,18 +7800,19 @@
       const isNew = key => Number(state.streamNewFields?.[key] || 0) > now ? " is-stream-new" : "";
       if (state.loadError) {
         const savedCount = Math.min(state.history.length, state.totalYears);
+        const maintenance = isMaintenanceMessage(state.loadError);
         article.innerHTML = `
           <div class="card-illustration" aria-hidden="true">
             <div class="card-error-mark">!</div>
           </div>
           <p class="card-error-copy">
-            <b>这一题没生成出来</b>
-            <span>前面 ${savedCount} 次选择已经保存，重试后继续当前年份。</span>
+            <b>${maintenance ? "模型服务临时维护中" : "这一题没生成出来"}</b>
+            <span>${maintenance ? `前面 ${savedCount} 次选择已经保存，恢复后可继续重试。` : `前面 ${savedCount} 次选择已经保存，重试后继续当前年份。`}</span>
             <small>${escapeHTML(state.loadError)}</small>
           </p>
           <div class="choice-preview">
             <button class="choice-pill left retry-current-step" type="button">
-              <b class="choice-title">重试这一题</b>
+              <b class="choice-title">${maintenance ? "稍后重试" : "重试这一题"}</b>
               <span>不用重新开始</span>
             </button>
           </div>
@@ -8759,18 +8781,19 @@
     }
 
     function renderResultError(message) {
+      const maintenance = isMaintenanceMessage(message);
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading", "is-streaming");
       card?.classList.add("is-revealed");
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears}张牌后的你`;
-      els.resultTitle.textContent = "这一页没装订成功";
+      els.resultTitle.textContent = maintenance ? "模型服务临时维护中" : "这一页没装订成功";
       els.resultSummary.textContent = "";
       els.resultTags.innerHTML = "";
       els.resultOverview.innerHTML = `
         <div class="glass-section result-error-card">
           <p>${escapeHTML(message || "最终结果生成失败，请重试。")}</p>
-          <button class="cta-button" id="retryResult" type="button">重新生成结果</button>
+          <button class="cta-button" id="retryResult" type="button">${maintenance ? "稍后重试" : "重新生成结果"}</button>
         </div>
       `;
       els.resultInsights.innerHTML = "";
@@ -10213,6 +10236,30 @@
             footerText: footer.textContent.replace(/\s+/g, ""),
             footerClickable: !!footer.querySelector("a,button")
           });
+        },
+        maintenanceError() {
+          showFlow("play");
+          state.index = 7;
+          state.history = Array.from({ length: 7 }, (_, index) => ({
+            index,
+            year: index + 1,
+            delta: {},
+            sceneTitle: `第${index + 1}题`,
+            choiceText: "已选择"
+          }));
+          state.deck = [];
+          state.loadError = "模型服务正在临时维护，前面的选择不会丢，请稍后再试。";
+          state.isLoading = false;
+          render();
+          window.setTimeout(() => {
+            const card = document.querySelector(".load-error-card");
+            emit({
+              test: "maintenanceError",
+              title: card?.querySelector(".card-error-copy b")?.textContent.replace(/\s+/g, "") || "",
+              buttonText: card?.querySelector(".retry-current-step .choice-title")?.textContent.replace(/\s+/g, "") || "",
+              text: card?.textContent.replace(/\s+/g, "") || ""
+            });
+          }, 120);
         }
       };
       (tests[selfTest] || (() => emit({ error: "unknown selftest: " + selfTest })))();

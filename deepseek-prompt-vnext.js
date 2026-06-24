@@ -1234,12 +1234,12 @@ function storyCardMarkers(card = {}) {
 }
 
 const riasecSupplyBias = {
-  R: -2600,
-  A: -2200,
-  I: -800,
-  E: -600,
-  S: 700,
-  C: 900
+  R: -1700,
+  A: -1400,
+  I: -300,
+  E: -800,
+  S: 100,
+  C: -400
 };
 
 function storyCardScore(card = {}, year = 1, history = [], profile = {}) {
@@ -2450,7 +2450,7 @@ function childRouteHint(history = [], year = 1, profile = {}) {
   const stage = childTimelineStage(history, year);
   if (stage === "出生") return "育儿状态：已选择生小孩；本年只写孩子出生或生下小孩，以及新生儿照护。";
   if (stage === "婴幼儿") return "育儿状态：婴幼儿阶段；只写夜醒、托育适应、照护分工、家庭支援；不写发烧/儿科。";
-  if (stage === "成长") return "育儿状态：孩子成长中；按年龄顺推，只写符合年龄的照护问题。";
+  if (stage === "成长") return "育儿状态：孩子成长中；作为家庭背景短带；本年未抽中育儿事件时，不开新的育儿问题。";
   if (currentYear < childDecisionYear(profile) && !stage) return "";
   return "育儿状态：未选择生小孩，不把孩子写成既成事实；只写是否进入育儿线。";
 }

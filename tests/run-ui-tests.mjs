@@ -36,6 +36,14 @@ const suites = {
     ["重试按钮可点击", d.retryEnabled === true],
     ["文案说明前面选择已保存", d.mentionsSaved === true],
     ["不出现返回开局入口", d.noReturn === true]
+  ],
+  authorCta: d => [
+    ["结果页作者入口展示作者和账号名", d.linkText === "作者大师的AI小灶"],
+    ["作者入口跳转抖音主页", d.href === "https://www.douyin.com/user/MS4wLjABAAAAohe8JB4RvITJitJ69b7cV4NTaYTMYrVI43C-3SUnPPc"],
+    ["作者入口新窗口打开", d.target === "_blank"],
+    ["原结果操作按钮仍保留", JSON.stringify(d.buttonTexts) === JSON.stringify(["分享结果", "查看过程", "重新测试"])],
+    ["分享图作者署名使用 @ 文案", d.footerText === "@大师的AI小灶"],
+    ["分享图作者署名不可点击", d.footerClickable === false]
   ]
 };
 

@@ -2165,12 +2165,70 @@
     /* actions */
     .result-actions {
       display: flex;
+      flex-direction: column;
       gap: 8px;
       width: 100%;
       padding-top: 8px;
     }
 
-    .result-actions button {
+    .author-cta {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 17px;
+      border-radius: 999px;
+      border: 1px solid rgba(84, 100, 130, 0.12);
+      background: #111111;
+      color: #f1f8f7;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1;
+      text-decoration: none;
+      box-shadow:
+        0 18px 22px rgba(52, 68, 98, 0.12),
+        0 2px 4px rgba(52, 68, 98, 0.05);
+      -webkit-backdrop-filter: blur(11px);
+      backdrop-filter: blur(11px);
+      transition: transform 0.15s ease;
+    }
+
+    .author-cta:active {
+      transform: translateY(1px);
+    }
+
+    .author-cta-muted {
+      opacity: 0.5;
+    }
+
+    .douyin-icon {
+      width: 22px;
+      height: 22px;
+      flex: none;
+      overflow: visible;
+    }
+
+    .douyin-icon .dy-cyan { fill: #25f4ee; }
+    .douyin-icon .dy-red { fill: #fe2c55; }
+    .author-cta .douyin-icon .dy-main { fill: #ffffff; }
+
+    .author-cta-arrow {
+      width: 6px;
+      height: 12px;
+      flex: none;
+      background: currentColor;
+      opacity: 0.92;
+      clip-path: polygon(0 0, 100% 50%, 0 100%, 0 74%, 56% 50%, 0 26%);
+    }
+
+    .result-action-buttons {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .result-action-buttons button {
       flex: 1 1 0;
       min-width: 0;
       min-height: 58px;
@@ -2183,11 +2241,11 @@
       transition: transform 0.15s ease;
     }
 
-    .result-actions button:active {
+    .result-action-buttons button:active {
       transform: translateY(1px);
     }
 
-    .result-actions #saveResult {
+    .result-action-buttons #saveResult {
       background: linear-gradient(180deg, var(--blue-hi) 0%, var(--blue-lo) 100%);
       color: #ffffff;
       box-shadow:
@@ -2195,7 +2253,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.32);
     }
 
-    .result-actions #copyDebugFlow {
+    .result-action-buttons #copyDebugFlow {
       background: #ffffff;
       color: #4b5870;
       box-shadow:
@@ -2203,7 +2261,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.32);
     }
 
-    .result-actions #restartResult {
+    .result-action-buttons #restartResult {
       background: #ffffff;
       color: #2a8cff;
       box-shadow:
@@ -2276,6 +2334,28 @@
     .share-qr-text b { font-size: 18px; font-weight: 800; color: var(--ink-strong); }
     .share-qr-text span { font-size: 13px; color: var(--ink-soft); }
     .share-qr-domain { font-weight: 700; color: var(--blue-lo) !important; letter-spacing: 0.2px; }
+
+    .share-author-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+      min-height: 34px;
+      color: #1b2638;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .share-author-footer .douyin-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .share-author-footer .douyin-icon .dy-main {
+      fill: #111111;
+    }
 
     /* 分享图二级页面：全屏展示完整图片，长按保存 */
     .share-viewer[hidden] { display: none; }
@@ -2748,9 +2828,21 @@
       <div class="result-block" id="resultHighlights"></div>
       <div class="result-block" id="resultGuides"></div>
       <div class="result-actions">
-        <button id="saveResult" type="button">分享结果</button>
-        <button id="copyDebugFlow" type="button">查看过程</button>
-        <button id="restartResult" class="primary" type="button">重新测试</button>
+        <a class="author-cta" href="https://www.douyin.com/user/MS4wLjABAAAAohe8JB4RvITJitJ69b7cV4NTaYTMYrVI43C-3SUnPPc" target="_blank" rel="noopener noreferrer" aria-label="抖音：大师的AI小灶">
+          <span class="author-cta-muted">作者</span>
+          <svg class="douyin-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path class="dy-cyan" transform="translate(-1 1)" d="M14.2 3.2c.8 2.7 2.6 4.2 5.4 4.5v3.2c-1.9 0-3.5-.5-4.8-1.5v5.7c0 3.2-2.3 5.5-5.5 5.5-2.8 0-5-2-5-4.8 0-2.9 2.3-5 5.4-5 .5 0 1 .1 1.4 .2v3.2c-.4-.2-.8-.3-1.3-.3-1.3 0-2.2 .8-2.2 1.9s.8 1.8 1.9 1.8c1.3 0 2.2-.9 2.2-2.5V3.2h2.5z"></path>
+            <path class="dy-red" transform="translate(1 -1)" d="M14.2 3.2c.8 2.7 2.6 4.2 5.4 4.5v3.2c-1.9 0-3.5-.5-4.8-1.5v5.7c0 3.2-2.3 5.5-5.5 5.5-2.8 0-5-2-5-4.8 0-2.9 2.3-5 5.4-5 .5 0 1 .1 1.4 .2v3.2c-.4-.2-.8-.3-1.3-.3-1.3 0-2.2 .8-2.2 1.9s.8 1.8 1.9 1.8c1.3 0 2.2-.9 2.2-2.5V3.2h2.5z"></path>
+            <path class="dy-main" d="M14.2 3.2c.8 2.7 2.6 4.2 5.4 4.5v3.2c-1.9 0-3.5-.5-4.8-1.5v5.7c0 3.2-2.3 5.5-5.5 5.5-2.8 0-5-2-5-4.8 0-2.9 2.3-5 5.4-5 .5 0 1 .1 1.4 .2v3.2c-.4-.2-.8-.3-1.3-.3-1.3 0-2.2 .8-2.2 1.9s.8 1.8 1.9 1.8c1.3 0 2.2-.9 2.2-2.5V3.2h2.5z"></path>
+          </svg>
+          <span>大师的AI小灶</span>
+          <span class="author-cta-arrow" aria-hidden="true"></span>
+        </a>
+        <div class="result-action-buttons">
+          <button id="saveResult" type="button">分享结果</button>
+          <button id="copyDebugFlow" type="button">查看过程</button>
+          <button id="restartResult" class="primary" type="button">重新测试</button>
+        </div>
       </div>
     </div>
     <div class="share-sheet" id="shareSheet" hidden>
@@ -9270,7 +9362,25 @@
 
     let resultImageModulePromise = null;
     let shareQrFooterEl = null;
+    let shareAuthorFooterEl = null;
     const SHARE_QR_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOgAAADoCAIAAABqyz8vAAADZ0lEQVR42u3dUW7rMAxFwesi+99yuoJ8GBBB0p75zutLkwNBIFT5+n6/gW3+fAQIF4QLwkW4IFwQLsIF4YJwQbgIF4QLwkW4MMPn7j+4rmvFL3bqnHHX7/vr/f96P3dfv/37suJiqwDCBeEiXBAuCJeY46ZrbpqmOevd+WjXz/F9WXGxVQDhgnARLggXhEvMcTNzbtd1vvbUXPZtc9bq92/FxVYBhAvCRbggXBAuMcclu+5neNvz6qy4CBeEC8JFuCBcEC4xxyVnz+neneNuv+/WigvCRbggXBAuwgXhQtbMcbecE+16n6eeZ/a278uKi60CCBeEi3BBuCBcYo6bafcGZPm5267XP/X7suIiXBAuCBfhgnBBuMQcN+5hzcjzuL4vKy7CBeGCcBEuCBeEy+tcp85xTrvPtXp+ueX3eurnb8XFVgGEC8JFuCBcEC4xxx333K8Un2etnmd33fPQ9f6rf74VF1sFEC4IF+GCcEG4xBy3/HzqtPtlnzonrj6P2/X5WHGxVQDhgnARLggXhEvMcdvmtVvuSdh+jnna52yOi60CCBeEi3BBuCBcyJrzuBk2Z+26N3fafH3a89isuNgqgHBBuAgXhAvCJea44/7ef9pcdst9utXngE+93oqLrQIIF4SLcEG4IFz46ZMl88IMu5dg2vnjaf+vexVAuAgXhAvCRbggXMiaOW6K53lPfQ5Z1/24pz6f6vdvxcVWAYQLwkW4IFwQLjHHTdf8r+vv/bP8eWlbzte6VwFbBRAuCBeEi3BBuJC255yt+YWHzYm7zhNvv7fYioutAggXhItwQbggXGKO23a+M0vOAXfNR6c9n6zrHl8rLrYKIFwQLsIF4YJwiXsVUj2HS9O9AdXz2mmfT/Ucuuv+CisutgogXBAuwgXhgnCJOW6m3c/adY/stOeNdZ2TPnV+14qLrQIIF4QLwkW4IFzIuDnuFtPuqc2wextOnXt2rwK2CiBcEC4IF+GCcCHmuHn2vQS/Xn/qfU57fpsVF1sFEC4IF+GCcEG4UD/H7TqfWv38s7s//9Rc89Q9Blvuu7DiYqsAwgXhIlwQLggXzs1xp90Xu+X+gep5c9e9wlZcEC7CBeGCcBEuCBeOuaadlwUrLsIF4YJwES4IF4QLwkW4IFwQLsIF4YJwES4s8g+CXZPXXxlT0AAAAABJRU5ErkJggg==";
+
+    function getDouyinIconMarkup() {
+      return '<svg class="douyin-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+        '<path class="dy-cyan" transform="translate(-1 1)" d="M14.2 3.2c.8 2.7 2.6 4.2 5.4 4.5v3.2c-1.9 0-3.5-.5-4.8-1.5v5.7c0 3.2-2.3 5.5-5.5 5.5-2.8 0-5-2-5-4.8 0-2.9 2.3-5 5.4-5 .5 0 1 .1 1.4 .2v3.2c-.4-.2-.8-.3-1.3-.3-1.3 0-2.2 .8-2.2 1.9s.8 1.8 1.9 1.8c1.3 0 2.2-.9 2.2-2.5V3.2h2.5z"></path>' +
+        '<path class="dy-red" transform="translate(1 -1)" d="M14.2 3.2c.8 2.7 2.6 4.2 5.4 4.5v3.2c-1.9 0-3.5-.5-4.8-1.5v5.7c0 3.2-2.3 5.5-5.5 5.5-2.8 0-5-2-5-4.8 0-2.9 2.3-5 5.4-5 .5 0 1 .1 1.4 .2v3.2c-.4-.2-.8-.3-1.3-.3-1.3 0-2.2 .8-2.2 1.9s.8 1.8 1.9 1.8c1.3 0 2.2-.9 2.2-2.5V3.2h2.5z"></path>' +
+        '<path class="dy-main" d="M14.2 3.2c.8 2.7 2.6 4.2 5.4 4.5v3.2c-1.9 0-3.5-.5-4.8-1.5v5.7c0 3.2-2.3 5.5-5.5 5.5-2.8 0-5-2-5-4.8 0-2.9 2.3-5 5.4-5 .5 0 1 .1 1.4 .2v3.2c-.4-.2-.8-.3-1.3-.3-1.3 0-2.2 .8-2.2 1.9s.8 1.8 1.9 1.8c1.3 0 2.2-.9 2.2-2.5V3.2h2.5z"></path>' +
+        '</svg>';
+    }
+
+    function getShareAuthorFooter() {
+      if (shareAuthorFooterEl) return shareAuthorFooterEl;
+      const el = document.createElement("div");
+      el.className = "share-author-footer";
+      el.innerHTML = getDouyinIconMarkup() + "<span>@大师的AI小灶</span>";
+      shareAuthorFooterEl = el;
+      return el;
+    }
 
     function getShareQrFooter() {
       if (shareQrFooterEl) return shareQrFooterEl;
@@ -9334,7 +9444,12 @@
       const clone = live.cloneNode(true);
       clone.classList.remove("is-streaming", "is-revealed", "is-loading");
       clone.classList.add("is-capturing");
-      clone.querySelector(".result-actions")?.remove();
+      const actionBlock = clone.querySelector(".result-actions");
+      const authorFooter = getShareAuthorFooter().cloneNode(true);
+      authorFooter.removeAttribute("hidden");
+      authorFooter.hidden = false;
+      if (actionBlock) actionBlock.replaceWith(authorFooter);
+      else clone.appendChild(authorFooter);
       clone.querySelector(".ability-section")?.classList.remove("is-faux-stream");
       if (mode === "key") {
         clone.querySelector(".yearning-section")?.remove();
@@ -9345,8 +9460,10 @@
       footer.removeAttribute("hidden");
       footer.hidden = false;
       if (mode === "key") {
+        const author = clone.querySelector(".share-author-footer");
         const ability = clone.querySelector(".ability-section");
-        if (ability && ability.parentNode) ability.parentNode.insertBefore(footer, ability.nextSibling);
+        if (author && author.parentNode) author.parentNode.insertBefore(footer, author.nextSibling);
+        else if (ability && ability.parentNode) ability.parentNode.insertBefore(footer, ability.nextSibling);
         else clone.appendChild(footer);
       } else {
         clone.appendChild(footer);
@@ -10081,6 +10198,21 @@
               noReturn: !text.includes("返回")
             });
           }, 120);
+        },
+        authorCta() {
+          showFlow("result");
+          const link = document.querySelector(".author-cta");
+          const buttons = [...document.querySelectorAll(".result-action-buttons button")].map(button => button.textContent.replace(/\s+/g, ""));
+          const footer = getShareAuthorFooter().cloneNode(true);
+          emit({
+            test: "authorCta",
+            linkText: link ? link.textContent.replace(/\s+/g, "") : "",
+            href: link ? link.href : "",
+            target: link ? link.target : "",
+            buttonTexts: buttons,
+            footerText: footer.textContent.replace(/\s+/g, ""),
+            footerClickable: !!footer.querySelector("a,button")
+          });
         }
       };
       (tests[selfTest] || (() => emit({ error: "unknown selftest: " + selfTest })))();

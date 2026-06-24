@@ -73,7 +73,7 @@
     }
 
     html[data-flow="result"] {
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
+      background: var(--result-bg, linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%));
     }
 
     body {
@@ -220,7 +220,40 @@
     }
 
     body[data-flow="result"] {
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%) fixed;
+      background: var(--result-bg, linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%)) fixed;
+      height: var(--screen-h);
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    html[data-result-primary="R"] {
+      --result-bg: linear-gradient(193.81deg, #91c6fb 19.38%, #99ffb7 55.3%, #eeffea 80.27%);
+      --result-head-color: #113365;
+      --result-theme-color: #eeffea;
+    }
+
+    html[data-result-primary="C"] {
+      --result-bg: linear-gradient(193.81deg, #b2f99c 19.38%, #fff899 55.3%, #ebffea 80.27%);
+      --result-head-color: #293b01;
+      --result-theme-color: #ebffea;
+    }
+
+    html[data-result-primary="E"] {
+      --result-bg: linear-gradient(193.81deg, #ff9090 19.38%, #cf99ff 55.3%, #fff3ea 80.27%);
+      --result-head-color: #4e1300;
+      --result-theme-color: #fff3ea;
+    }
+
+    html[data-result-primary="I"] {
+      --result-bg: linear-gradient(193.81deg, #d694ef 19.38%, #99a3ff 55.3%, #fff3ea 80.27%);
+      --result-head-color: #350049;
+      --result-theme-color: #fff3ea;
+    }
+
+    html[data-result-primary="S"] {
+      --result-bg: linear-gradient(193.81deg, #94efe2 19.38%, #999cff 55.3%, #eaf8ff 80.27%);
+      --result-head-color: #00494b;
+      --result-theme-color: #eaf8ff;
     }
 
     /* ====== shared atoms ====== */
@@ -1012,12 +1045,12 @@
     }
 
     .choice-pill {
-      flex: 1 1 0;
+      flex: 0 0 auto;
       min-width: 0;
       min-height: 52px;
-      display: flex;
+      display: grid;
       align-items: center;
-      justify-content: center;
+      justify-items: stretch;
       padding: 11px 14px;
       border-radius: 22px;
       text-align: left;
@@ -1037,11 +1070,15 @@
 
     .choice-pill b {
       display: block;
+      width: 100%;
+      min-width: 0;
       max-width: 100%;
       font-size: 16px;
       font-weight: 600;
       line-height: 1.35;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .choice-pill span,
@@ -1189,6 +1226,8 @@
       background: linear-gradient(110deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 70%);
       transform: translateX(-100%);
       animation: card-sheen 1.4s ease infinite;
+      z-index: 1;
+      pointer-events: none;
     }
 
     @keyframes card-sheen {
@@ -1199,11 +1238,12 @@
 
     .card-loading-orbit {
       position: absolute;
-      right: 22px;
-      top: 22px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       gap: 5px;
-      z-index: 5;
+      z-index: 2;
     }
 
     .card-loading-orbit i {
@@ -1290,15 +1330,19 @@
        ============================================================ */
     .result-sheet {
       position: relative;
-      min-height: var(--screen-h);
-      overflow: visible;
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
+      height: var(--screen-h);
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       z-index: 40;
     }
 
     .result-card {
       width: 100%;
       max-width: var(--shell-w);
+      min-height: var(--screen-h);
       margin: 0 auto;
       padding: 64px 24px calc(24px + env(safe-area-inset-bottom, 0px));
       display: flex;
@@ -1308,14 +1352,33 @@
 
     /* 仅在导出结果长图时给卡片自身铺上渐变背景 */
     .result-card.is-capturing {
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
+      background: var(--result-bg, linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%));
     }
 
     /* 截图时隐藏按钮 */
     .result-card.is-capturing .result-actions { display: none; }
 
-    /* 流式生成期间隐藏操作按钮，避免分享到不完整结果 */
-    .result-card.is-streaming .result-actions { display: none; }
+    .result-card.is-capturing,
+    .result-card.is-capturing * {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .result-card.is-capturing .glass-section {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+      box-shadow: 0 10px 24px rgba(52, 68, 98, 0.08);
+    }
+
+    .result-card.is-capturing .ability-section {
+      filter: none;
+      box-shadow: 0 10px 24px rgba(52, 68, 98, 0.08);
+    }
+
+    .result-card.is-capturing .ability-art {
+      filter: none;
+    }
 
     /* 结果页卡片轻微倾斜，自上而下依次 +1° / -1° */
     #resultOverview .glass-section { transform: rotate(1deg); }
@@ -1382,7 +1445,7 @@
       font-size: 33px;
       font-weight: 700;
       line-height: 1.1;
-      color: #6c4507;
+      color: var(--result-head-color, #6c4507);
     }
 
     .result-title span {
@@ -1409,8 +1472,7 @@
     }
 
     /* 结果就绪后：结果信息与各段文案一起错峰淡入 */
-    .result-card.is-loading .result-eyebrow,
-    .result-card.is-loading .result-actions {
+    .result-card.is-loading .result-eyebrow {
       display: none;
     }
 
@@ -1470,7 +1532,7 @@
       font-weight: 400;
       line-height: 1.4;
       letter-spacing: -0.15px;
-      color: #6c4507;
+      color: var(--result-head-color, #6c4507);
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
     }
 
@@ -1482,7 +1544,7 @@
       overflow: visible;
     }
 
-    .result-chips .tag {
+    body[data-flow="result"] .result-chips .tag {
       display: inline-flex;
       align-items: center;
       min-height: 26px;
@@ -1490,8 +1552,8 @@
       border-radius: 999px;
       font-size: 11px;
       font-weight: 700;
-      color: #6c4507;
-      background: #fef5e6;
+      color: var(--result-head-color, #6c4507);
+      background: #ffffff94;
       white-space: nowrap;
     }
 
@@ -1600,6 +1662,8 @@
 
     /* RIASEC ability card */
     .ability-section {
+      position: relative;
+      overflow: visible;
       background: #ffffff;
       border: 1px solid rgba(84, 100, 130, 0.12);
       border-radius: 28px;
@@ -1613,7 +1677,7 @@
     .ability-top {
       display: flex;
       gap: 12px;
-      align-items: flex-end;
+      align-items: flex-start;
       width: 100%;
     }
 
@@ -1652,14 +1716,15 @@
 
     .ability-art {
       flex: 0 0 auto;
-      width: 104px;
-      height: 156px;
-      margin-bottom: -37px;
+      width: clamp(128px, 33vw, 148px);
+      height: clamp(192px, 49.5vw, 222px);
+      margin-bottom: clamp(-144px, -31vw, -114px);
       object-fit: contain;
       object-position: center bottom;
       filter: drop-shadow(0 12px 18px rgba(31, 45, 76, 0.2));
       position: relative;
       z-index: 3;
+      transform: translateY(clamp(-88px, -20vw, -64px));
     }
 
     .ability-box {
@@ -1854,8 +1919,7 @@
     }
 
     .result-scene b {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       max-width: 100%;
       padding: 3.5px 10px;
       border-radius: 999px;
@@ -1863,7 +1927,9 @@
       font-size: 16px;
       font-weight: 700;
       line-height: 21.44px;
-      white-space: normal;
+      white-space: nowrap;
+      word-break: keep-all;
+      overflow-wrap: normal;
     }
 
     .result-scene span {
@@ -1919,15 +1985,16 @@
     }
 
     .result-chronicle-item b {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       max-width: 100%;
       padding: 3.3px 10px 4px;
       border-radius: 999px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      line-height: 21.24px;
-      white-space: normal;
+      line-height: 20.8px;
+      white-space: nowrap;
+      word-break: keep-all;
+      overflow-wrap: normal;
     }
 
     .result-chronicle-item p {
@@ -1981,8 +2048,7 @@
     }
 
     .result-guide-card b {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       max-width: 100%;
       padding: 4px 10px;
       border-radius: 999px;
@@ -1991,6 +2057,8 @@
       line-height: 19.5px;
       color: #172033;
       white-space: normal;
+      word-break: normal;
+      overflow-wrap: anywhere;
     }
 
     .result-guide-card p {
@@ -2163,15 +2231,6 @@
       color: rgba(255, 255, 255, 0.82);
     }
     .share-viewer-tip { flex: 1; min-width: 0; font-size: 14px; }
-    .share-viewer-save {
-      flex: none;
-      color: #fff;
-      font-size: 14px;
-      text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.16);
-    }
     .share-viewer-close {
       flex: none;
       width: 34px;
@@ -2640,7 +2699,6 @@
     <div class="share-viewer" id="shareViewer" hidden>
       <div class="share-viewer-bar">
         <span class="share-viewer-tip">长按图片保存到相册</span>
-        <a class="share-viewer-save" id="shareViewerSave" download style="display:none">下载</a>
         <button class="share-viewer-close" id="shareViewerClose" type="button" aria-label="关闭">✕</button>
       </div>
       <div class="share-viewer-body" id="shareViewerBody"></div>
@@ -2713,7 +2771,7 @@
     const hollandTypes = {
       R: { label: "实用型", nick: "匠人", word: "动手", color: "#315c9a", short: "工具、现场、原型、实际问题", careerLabel: "工程实作", directions: ["工程设计", "智能硬件", "工业设计", "建筑土木", "现场技术"] },
       I: { label: "研究型", nick: "哲人", word: "研究", color: "#6c5ce7", short: "分析、推理、验证、探索规律", careerLabel: "研究分析", directions: ["科研", "算法", "数据分析", "医学研究", "统计建模"] },
-      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#ff5b23", short: "表达、审美、内容、作品成形", careerLabel: "内容创意", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
+      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#FF8400", short: "表达、审美、内容、作品成形", careerLabel: "内容创意", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
       S: { label: "社会型", nick: "好人", word: "助人", color: "#0f8b8d", short: "沟通、陪伴、教育、服务他人", careerLabel: "沟通助人", directions: ["教育", "心理咨询", "用户研究", "医疗服务", "公益服务"] },
       E: { label: "企业型", nick: "商人", word: "组织", color: "#ed4710", short: "说服、管理、争取、推动资源", careerLabel: "组织推进", directions: ["商业管理", "创业", "市场增长", "商务推进", "法律商务"] },
       C: { label: "常规型", nick: "公人", word: "秩序", color: "#8bbf16", short: "流程、规则、数据、稳定执行", careerLabel: "流程运营", directions: ["财会审计", "合规风控", "数据运营", "行政管理", "流程管理"] }
@@ -4833,6 +4891,7 @@
     function apiProfile(profile = state.profile) {
       const out = {
         gender: profile.gender || "不限定",
+        score: profile.score || "未知分数",
         hope: profile.hope || "稳定且体面",
         major: profile.majorLabel || profile.major || majorLabel()
       };
@@ -4858,7 +4917,15 @@
       if (Array.isArray(item.appearedRoles) && item.appearedRoles.length) {
         out.appearedRoles = item.appearedRoles.slice(0, 8);
       }
-      if (includeHolland) out.holland = normalizeRiasecScores(item.holland);
+      if (includeHolland) {
+        out.holland = normalizeRiasecScores(item.holland);
+        if (item.offeredHolland) {
+          out.offeredHolland = {
+            left: normalizeRiasecScores(item.offeredHolland.left),
+            right: normalizeRiasecScores(item.offeredHolland.right)
+          };
+        }
+      }
       return out;
     }
 
@@ -5892,10 +5959,32 @@
       play: "#ffffff",
       result: "#e9f9e6"
     };
+    const resultThemeColors = {
+      A: "#e9f9e6",
+      R: "#eeffea",
+      C: "#ebffea",
+      E: "#fff3ea",
+      I: "#fff3ea",
+      S: "#eaf8ff"
+    };
+
+    function normalizeResultPrimary(primary = "A") {
+      const code = String(primary || "A").trim().charAt(0).toUpperCase();
+      return hollandTypes[code] ? code : "A";
+    }
+
+    function applyResultTheme(primary = "A") {
+      const code = normalizeResultPrimary(primary);
+      document.documentElement.dataset.resultPrimary = code;
+      document.body.dataset.resultPrimary = code;
+      if (document.body.dataset.flow === "result") syncThemeColor();
+    }
 
     function syncThemeColor() {
       const flow = document.body.dataset.flow || "entry";
-      document.querySelector("#themeColor")?.setAttribute("content", flowThemeColors[flow] || "#ffffff");
+      const resultPrimary = normalizeResultPrimary(document.documentElement.dataset.resultPrimary);
+      const color = flow === "result" ? resultThemeColors[resultPrimary] : flowThemeColors[flow];
+      document.querySelector("#themeColor")?.setAttribute("content", color || "#ffffff");
     }
 
     function showFlow(flow) {
@@ -6540,7 +6629,11 @@
         consequence: chosen.consequence || chosen.feedback || "",
         delta: chosen.delta,
         tag: chosen.tag,
-        holland: normalizeRiasecScores(chosen.riasec) || inferChoiceHolland(chosen, direction)
+        holland: normalizeRiasecScores(chosen.riasec) || inferChoiceHolland(chosen, direction),
+        offeredHolland: {
+          left: normalizeRiasecScores(card.left?.riasec) || inferChoiceHolland(card.left, "left"),
+          right: normalizeRiasecScores(card.right?.riasec) || inferChoiceHolland(card.right, "right")
+        }
       };
       item.appearedRoles = appearedRolesForHistoryItem(item, card);
       return item;
@@ -7542,7 +7635,9 @@
         : `<span class="stream-placeholder" aria-label="选项生成中"></span>`;
       article.innerHTML = `
         ${streamPreviousFeedbackHTML(stream, isNew)}
-        <div class="card-illustration" aria-hidden="true"></div>
+        <div class="card-illustration" aria-hidden="true">
+          ${state.loadError ? "" : `<div class="card-loading-orbit"><i></i><i></i><i></i></div>`}
+        </div>
         <p class="card-prompt">${state.loadError ? escapeHTML(state.loadError) : bodyHTML}</p>
         <div class="choice-preview">
           <button class="choice-pill left" type="button" ${state.loadError ? "" : "disabled"}>
@@ -7552,7 +7647,6 @@
             <b class="choice-title">${state.loadError ? "返回" : rightLabelHTML}</b>
           </button>
         </div>
-        ${state.loadError ? "" : `<div class="card-loading-orbit" aria-hidden="true"><i></i><i></i><i></i></div>`}
       `;
       if (state.loadError) {
         article.querySelector(".choice-pill.left").addEventListener("click", retryCurrentStep);
@@ -8172,7 +8266,25 @@
       });
       const total = Object.values(scores).reduce((sum, value) => sum + value, 0);
       if (!total) Object.keys(scores).forEach(code => { scores[code] = 1; });
-      return scores;
+      return normalizeHollandScoresByOffer(scores);
+    }
+
+    function normalizeHollandScoresByOffer(scores) {
+      const keys = ["R", "I", "A", "S", "E", "C"];
+      const offered = Object.fromEntries(keys.map(key => [key, 0]));
+      state.history.forEach(item => {
+        const choices = item.offeredHolland
+          ? [item.offeredHolland.left, item.offeredHolland.right]
+          : [item.holland];
+        choices.forEach(choiceScores => mergeHollandScores(offered, choiceScores));
+      });
+      const offeredTotal = Object.values(offered).reduce((sum, value) => sum + value, 0);
+      if (!offeredTotal) return scores;
+      const averageOffer = offeredTotal / keys.length;
+      return Object.fromEntries(keys.map(key => {
+        const availability = Math.max(Number(offered[key]) || 0, averageOffer * 0.45);
+        return [key, scores[key] * (averageOffer / availability)];
+      }));
     }
 
     function getHollandRank(scores = getHollandScoresFromHistory()) {
@@ -8407,7 +8519,9 @@
     async function showResult() {
       els.progressFill.style.width = "100%";
       // API 等待期间只预载 RIASEC 公仔图，等结果文案一起亮相
-      probeArt(hollandTypeArtUrl(getHollandSummaryData().primary));
+      const hollandSummary = getHollandSummaryData();
+      applyResultTheme(hollandSummary.primary);
+      probeArt(hollandTypeArtUrl(hollandSummary.primary));
       showFlow("result");
       renderResultLoading();
       renderResultStreaming({});
@@ -8501,6 +8615,7 @@
       const eyebrow = document.querySelector("#resultEyebrow");
       if (eyebrow) eyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const summary = getHollandSummaryData();
+      applyResultTheme(summary.primary);
       els.resultTags.innerHTML = [majorLabel(), `霍兰德 ${summary.code}`, hollandTypes[summary.primary]?.label || "研究型"]
         .map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join("");
       els.resultTitle.innerHTML = partial.title ? resultTitleHTML(partial.title, partial) : `<span class="sk"></span><span class="sk"></span>`;
@@ -8572,6 +8687,7 @@
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const hollandSummary = getHollandSummaryData();
+      applyResultTheme(hollandSummary.primary);
       const tags = [majorLabel(), `霍兰德 ${hollandSummary.code}`, hollandTypes[hollandSummary.primary]?.label || "研究型"];
       const scenes = (Array.isArray(result.famousScenes) ? result.famousScenes : [])
         .slice(0, 3)
@@ -8601,7 +8717,7 @@
       els.resultSummary.textContent = normalizeResultStatus(result.status42, safeScenes);
       els.resultOverview.innerHTML = `
         <div class="glass-section">
-          ${careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities)}
+          ${careerProbabilityHTML(result.majorCareerNote, result.careerPossibilities, result.title)}
         </div>
       `;
       fitCareerCardLabels();
@@ -8811,9 +8927,114 @@
       ].join("，");
     }
 
-    function careerProbabilityHTML(text, possibilities = null) {
+    const careerLabelTypeRules = {
+      R: /工程|技术|硬件|建筑|制造|设备|临床|实作|实操|研发|施工|运维|产品工程|主治|医生/,
+      I: /研究|分析|算法|数据|科研|实验|建模|统计|策略|咨询|诊断|调研|风控模型/,
+      A: /设计|内容|创意|作者|策划|编导|媒体|品牌|视觉|交互|写作|科普|作品|导演/,
+      S: /教师|教育|咨询|心理|用户研究|培训|医疗服务|护理|社工|公益|社群|服务|沟通/,
+      E: /经理|产品|运营|创业|商务|市场|销售|管理|合伙|负责人|增长|项目统筹|法律商务/,
+      C: /会计|审计|财务|合规|法务|风控|公务员|行政|流程|运营管理|数据运营|内控|档案/
+    };
+
+    function inferCareerCodeFromLabel(label, fallbackCode = "I") {
+      const text = String(label || "");
+      const scored = Object.entries(careerLabelTypeRules)
+        .map(([code, pattern]) => ({ code, score: (text.match(pattern) || []).length }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+      return scored[0]?.code || fallbackCode;
+    }
+
+    function careerPercentSeed() {
+      return [
+        majorLabel(),
+        ...state.history.map(item => [
+          item.year,
+          item.choiceText || item.choice || item.tag || "",
+          Object.entries(item.holland || {}).map(([key, value]) => `${key}${Number(value) || 0}`).join("")
+        ].join(":"))
+      ].join("|");
+    }
+
+    function distributeCareerPercents(weights) {
+      const base = weights.map(value => Math.max(0.03, Number(value) || 0.03));
+      const total = base.reduce((sum, value) => sum + value, 0) || 1;
+      const raw = base.map(value => clamp((value / total) * 100, 12, 62));
+      let rounded = raw.map(Math.round);
+      let diff = 100 - rounded.reduce((sum, value) => sum + value, 0);
+      let guard = 0;
+      while (diff !== 0 && guard < 120) {
+        const direction = diff > 0 ? 1 : -1;
+        const candidates = rounded
+          .map((value, index) => ({ index, value, weight: base[index], room: direction > 0 ? 62 - value : value - 12 }))
+          .filter(item => item.room > 0)
+          .sort((a, b) => direction > 0 ? b.weight - a.weight : a.weight - b.weight);
+        if (!candidates.length) break;
+        rounded[candidates[0].index] += direction;
+        diff -= direction;
+        guard += 1;
+      }
+      return rounded;
+    }
+
+    function careerPercentValue(value) {
+      return Number(String(formatCareerPercent(value)).match(/\d+(?:\.\d+)?/)?.[0] || 0);
+    }
+
+    function sortCareerMatches(matches = []) {
+      return [...matches].sort((a, b) => careerPercentValue(b.percent) - careerPercentValue(a.percent));
+    }
+
+    function careerMatchesFromPossibilities(possibilities = []) {
+      const rawMatches = Array.isArray(possibilities)
+        ? possibilities.slice(0, 3).map(item => ({
+          percent: formatCareerPercent(item.percent),
+          label: normalizeCareerLabel(item.label)
+        })).filter(item => item.percent !== "0%" && item.label)
+        : [];
+      return sortCareerMatches(normalizeCareerPercentMatches(rawMatches));
+    }
+
+    function topCareerLabelFromPossibilities(possibilities = []) {
+      return careerMatchesFromPossibilities(possibilities)[0]?.label || "";
+    }
+
+    function careerLabelFromTitle(title) {
+      return String(title || "").split(/[，,]/).map(seg => seg.trim()).filter(Boolean)[2] || "";
+    }
+
+    function alignCareerTextWithTopCareer(text, title, topCareer) {
+      const titleCareer = careerLabelFromTitle(title);
+      if (!text || !titleCareer || !topCareer || titleCareer === topCareer) return text;
+      return String(text).split(titleCareer).join(topCareer);
+    }
+
+    function normalizeCareerPercentMatches(matches = []) {
+      const cleaned = matches
+        .slice(0, 3)
+        .map(item => ({ ...item, label: normalizeCareerLabel(item.label) }))
+        .filter(item => item.label);
+      if (cleaned.length < 3) return cleaned;
+      const summary = getHollandSummaryData();
+      const scores = summary.scores || {};
+      const rankCodes = (summary.rank || []).map(([code]) => code).filter(code => hollandTypes[code]);
+      const seed = careerPercentSeed();
+      const totalScore = Math.max(Object.values(scores).reduce((sum, value) => sum + (Number(value) || 0), 0), 1);
+      const weights = cleaned.map((item, index) => {
+        const code = inferCareerCodeFromLabel(item.label, rankCodes[index] || rankCodes[0] || "I");
+        const rankIndex = rankCodes.indexOf(code);
+        const scoreShare = (Number(scores[code]) || 0) / totalScore;
+        const rankBoost = [0.14, 0.09, 0.05, 0.02, 0, -0.01][rankIndex] || 0;
+        const jitter = ((hashString(`${seed}:${item.label}:${code}:${index}`) % 17) - 8) / 100;
+        return Math.max(0.05, scoreShare + rankBoost + jitter);
+      });
+      const percents = distributeCareerPercents(weights);
+      return cleaned.map((item, index) => ({ ...item, percent: `${percents[index]}%` }));
+    }
+
+    function careerProbabilityHTML(text, possibilities = null, title = "") {
       const raw = String(text || "").trim();
-      const matches = Array.isArray(possibilities) && possibilities.length
+      const rawMatches = Array.isArray(possibilities) && possibilities.length
         ? possibilities.slice(0, 3).map(item => ({
           percent: formatCareerPercent(item.percent),
           label: normalizeCareerLabel(item.label)
@@ -8824,15 +9045,19 @@
             percent: `${match[1]}%`,
             label: normalizeCareerLabel(match[2])
           }));
-      const summary = careerSummaryText(raw, matches);
-      if (matches.length < 3) {
-        return `<div class="career-probability"><p class="career-summary">${escapeHTML(summary || raw)}</p></div>`;
+      const matches = normalizeCareerPercentMatches(rawMatches);
+      const sortedMatches = sortCareerMatches(matches);
+      const topCareer = sortedMatches[0]?.label || "";
+      const alignedRaw = alignCareerTextWithTopCareer(raw, title, topCareer);
+      const summary = careerSummaryText(alignedRaw, sortedMatches);
+      if (sortedMatches.length < 3) {
+        return `<div class="career-probability"><p class="career-summary">${escapeHTML(summary || alignedRaw)}</p></div>`;
       }
       return `
         <div class="career-probability">
           <p class="career-summary">${escapeHTML(summary)}</p>
           <div class="career-cards">
-            ${matches.map(item => `
+            ${sortedMatches.map(item => `
               <div class="career-card">
                 <b>${escapeHTML(item.percent)}</b>
                 <span>${escapeHTML(item.label)}</span>
@@ -8853,17 +9078,18 @@
         return false;
       }
       const possibilities = Array.isArray(partial.careerPossibilities) ? partial.careerPossibilities : [];
-      const key = careerOverviewKey(note, possibilities);
+      const title = String(partial.title || "").trim();
+      const key = careerOverviewKey(note, possibilities, title);
       if (state.resultCareerRenderKey === key) return true;
       state.resultCareerRenderKey = key;
-      els.resultOverview.innerHTML = `<div class="glass-section">${careerProbabilityHTML(note, possibilities)}</div>`;
+      els.resultOverview.innerHTML = `<div class="glass-section">${careerProbabilityHTML(note, possibilities, title)}</div>`;
       fitCareerCardLabels();
       return true;
     }
 
-    function careerOverviewKey(note, possibilities = []) {
+    function careerOverviewKey(note, possibilities = [], title = "") {
       const careers = possibilities.slice(0, 3).map(item => `${formatCareerPercent(item.percent)}:${normalizeCareerLabel(item.label)}`);
-      return JSON.stringify([String(note || "").trim(), careers]);
+      return JSON.stringify([String(note || "").trim(), careers, String(title || "").trim()]);
     }
 
     function formatCareerPercent(value) {
@@ -8909,7 +9135,12 @@
       const fallback = buildShareableLifeTitle(getHollandSummaryData(), result?.careerPossibilities || []);
       const text = raw || fallback;
       // 三段式称号：第一段（精神状态）单独一行；现实处境 + 职业身份用「的」连成第二行
-      const segments = text.split(/[，,]/).map(seg => seg.trim()).filter(Boolean);
+      const topCareer = topCareerLabelFromPossibilities(result?.careerPossibilities || []);
+      const segments = text.split(/[，,]/).map(seg => seg.trim()).filter(Boolean).slice(0, 3);
+      if (topCareer) {
+        if (segments.length >= 3) segments[2] = topCareer;
+        else segments.push(topCareer);
+      }
       if (segments.length <= 1) return escapeHTML(text);
       const rest = segments.slice(1);
       const lines = [segments[0], rest.length >= 2 ? `${rest[0]}的${rest.slice(1).join("")}` : rest.join("")];
@@ -8968,6 +9199,7 @@
     }
 
     function openShareSheet() {
+      if (!state.result) return;
       const sheet = document.querySelector("#shareSheet");
       if (sheet) sheet.hidden = false;
     }
@@ -8992,8 +9224,6 @@
     function openShareViewer() {
       const body = document.querySelector("#shareViewerBody");
       if (body) body.innerHTML = `<div class="share-viewer-loading">正在生成图片…</div>`;
-      const save = document.querySelector("#shareViewerSave");
-      if (save) { save.style.display = "none"; save.removeAttribute("href"); }
       const viewer = document.querySelector("#shareViewer");
       if (viewer) viewer.hidden = false;
     }
@@ -9056,8 +9286,6 @@
         shareViewerUrl = URL.createObjectURL(blob);
         const body = document.querySelector("#shareViewerBody");
         if (body) body.innerHTML = `<img src="${shareViewerUrl}" alt="${escapeHTML(title)}" />`;
-        const save = document.querySelector("#shareViewerSave");
-        if (save) { save.href = shareViewerUrl; save.setAttribute("download", `${title}.png`); save.style.display = ""; }
       } catch (error) {
         console.error("share image failed", error);
         const body = document.querySelector("#shareViewerBody");

@@ -4,6 +4,7 @@ import {
   buildAnnualInput,
   buildBatchInput,
   buildResultInput,
+  childTimelineStage,
   getOutlineCard,
   vNextResultTaskPrompt,
   vNextSystemPrompt
@@ -22,6 +23,8 @@ const riasecTypes = ["R", "I", "A", "S", "E", "C"];
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
 const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "innerYearning", "shareHooks"];
+const childBornFactPattern = /孩子(?:出生|刚出生|刚满|满[一二两三四五六七八九十\d]+岁|夜醒|照护|生病|发烧|哭闹|接送|上学|入园|睡着|睡了)|小孩(?:出生|刚出生|刚满|满[一二两三四五六七八九十\d]+岁|夜醒|照护|生病|发烧|哭闹|接送|上学|入园)|宝宝|新生儿|托育|幼儿园|班主任|儿科|陪诊|分离焦虑|哄娃|育儿分工|婴幼儿|新成员抱回家|生下小孩/;
+const matureChildCarePattern = /托育|幼儿园|班主任|分离焦虑|入园|上学|周岁|刚满[一二两三四五六七八九十\d]+岁|满[一二两三四五六七八九十\d]+岁/;
 
 function systemPrompt() {
   return vNextSystemPrompt;
@@ -144,7 +147,8 @@ function compactHistory(history = []) {
     choiceText: item.choiceText,
     consequence: item.consequence,
     tag: item.tag,
-    holland: item.holland
+    holland: item.holland,
+    offeredHolland: item.offeredHolland
   }));
 }
 
@@ -268,7 +272,10 @@ async function callModel(messages, validator, env, model = currentModel(env), on
       if (clientAborted || clientSignal?.aborted) throw clientAbortError();
       lastError = error;
       console.error(`${config.label} attempt ${attempt + 1}/${maxAttempts} failed (stream=${useStream}, status=${error?.status || "-"}):`, error?.message || error);
-      if (useStream && streamedAny) throw error;
+      if (useStream && streamedAny) {
+        onDiscard?.();
+        continue;
+      }
     } finally {
       clearTimeout(timeout);
       clientSignal?.removeEventListener("abort", abortFromClient);
@@ -471,21 +478,50 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   if (!normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
+  enforceChildTimelineOrder(normalized, history);
   enforceSecondYearRelationEntry(normalized, profile);
   return normalized;
 }
 
+function annualChildTimelineText(card) {
+  return [
+    card?.phase,
+    card?.lifeTrack,
+    card?.relationshipTrack,
+    card?.summary,
+    card?.scene?.title,
+    card?.scene?.body,
+    card?.a?.title,
+    card?.a?.label,
+    card?.a?.tag,
+    card?.a?.consequence,
+    card?.b?.title,
+    card?.b?.label,
+    card?.b?.tag,
+    card?.b?.consequence
+  ].map(optionalCleanText).filter(Boolean).join(" ");
+}
+
+function enforceChildTimelineOrder(card, history = []) {
+  const text = annualChildTimelineText(card);
+  const stage = childTimelineStage(history, card?.year);
+  if (stage === "出生") {
+    if (matureChildCarePattern.test(text)) throw new Error("Invalid annual JSON: child care before child birth");
+    return card;
+  }
+  if (stage === "婴幼儿" || stage === "成长") return card;
+  if (childBornFactPattern.test(text)) throw new Error("Invalid annual JSON: child care before child birth");
+  return card;
+}
+
 function secondYearRelationIntro(profile = {}) {
-  const relationName = optionalCleanText(profile.relationName || profile.openingRelationName);
-  return relationName ? `第一年有过相处的同学${relationName}` : "";
+  return "暧昧对象";
 }
 
 function ensureTextIncludesRelationIntro(value, intro) {
-  const text = optionalCleanText(value);
+  const text = optionalCleanText(value).replaceAll("伴侣", intro).replaceAll("关系线核心角色", intro);
   if (!intro) return text;
   if (text.includes(intro)) return text;
-  const relationName = intro.replace(/^第一年有过相处的同学/, "");
-  if (relationName && text.includes(relationName)) return text.replaceAll(relationName, intro);
   if (text.includes("第一年有过相处的同学")) return text.replaceAll("第一年有过相处的同学", intro);
   return `${text}${text.endsWith("。") ? "" : "。"}${intro}也在现场。`;
 }
@@ -494,8 +530,6 @@ function ensureTrackIncludesRelationIntro(value, intro) {
   const text = optionalCleanText(value);
   if (!intro) return text;
   if (text.includes(intro)) return text;
-  const relationName = intro.replace(/^第一年有过相处的同学/, "");
-  if (relationName && text.includes(relationName)) return text.replaceAll(relationName, intro);
   if (text.includes("：")) {
     const [stage, rest] = text.split(/：(.+)/);
     return `${stage}：${intro}${rest || "在现场接住你的节奏"}`;
@@ -541,7 +575,7 @@ function mergeFeedbackParts(consequence, offstage) {
 
 function optionalCleanText(value) {
   return String(value || "")
-    .replace(/关系线核心角色/g, "伴侣")
+    .replace(/关系线核心角色/g, "对象")
     .replace(/室友\/同伴/g, "室友")
     .replace(/导师\/老师|辅导员\/导师背景声/g, "专业课老师")
     .replace(/外部机会角色背景压力|外部机会角色/g, "合作方")
@@ -966,10 +1000,7 @@ function mockResponse(messages) {
 }
 
 function mockRelationName(parsed) {
-  const explicit = optionalCleanText(parsed?.storyCast?.relationName);
-  if (explicit) return explicit;
-  const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
-  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "关系对象";
+  return optionalCleanText(parsed?.storyCast?.relationIntro) || "对象";
 }
 
 function mockSceneTitle(year, outlineCard) {
@@ -1017,9 +1048,7 @@ function mockAnnualCard(parsed, year, outlineCard, relationName, axis) {
 }
 
 function mockRelationLabel(parsed, relationName) {
-  const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
-  const historyText = JSON.stringify(parsed?.history || []);
-  return intro && relationName && !historyText.includes(intro) ? intro : relationName;
+  return relationName || "对象";
 }
 
 function mockIncidentText(parsed, outlineCard) {
@@ -1041,9 +1070,10 @@ function mockRelationshipTrack(parsed, year, relationName) {
 }
 
 function mockSceneBody(parsed, outlineCard, relationName, incident) {
-  const relationEntry = optionalCleanText(parsed?.stateHints?.year2RelationEntry).replace(/^伴侣出场：/, "");
   const conflict = (outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`)
-    .replace("第一年有过相处的同学", relationEntry || "第一年有过相处的同学");
+    .replaceAll("第一年有过相处的同学", relationName)
+    .replaceAll("关系线核心角色", relationName)
+    .replaceAll("伴侣", relationName);
   const relationTail = outlineCard?.mainTrack === "relationship" ? `${relationName}在旁边等你给一句准话。` : "";
   return `${conflict}${relationTail}`;
 }

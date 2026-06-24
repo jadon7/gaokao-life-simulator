@@ -337,12 +337,26 @@
     function choiceHolland(choice) { return normalizeRiasecScores(choice.riasec) || inferChoiceHolland(choice); }
     function runScores(run) {
       const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+      const offered = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
       run.cards.forEach(item => {
+        ["left", "right"].forEach(side => {
+          const h = choiceHolland(item.card?.[side] || {});
+          ORDER.forEach(k => addScore(offered, k, Number(h[k] || 0)));
+        });
         if (!item.pick) return;
         const h = choiceHolland(item.card[item.pick]);
         ORDER.forEach(k => addScore(scores, k, Number(h[k] || 0)));
       });
-      return scores;
+      return normalizeScoresByOffer(scores, offered);
+    }
+    function normalizeScoresByOffer(scores, offered) {
+      const offeredTotal = ORDER.reduce((sum, key) => sum + Number(offered[key] || 0), 0);
+      if (!offeredTotal) return scores;
+      const averageOffer = offeredTotal / ORDER.length;
+      return Object.fromEntries(ORDER.map(key => {
+        const availability = Math.max(Number(offered[key]) || 0, averageOffer * 0.45);
+        return [key, scores[key] * (averageOffer / availability)];
+      }));
     }
     function visualPercents(scores) {
       const values = ORDER.map(k => Math.max(0, Number(scores[k] || 0)));
@@ -399,7 +413,11 @@
         callbackSeeds: card.callbacks || [],
         choice: chosen.tag, choiceText: chosen.label, tag: chosen.tag,
         consequence: chosen.consequence || "",
-        holland: choiceHolland(chosen)
+        holland: choiceHolland(chosen),
+        offeredHolland: {
+          left: choiceHolland(card.left || {}),
+          right: choiceHolland(card.right || {})
+        }
       };
     }
     function historyPayload(run) {
@@ -1051,12 +1069,14 @@
       const r = run?.result;
       if (!r) { box.textContent = "该局跑完后自动生成。"; return; }
       const parts = String(r.title || "").split(/[，,]/).filter(Boolean);
-      const titleCheck = parts.length === 3 && String(r.title).length <= 24
-        ? `<span class="badge ok">三段式合规</span>`
-        : `<span class="badge warn">title 不合规（${parts.length} 段 / ${String(r.title).length} 字）</span>`;
+      const titleCheck = parts.length >= 3
+        ? `<span class="badge ok">三段式</span>`
+        : `<span class="badge warn">title 少于三段（${parts.length} 段）</span>`;
+      const yearning = r.innerYearning || {};
       box.innerHTML = `
         <div class="rt">${esc(r.title)}</div>${titleCheck}
         <h5>status42</h5>${esc(r.status42 || "")}
+        <h5>innerYearning</h5>${esc(yearning.keyword || "")}｜${esc(yearning.core || "")}<br/>${esc(yearning.evidence || "")}<br/>${esc(yearning.sacrifice || "")}<br/>${esc(yearning.temperament || "")}
         <h5>careerPossibilities</h5>${(r.careerPossibilities || []).map(c => `${c.percent}% ${esc(c.label)}`).join(" ｜ ")}
         <h5>majorCareerNote</h5>${esc(r.majorCareerNote || "")}
         <h5>famousScenes</h5>${(r.famousScenes || []).map(s => `<b>${esc(s.title)}</b>：${esc(s.body)}`).join("<br/>")}

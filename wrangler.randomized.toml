@@ -1,0 +1,17 @@
+name = "gaokao-life-simulator-randomized"
+main = "worker.js"
+compatibility_date = "2026-06-08"
+account_id = "0eedb61d5ddbea42f84455c9455addb0"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+LLM_MODEL = "deepseek-v4-flash"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]

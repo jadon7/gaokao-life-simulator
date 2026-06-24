@@ -533,16 +533,13 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
 }
 
 function secondYearRelationIntro(profile = {}) {
-  const relationName = optionalCleanText(profile.relationName || profile.openingRelationName);
-  return relationName ? `第一年有过相处的同学${relationName}` : "";
+  return "伴侣";
 }
 
 function ensureTextIncludesRelationIntro(value, intro) {
   const text = optionalCleanText(value);
   if (!intro) return text;
   if (text.includes(intro)) return text;
-  const relationName = intro.replace(/^第一年有过相处的同学/, "");
-  if (relationName && text.includes(relationName)) return text.replaceAll(relationName, intro);
   if (text.includes("第一年有过相处的同学")) return text.replaceAll("第一年有过相处的同学", intro);
   return `${text}${text.endsWith("。") ? "" : "。"}${intro}也在现场。`;
 }
@@ -551,8 +548,6 @@ function ensureTrackIncludesRelationIntro(value, intro) {
   const text = optionalCleanText(value);
   if (!intro) return text;
   if (text.includes(intro)) return text;
-  const relationName = intro.replace(/^第一年有过相处的同学/, "");
-  if (relationName && text.includes(relationName)) return text.replaceAll(relationName, intro);
   if (text.includes("：")) {
     const [stage, rest] = text.split(/：(.+)/);
     return `${stage}：${intro}${rest || "在现场接住你的节奏"}`;
@@ -1016,10 +1011,7 @@ function mockResponse(messages) {
 }
 
 function mockRelationName(parsed) {
-  const explicit = optionalCleanText(parsed?.storyCast?.relationName);
-  if (explicit) return explicit;
-  const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
-  return intro.match(/([\u4e00-\u9fa5]{2,4})$/)?.[1] || "关系对象";
+  return "伴侣";
 }
 
 function mockSceneTitle(year, outlineCard) {
@@ -1067,9 +1059,7 @@ function mockAnnualCard(parsed, year, outlineCard, relationName, axis) {
 }
 
 function mockRelationLabel(parsed, relationName) {
-  const intro = optionalCleanText(parsed?.storyCast?.relationIntro);
-  const historyText = JSON.stringify(parsed?.history || []);
-  return intro && relationName && !historyText.includes(intro) ? intro : relationName;
+  return relationName || "伴侣";
 }
 
 function mockIncidentText(parsed, outlineCard) {
@@ -1091,9 +1081,8 @@ function mockRelationshipTrack(parsed, year, relationName) {
 }
 
 function mockSceneBody(parsed, outlineCard, relationName, incident) {
-  const relationEntry = optionalCleanText(parsed?.stateHints?.year2RelationEntry).replace(/^伴侣出场：/, "");
   const conflict = (outlineCard?.conflict || `${incident}突然摆到你面前，你必须立刻做选择。`)
-    .replace("第一年有过相处的同学", relationEntry || "第一年有过相处的同学");
+    .replace("第一年有过相处的同学", "伴侣");
   const relationTail = outlineCard?.mainTrack === "relationship" ? `${relationName}在旁边等你给一句准话。` : "";
   return `${conflict}${relationTail}`;
 }

@@ -13,7 +13,7 @@
   <li>每张卡只拍一个具体事件；每年是一年后的新大事，不写上一年同一事件续集。</li>
   <li>约三分之一为低压正反馈；正反馈卡先给明确好结果，选项承接收获。</li>
   <li>可见文案用常见口语；少专业词，不写生僻简称，不强行缩写。</li>
-  <li>只有固定伴侣有姓名；第二年伴侣必须出场，用“第一年有过相处的同学 + 姓名”。</li>
+  <li>伴侣称呼固定为“伴侣”；第二年伴侣在场，不带姓名。</li>
   <li>lifeTrack 写本年新状态；relationshipTrack 只写背景信号。</li>
   <li>除第二年外，非关系主线不把伴侣写进 scene.body、A/B 或 consequence；关系主线写共同生活选择。</li>
   <li>题面只写事件，不写当前年份或当前年龄。</li>
@@ -38,7 +38,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr><td>固定锚点</td><td>第一次被认可</td><td>第二年校园开放日被看见；第一年有过相处的伴侣在场。</td></tr>
+    <tr><td>固定锚点</td><td>第一次被认可</td><td>第二年校园开放日被看见；伴侣在场。</td></tr>
     <tr><td>事件池抽取</td><td>项目被认可</td><td>奖学金、公开奖励、团队扩张、代表作等事件。</td></tr>
     <tr><td>事件池抽取</td><td>关系变稳定</td><td>稳定周末、共同日常、长期承诺等事件。</td></tr>
     <tr><td>事件池抽取</td><td>收到感谢</td><td>客户感谢、家人感谢、照护被看见等事件。</td></tr>
@@ -62,8 +62,8 @@
     </tr>
   </thead>
   <tbody>
-    <tr><td>1</td><td>预置开局</td><td>预置</td><td>按专业匹配固定开局卡，不走年度生成提示词。</td><td>由预置卡决定</td><td>开局关系角色和选择后果进入后续 history</td></tr>
-    <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂；固定伴侣在场。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
+    <tr><td>1</td><td>预置开局</td><td>预置</td><td>按专业匹配固定开局卡，不走年度生成提示词。</td><td>由预置卡决定</td><td>选择后果进入后续 history，伴侣姓名后续脱敏</td></tr>
+    <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂；伴侣在场。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
     <tr><td>4</td><td>毕业分流</td><td>生活</td><td>考研、项目、实习二选一。</td><td>锁定考研窗口 / 放弃备考抢项目</td><td>考研群、保研绩点、校外项目</td></tr>
     <tr><td>4（低于300分）</td><td>就业分流</td><td>生活</td><td>实习、校园招聘、第一份工作三类选择。</td><td>争取入职机会 / 排稳投递节奏</td><td>实习面试、校园招聘群、第一份工作</td></tr>
     <tr><td>3-17（非固定锚点）</td><td>事件池抽取</td><td>生活/关系</td><td>从城市表态、生活分账、关系稳定、收入落地、家庭照护、见家长、住房预算、职业低谷、团队扩张、早年回援、共同事业、长期照护、主动休息、未来五年等事件中抽取。</td><td>按抽中事件的 A/B 轴生成</td><td>history 避重，相邻年份换压力源和人物关系</td></tr>
@@ -83,8 +83,8 @@
   <tbody>
     <tr><td background-color="light-gray">来源</td><td>正式流程调用 /api/game/start，由 opening-cards-data.js 按专业返回固定开局卡。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>预置卡自带场景、关系角色、A/B 选项和后果；不调用年度模型提示词。</td></tr>
-    <tr><td background-color="light-gray">影响后续</td><td>openingRelationName、openingRelationGender、openingRelationIntro 和第 1 年选择后果进入 history，供后续年份承接。</td></tr>
-    <tr><td background-color="light-gray">伴侣称呼</td><td>第二年使用“第一年有过相处的同学 + 姓名”，后续关系主线按最近关系承接。</td></tr>
+    <tr><td background-color="light-gray">影响后续</td><td>第 1 年选择后果进入 history；后续年度生成会把伴侣姓名脱敏为关系状态。</td></tr>
+    <tr><td background-color="light-gray">伴侣称呼</td><td>第二年和后续关系主线统一使用“伴侣”。</td></tr>
     <tr><td background-color="light-gray">备注</td><td>deepseek-prompt-vnext.js 里仍保留第 1 年 outline/openingFrame，用于实验、批量或兜底路径；不是正式开局卡生成口径。</td></tr>
   </tbody>
 </table>
@@ -92,10 +92,10 @@
 <h2>第 2 年：校园开放日</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">阶段约束</td><td>把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>把专业小事讲给高中生听懂；伴侣在场。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>校园开放日，主角把专业体验摊上的小任务讲清楚，来参观的高中生听懂，老师当场夸。</td></tr>
     <tr><td background-color="light-gray">正反馈</td><td>第一次被认可：第一落点写被看见，而不是危机压身。</td></tr>
-    <tr><td background-color="light-gray">角色与关系信号</td><td>高中生/新生、老师、固定伴侣；题面必须出现“第一年有过相处的同学 + 姓名”。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>高中生/新生、老师、伴侣；题面使用“伴侣”。</td></tr>
     <tr><td background-color="light-gray">选择结构</td><td>A：做成教程；B：休息复盘。</td></tr>
   </tbody>
 </table>

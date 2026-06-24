@@ -42,8 +42,7 @@
 - 每年是一年后的新大事，不写上一年同一事件续集。
 - scene.body 只写本年新事件，不把上一年消息、电话、邀约写成下集。
 - scene.body 只出现本卡主事件的关键角色；非关键角色放 relationshipTrack 或 summary。
-- 只有固定伴侣有姓名；有 stateHints.castIntroRule 时，scene/relationshipTrack 首次写伴侣用完整称呼；其他角色只用关系称呼。
-- 有 stateHints.year2RelationEntry 时，题面和 relationshipTrack 必须出现该称呼。
+- 伴侣称呼固定为“伴侣”；其他角色只用关系称呼。
 - summary 写上一年余波；scene.body 写本年事件。
 - stateHints.lastYear / history / repeatGuard 只用于 summary 和避重，不进入 scene.body/A/B。
 - relationshipTrack 换具体信号。
@@ -86,7 +85,7 @@
 - pressureMode：relief
 - reliefSignal：第一次被认可
 - riasecAxis：R / I
-- conflict：校园开放日，你把专业体验摊上的小任务讲清楚，来参观的高中生真的听懂了，老师也当场夸你。第一年有过相处的同学也在现场，你要把讲法整理成入门小教程，还是先一起休息复盘。
+- conflict：校园开放日，你把专业体验摊上的小任务讲清楚，来参观的高中生真的听懂了，老师也当场夸你。伴侣也在现场，你要把讲法整理成入门小教程，还是先一起休息复盘。
 - sideBeat：关系线核心角色确认自己和你有了稳定默契
 - choiceContrast：做成教程 / 休息复盘
 - callbacks：校园开放日、高中生听懂、第一次被看见
@@ -318,8 +317,8 @@
 
 这些不是固定年度原文，但会进入同一条 user message：
 
-- profile：玩家姓名、性别、省份、分数、目标、专业、开局关系角色。
-- storyCast：关系主线才带固定伴侣姓名和完整称呼；没有固定姓名时不生成新姓名。
+- profile：玩家性别、期望和专业；伴侣姓名不进入年度 user prompt。
+- storyCast：关系线只保留“伴侣”称呼和阶段角色，不带伴侣姓名。
 - history：之前每年卡片的 scene、sceneBody、summary、choiceText、consequence、relationshipTrack 等。
 - stateHints.timeFrame：阶段判断，不直接写进题面。
 - stateHints.routeState：根据历史选择生成的路线惯性。

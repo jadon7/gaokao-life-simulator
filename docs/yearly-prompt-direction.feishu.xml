@@ -18,7 +18,7 @@
   <li>除第二年外，非关系主线不把伴侣写进 scene.body、A/B 或 consequence；关系主线写共同生活选择。</li>
   <li>题面只写事件，不写当前年份或当前年龄。</li>
   <li>新恋情阶段只在关系主线写新关系信号，不生成姓名。</li>
-  <li>未选择生小孩时，只写是否进入育儿线；已选择生小孩后，才写孩子生病、照护、教育。</li>
+  <li>育儿线按年龄推进：第 15 年选择，隔年孩子出生，之后写婴幼儿照护。</li>
   <li>第 18 年按 closingFrame 收尾，不开新事件。</li>
   <li>上一年余波只进 summary；scene.body 写本年新事件。</li>
   <li>A/B 是完整互斥动作；只处理当前事件，A 对第一个选择轴，B 对第二个选择轴。</li>
@@ -77,7 +77,9 @@
     <tr><td>14</td><td>低谷验账</td><td>生活</td><td>升职落空、项目被砍或客户撤单。</td><td>重写证据 / 做新筹码</td><td>升职落空、项目被砍、低谷被看见</td></tr>
     <tr><td>15</td><td>家庭责任</td><td>关系</td><td>是否进入育儿线、照护或房贷重新排位。</td><td>说清育儿计划 / 先稳现有生活</td><td>育儿选择、照护分工、成年责任</td></tr>
     <tr><td>16</td><td>早年回援</td><td>生活</td><td>前文人物带回帮助。</td><td>拆清账本 / 讲成故事</td><td>早年回援、团队扩张、合伙账本</td></tr>
-    <tr><td>17</td><td>责任结算</td><td>生活</td><td>养老、共同事业，或已选育儿线后的教育问题给出答案。</td><td>争取同队 / 各自路线</td><td>长期责任、各自路线、最后表态</td></tr>
+    <tr><td>16（已选择生小孩）</td><td>孩子出生</td><td>关系</td><td>孩子出生，新生儿照护和家庭支援落地。</td><td>一起扛夜里 / 排稳照护分工</td><td>孩子出生、夜里照护、照护分工</td></tr>
+    <tr><td>17</td><td>责任结算</td><td>生活</td><td>养老、共同事业，或已选育儿线后的照护问题给出答案。</td><td>争取同队 / 各自路线</td><td>长期责任、各自路线、最后表态</td></tr>
+    <tr><td>17（已选择生小孩）</td><td>婴幼儿照护</td><td>生活</td><td>夜醒、陪诊、托育适应和分工。</td><td>先接住照护 / 排稳支援表</td><td>婴幼儿照护、儿科陪诊、托育适应</td></tr>
     <tr><td>18</td><td>回顾收尾</td><td>生活</td><td>回收开局、关键选择、职业代价和关系结果。</td><td>摊开账本 / 体面收住</td><td>最终落点、未来五年、关系收束</td></tr>
   </tbody>
 </table>
@@ -253,9 +255,21 @@
   <tbody>
     <tr><td background-color="light-gray">阶段约束</td><td>是否进入育儿线、照护或房贷重新排位。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>父母照护、房贷或未来几年生活安排摆到桌面；主角和伴侣要把要不要生小孩说清，或先把现有现实排稳。</td></tr>
-    <tr><td background-color="light-gray">关键分支</td><td>本卡选择决定是否进入育儿线；未选择前不写孩子生病、照护、教育。</td></tr>
+    <tr><td background-color="light-gray">关键分支</td><td>本卡选择决定是否进入育儿线；未选择前只写是否选择。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣/关系线核心角色、家庭型角色；成年责任上桌。</td></tr>
     <tr><td background-color="light-gray">选择结构</td><td>A：说清育儿计划；B：先稳现有生活。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 16 年：孩子出生分支</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">触发条件</td><td>第 15 年选择进入育儿线。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>孩子出生，新生儿照护和家庭支援落地。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>前一年说清育儿计划后，孩子出生；主角和伴侣开始处理夜里照护与支援分工。</td></tr>
+    <tr><td background-color="light-gray">正反馈</td><td>孩子出生：计划变成现实生活。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣、家庭型角色；关系阶段进入生儿育女。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：一起扛夜里；B：排稳照护分工。</td></tr>
   </tbody>
 </table>
 
@@ -273,11 +287,22 @@
 <h2>第 17 年：责任结算</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">阶段约束</td><td>养老、共同事业，或已选育儿线后的教育问题给出答案。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>养老、共同事业，或已选育儿线后的照护问题给出答案。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>父母养老或共同事业把长期责任推到最后一张账单；主角决定继续同队，还是承认各自路线更好。</td></tr>
-    <tr><td background-color="light-gray">关键分支</td><td>只有第 15 年已选择生小孩，才可写孩子教育问题；否则回到养老、共同事业或长期责任。</td></tr>
+    <tr><td background-color="light-gray">关键分支</td><td>已选择生小孩时写婴幼儿照护；否则回到养老、共同事业或长期责任。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>家庭型角色、主角自己；现实状态给出最后定位，不铺新冲突。</td></tr>
     <tr><td background-color="light-gray">选择结构</td><td>A：争取同队；B：各自路线。</td></tr>
+  </tbody>
+</table>
+
+<h2>第 17 年：婴幼儿照护分支</h2>
+<table>
+  <tbody>
+    <tr><td background-color="light-gray">触发条件</td><td>第 15 年选择进入育儿线，且第 16 年已写孩子出生。</td></tr>
+    <tr><td background-color="light-gray">阶段约束</td><td>夜醒、陪诊、托育适应和分工。</td></tr>
+    <tr><td background-color="light-gray">内容方向</td><td>孩子仍在婴幼儿阶段，照护、陪诊和托育适应挤进日程。</td></tr>
+    <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣、家庭型角色、儿科医生；育儿压力停留在婴幼儿照护和家庭支援。</td></tr>
+    <tr><td background-color="light-gray">选择结构</td><td>A：先接住照护；B：排稳支援表。</td></tr>
   </tbody>
 </table>
 

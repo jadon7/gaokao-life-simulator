@@ -488,7 +488,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- stateHints.childRoute=未选择生小孩 时，只写是否进入育儿线；=已选择生小孩 时，才写孩子生病/照护/教育。
+- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；按年龄顺推。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：{{PHASE_PROMPT}}
 - 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
@@ -553,7 +553,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- stateHints.childRoute=未选择生小孩 时，只写是否进入育儿线；=已选择生小孩 时，才写孩子生病/照护/教育。
+- 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；按年龄顺推。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
@@ -633,8 +633,15 @@ function phasePromptForYear(year = 1, history = [], profile = {}) {
   const currentYear = Number(year || 1);
   const directWork = isDirectWorkProfile(profile);
   const educationState = educationStateHint(history, profile);
+  const childStage = childTimelineStage(history, currentYear);
   if (directWork && currentYear === 4) {
     return "就业分流：只写实习、校园招聘、第一份工作三类选择。";
+  }
+  if (childStage === "出生") {
+    return "孩子出生：生下小孩，新生儿照护和家庭支援落地。";
+  }
+  if (childStage === "婴幼儿" && currentYear <= 17) {
+    return "婴幼儿照护：夜醒、陪诊、托育适应和分工。";
   }
   const prompts = {
     1: "开学入场：专业第一件事和关键角色入场。",
@@ -653,7 +660,7 @@ function phasePromptForYear(year = 1, history = [], profile = {}) {
     14: "低谷验账：升职落空、项目被砍或客户撤单。",
     15: "家庭责任：是否进入育儿线、照护或房贷重新排位。",
     16: "早年回援：前文人物带回帮助。",
-    17: "责任结算：养老、共同事业，或已选育儿线后的教育问题给出答案。",
+    17: "责任结算：养老、共同事业，或已选育儿线后的照护问题给出答案。",
     18: "回顾收尾：回收开局、关键选择、职业代价和关系结果；像最后一张牌，不开新坑。"
   };
   return prompts[currentYear] || "年度推进：一年后的新大事。";
@@ -760,6 +767,38 @@ const directWorkYear4Card = {
   characters: ["学长学姐", "招聘方", "项目同伴"],
   abType: "争取入职机会 / 排稳投递节奏",
   callbacks: ["实习面试", "校园招聘群", "第一份工作"]
+};
+
+const childBirthCard = {
+  act: "第六幕：回收与落点",
+  year: 16,
+  mainTrack: "relationship",
+  phase: "孩子出生",
+  routePhase: "孩子出生",
+  comedyDevice: "生下小孩",
+  pressureMode: "relief",
+  reliefSignal: "孩子出生",
+  riasecAxis: ["S", "C"],
+  conflict: "前一年说清育儿计划后，孩子真的出生了。你们第一次把新成员抱回家，要先一起扛住夜里照护，还是马上把分工和支援排稳。",
+  sideBeat: "育儿线从计划变成现实生活",
+  characters: ["关系线核心角色", "家庭型角色"],
+  abType: "一起扛夜里 / 排稳照护分工",
+  callbacks: ["孩子出生", "夜里照护", "照护分工"]
+};
+
+const childInfantCareCard = {
+  act: "第六幕：回收与落点",
+  year: 17,
+  mainTrack: "life",
+  phase: "婴幼儿照护",
+  routePhase: "婴幼儿照护",
+  comedyDevice: "托育和陪诊",
+  riasecAxis: ["S", "C"],
+  conflict: "孩子还在婴幼儿阶段，夜醒、发烧陪诊和托育适应挤进日程。你要先把照护接住，还是把工作和家庭支援排成固定表。",
+  sideBeat: "育儿压力停留在婴幼儿照护和家庭支援",
+  characters: ["关系线核心角色", "家庭型角色"],
+  abType: "先接住照护 / 排稳支援表",
+  callbacks: ["婴幼儿照护", "儿科陪诊", "托育适应"]
 };
 
 const yearBeats = {
@@ -1126,11 +1165,12 @@ function compactOutlineCardWithEducation(card, storyCast = defaultStoryCast, edu
 
 function compactOutlineCardWithChildRoute(card, history = []) {
   if (!card || Number(card.year) !== 17) return card;
+  if (["出生", "婴幼儿"].includes(childTimelineStage(history, card.year))) return card;
   if (hasChosenChildRoute(history)) {
     return {
       ...card,
-      conflict: "孩子教育、父母养老或共同事业把长期责任推到最后一张账单。你要争取继续同队，还是承认各自路线更好。",
-      callbacks: ["长期责任", "孩子教育", "最后表态"]
+      conflict: "孩子照护、父母养老或共同事业把长期责任推到最后一张账单。你要争取继续同队，还是承认各自路线更好。",
+      callbacks: ["长期责任", "孩子照护", "最后表态"]
     };
   }
   return {
@@ -1170,7 +1210,7 @@ function compactOutlineCardWithIncident(card, storyCast = defaultStoryCast, inci
   };
 }
 
-const familyPressurePattern = /家庭|家里|孩子|父母|老人|房贷|养老|择校|照护|搬家/;
+const familyPressurePattern = /家庭|家里|孩子|父母|老人|房贷|养老|照护|搬家/;
 const careerPressurePattern = /事业|工作|项目|团队|客户|品牌|合伙|招募|创业|岗位|论文|课题|实习|校招|职场|平台|交付|方案/;
 
 function choiceBalanceHint(outlineCard = null, relationshipBeat = "", currentIncident = "") {
@@ -1313,7 +1353,7 @@ function supportRolesForYear(year = 1, history = [], profile = {}) {
   if (educationState === "继续读研" && currentYear <= 7) return ["导师", "同门", "实习负责人", "师兄师姐"];
   if (currentYear <= 8) return ["同事", "主管", "客户", "老同学"];
   if (currentYear <= 12) return ["主管", "客户", "老板", "甲方", "同事"];
-  if (currentYear <= 15) return ["客户", "老板", "团队成员", "家里长辈", hasChosenChildRoute(history) ? "孩子老师" : "伴侣家人"];
+  if (currentYear <= 15) return ["客户", "老板", "团队成员", "家里长辈", hasChosenChildRoute(history) ? "儿科医生" : "伴侣家人"];
   return ["下属", "合伙人", "客户", "老板", "团队成员"];
 }
 
@@ -1321,7 +1361,7 @@ function familyRolesForYear(year = 1, history = []) {
   const currentYear = Number(year || 1);
   if (currentYear <= 6) return ["妈妈", "爸爸", "二姨"];
   if (currentYear <= 12) return ["妈妈", "爸爸", "二姨", "伴侣家人"];
-  return ["妈妈", "爸爸", "二姨", "家里长辈", hasChosenChildRoute(history) ? "孩子老师" : "伴侣家人"];
+  return ["妈妈", "爸爸", "二姨", "家里长辈", hasChosenChildRoute(history) ? "儿科医生" : "伴侣家人"];
 }
 
 function withoutRelationRoles(roles = []) {
@@ -1706,7 +1746,7 @@ const professionalIncidentRules = [
     ],
     mature: [
       incidentItem("学校聘用", ["聘用"]),
-      incidentItem("班主任竞聘", ["班主任"]),
+      incidentItem("教研竞聘", ["教研竞聘"]),
       incidentItem("咨询转介", ["转介"])
     ]
   }]
@@ -1890,6 +1930,34 @@ function routeChoiceFromHistory(history = [], positivePattern, negativePattern) 
   return "";
 }
 
+const childDecisionPositivePattern = /生小孩|要小孩|要孩子|备孕|育儿计划|进入育儿|开始育儿/;
+const childEventPositivePattern = /生儿育女|孩子出生|宝宝|产检|托育|孩子生病|小孩生病|育儿分工|儿科|陪诊|婴幼儿|夜醒/;
+const childRouteNegativePattern = /不要小孩|不生小孩|暂不生|暂时不生|先不生|先不要孩子|不进入育儿|不走育儿|没有决定.*生小孩|没决定.*生小孩|没有要孩子|没要孩子|没有进入育儿|不打算要孩子|丁克|先稳现有生活|现有生活排稳|暂缓育儿|推迟要孩子/;
+
+function childRouteChoice(history = []) {
+  let eventYear = 0;
+  for (const item of [...history].reverse()) {
+    const text = [
+      item?.scene,
+      item?.sceneBody,
+      item?.sceneTitle,
+      item?.summary,
+      item?.choice,
+      item?.tag,
+      item?.choiceTag,
+      item?.choiceText,
+      item?.consequence,
+      item?.lifeTrack,
+      item?.relationshipTrack
+    ].filter(Boolean).join(" ");
+    if (childRouteNegativePattern.test(text)) return { state: "no", year: Number(item?.year || 0) || 0 };
+    if (childDecisionPositivePattern.test(text)) return { state: "yes", year: Number(item?.year || 0) || 0 };
+    if (!eventYear && childEventPositivePattern.test(text)) eventYear = Number(item?.year || 0) || 0;
+  }
+  if (eventYear) return { state: "yes", year: Math.max(1, eventYear - 1) };
+  return { state: "", year: 0 };
+}
+
 function hasChosenMarriageRoute(history = []) {
   return routeChoiceFromHistory(
     history,
@@ -1899,20 +1967,27 @@ function hasChosenMarriageRoute(history = []) {
 }
 
 function hasChosenChildRoute(history = []) {
-  return routeChoiceFromHistory(
-    history,
-    /生小孩|要小孩|要孩子|备孕|育儿计划|进入育儿|开始育儿|生儿育女|孩子出生|宝宝|产检|托育|孩子生病|小孩生病|育儿分工|孩子教育|孩子择校|幼儿园|儿科|陪诊/,
-    /不要小孩|不生小孩|暂不生|暂时不生|先不生|先不要孩子|不进入育儿|不走育儿|没有决定.*生小孩|没决定.*生小孩|没有要孩子|没要孩子|没有进入育儿|不打算要孩子|丁克|先稳现有生活|现有生活排稳|暂缓育儿|推迟要孩子/
-  ) === "yes";
+  return childRouteChoice(history).state === "yes";
+}
+
+function childTimelineStage(history = [], year = 1) {
+  const choice = childRouteChoice(history);
+  if (choice.state !== "yes" || !choice.year) return "";
+  const delta = Number(year || 1) - choice.year;
+  if (delta === 1) return "出生";
+  if (delta >= 2 && delta <= 4) return "婴幼儿";
+  if (delta > 4) return "成长";
+  return "计划";
 }
 
 function childRouteHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
-  const chosen = hasChosenChildRoute(history);
-  if (currentYear < 15 && !chosen) return "";
-  return chosen
-    ? "育儿状态：已选择生小孩，可写孩子生病、照护分工、教育安排。"
-    : "育儿状态：未选择生小孩，不把孩子写成既成事实；只写是否进入育儿线。";
+  const stage = childTimelineStage(history, year);
+  if (stage === "出生") return "育儿状态：已选择生小孩；本年只写孩子出生或生下小孩，以及新生儿照护。";
+  if (stage === "婴幼儿") return "育儿状态：婴幼儿阶段；只写夜醒、发烧陪诊、托育适应、照护分工。";
+  if (stage === "成长") return "育儿状态：孩子成长中；按年龄顺推，只写符合年龄的照护问题。";
+  if (currentYear < 15 && !stage) return "";
+  return "育儿状态：未选择生小孩，不把孩子写成既成事实；只写是否进入育儿线。";
 }
 
 function relationshipStageHint(history = [], year = 1) {
@@ -1984,6 +2059,7 @@ function relationshipBeatHint(history = [], year = 1) {
   const currentYear = Number(year || 1);
   const stage = relationshipStageHint(history, year);
   const childChosen = hasChosenChildRoute(history);
+  const childStage = childTimelineStage(history, year);
   if (currentYear <= 2) return `关系背景：${pickFreshFact(["替你留座", "帮你核材料", "一起改到关灯"], history, year)}`;
   if (currentYear <= 4) return `关系背景：${pickFreshFact(["实习节奏说清", "互相知道近期安排", "第一次认真聊未来"], history, year)}`;
   if (currentYear <= 7) {
@@ -1997,11 +2073,13 @@ function relationshipBeatHint(history = [], year = 1) {
   if (currentYear <= 14) {
     if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系背景：${pickFreshFact(["旧爱偶遇", "新关系稳定", "独自生活成型"], history, year)}`;
     if (["暧昧升温", "确定关系"].includes(stage)) return `关系背景：${pickFreshFact(["新关系稳定", "共同租房", "双方家人见面"], history, year)}`;
-    if (childChosen) return `关系背景：${pickFreshFact(["育儿计划开始落地", "照护分工说清", "家庭支持稳定"], history, year)}`;
+    if (childChosen) return `关系背景：${pickFreshFact(["产检安排说清", "照护分工说清", "家庭支持稳定"], history, year)}`;
     return `关系背景：${pickFreshFact(["家庭支持稳定", "生活分工定型", "共同财务更清楚", "照护责任一起商量"], history, year)}`;
   }
   if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系背景：${pickFreshFact(["分开结果", "第二段关系落地", "独自生活稳定"], history, year)}`;
-  if (childChosen) return `关系背景：${pickFreshFact(["孩子生病要陪诊", "育儿分工定型", "孩子教育取舍", "长期关系稳定"], history, year)}`;
+  if (childStage === "出生") return `关系背景：${pickFreshFact(["孩子出生", "夜里照护", "月子支援", "照护分工"], history, year)}`;
+  if (childStage === "婴幼儿") return `关系背景：${pickFreshFact(["孩子夜醒", "儿科陪诊", "托育适应", "照护分工"], history, year)}`;
+  if (childChosen) return `关系背景：${pickFreshFact(["育儿分工定型", "长期关系稳定", "家庭支援说清"], history, year)}`;
   return `关系背景：${pickFreshFact(["家庭分工定型", "长期关系稳定", "各自空间清楚", "父母照护一起商量"], history, year)}`;
 }
 
@@ -2223,6 +2301,9 @@ function dominantTheme(history = []) {
 }
 
 export function getOutlineCard(year, context = {}) {
+  const childStage = childTimelineStage(context?.history, year);
+  if (childStage === "出生") return { ...childBirthCard, year: Number(year) };
+  if (childStage === "婴幼儿" && Number(year) === 17) return { ...childInfantCareCard, year: Number(year) };
   if (Number(year) === 4 && isDirectWorkProfile(context?.profile)) return { ...directWorkYear4Card };
   const card = outlineCards.find(item => Number(item.year) === Number(year));
   return card ? { ...card, phase: yearBeatForYear(card.year) } : null;
@@ -2426,7 +2507,7 @@ export function buildResultInput({ profile, history, totalGameYears = 18, finalR
       titleFormulaHints: {
         emotionalState: "精神状态/性格，从关系、抗压、沟通、RIASEC 提炼，例 嘴硬心软、清醒内耗",
         realityState: "现实处境/代价，从机会、行业周期、收入与生活代价提炼，例 项目救场、副业回血",
-        careerOutlet: "职业身份，必须由 major/majorLabel 与长期选择收敛成具体职业，例 AI产品策划、升学规划师"
+        careerOutlet: "职业身份，必须由 major/majorLabel 与长期选择收敛成具体职业，例 AI产品策划、职业规划师"
       }
     }
   };

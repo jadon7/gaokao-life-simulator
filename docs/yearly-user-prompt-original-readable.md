@@ -34,7 +34,7 @@
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- stateHints.childRoute=未选择生小孩 时，只写是否进入育儿线；=已选择生小孩 时，才写孩子生病/照护/教育。
+- stateHints.childRoute 按育儿线年龄推进：第 15 年选择，隔年孩子出生，之后写婴幼儿照护。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：【见下方每年原文】
 - 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
@@ -84,7 +84,9 @@
 | 第 14 年 | 阶段约束：低谷验账：升职落空、项目被砍或客户撤单。 |
 | 第 15 年 | 阶段约束：家庭责任：是否进入育儿线、照护或房贷重新排位。 |
 | 第 16 年 | 阶段约束：早年回援：前文人物带回帮助。 |
-| 第 17 年 | 阶段约束：责任结算：养老、共同事业，或已选育儿线后的教育问题给出答案。 |
+| 第 16 年，已选择生小孩 | 阶段约束：孩子出生：生下小孩，新生儿照护和家庭支援落地。 |
+| 第 17 年 | 阶段约束：责任结算：养老、共同事业，或已选育儿线后的照护问题给出答案。 |
+| 第 17 年，已选择生小孩 | 阶段约束：婴幼儿照护：夜醒、陪诊、托育适应和分工。 |
 | 第 18 年 | 阶段约束：回顾收尾：回收开局、关键选择、职业代价和关系结果；像最后一张牌，不开新坑。 |
 
 ## 每年固定 outlineCard 原文
@@ -279,6 +281,19 @@
 - choiceContrast：拆清账本 / 讲成故事
 - callbacks：早年回援、团队扩张、合伙账本
 
+### 第 16 年，已选择生小孩分支
+
+- mainTrack：relationship
+- phase：孩子出生
+- comedyDevice：生下小孩
+- pressureMode：relief
+- reliefSignal：孩子出生
+- riasecAxis：S / C
+- conflict：前一年说清育儿计划后，孩子真的出生了。你们第一次把新成员抱回家，要先一起扛住夜里照护，还是马上把分工和支援排稳。
+- sideBeat：育儿线从计划变成现实生活
+- choiceContrast：一起扛夜里 / 排稳照护分工
+- callbacks：孩子出生、夜里照护、照护分工
+
 ### 第 17 年
 
 - mainTrack：life
@@ -289,6 +304,17 @@
 - sideBeat：现实状态同步给出最后现实定位
 - choiceContrast：争取同队 / 各自路线
 - callbacks：长期责任、各自路线、最后表态
+
+### 第 17 年，已选择生小孩分支
+
+- mainTrack：life
+- phase：婴幼儿照护
+- comedyDevice：托育和陪诊
+- riasecAxis：S / C
+- conflict：孩子还在婴幼儿阶段，夜醒、发烧陪诊和托育适应挤进日程。你要先把照护接住，还是把工作和家庭支援排成固定表。
+- sideBeat：育儿压力停留在婴幼儿照护和家庭支援
+- choiceContrast：先接住照护 / 排稳支援表
+- callbacks：婴幼儿照护、儿科陪诊、托育适应
 
 ### 第 18 年
 

@@ -360,7 +360,7 @@ function annualStreamResponse({ pathname, profile, history, body, env, model, de
         const year = Math.min(Math.max(Number(body.year || history.length + 1), 2), totalGameYears);
         const data = await callModel(
           buildAnnualMessages({ profile, history, year }),
-          value => validateAnnual(value, history, history, year),
+          value => validateAnnual(value, history, history, year, profile),
           env,
           model,
           text => send({ type: "delta", text }),
@@ -444,7 +444,7 @@ function parseJsonContent(content) {
   }
 }
 
-function validateAnnual(data, history = [], repeatHistory = history, expectedYear = null) {
+function validateAnnual(data, history = [], repeatHistory = history, expectedYear = null, profile = {}) {
   const normalized = {};
   if (typeof data?.summary !== "string") throw new Error("Invalid annual JSON: missing summary");
   normalized.summary = optionalCleanText(data.summary);
@@ -470,7 +470,45 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   if (!normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
+  enforceSecondYearRelationEntry(normalized, profile);
   return normalized;
+}
+
+function secondYearRelationIntro(profile = {}) {
+  const relationName = optionalCleanText(profile.relationName || profile.openingRelationName);
+  return relationName ? `第一年有过相处的同学${relationName}` : "";
+}
+
+function ensureTextIncludesRelationIntro(value, intro) {
+  const text = optionalCleanText(value);
+  if (!intro) return text;
+  if (text.includes(intro)) return text;
+  const relationName = intro.replace(/^第一年有过相处的同学/, "");
+  if (relationName && text.includes(relationName)) return text.replaceAll(relationName, intro);
+  if (text.includes("第一年有过相处的同学")) return text.replaceAll("第一年有过相处的同学", intro);
+  return `${text}${text.endsWith("。") ? "" : "。"}${intro}也在现场。`;
+}
+
+function ensureTrackIncludesRelationIntro(value, intro) {
+  const text = optionalCleanText(value);
+  if (!intro) return text;
+  if (text.includes(intro)) return text;
+  const relationName = intro.replace(/^第一年有过相处的同学/, "");
+  if (relationName && text.includes(relationName)) return text.replaceAll(relationName, intro);
+  if (text.includes("：")) {
+    const [stage, rest] = text.split(/：(.+)/);
+    return `${stage}：${intro}${rest || "在现场接住你的节奏"}`;
+  }
+  return `暧昧升温：${intro}在现场接住你的节奏`;
+}
+
+function enforceSecondYearRelationEntry(card, profile = {}) {
+  if (Number(card?.year) !== 2) return card;
+  const intro = secondYearRelationIntro(profile);
+  if (!intro) return card;
+  card.scene.body = ensureTextIncludesRelationIntro(card.scene.body, intro);
+  card.relationshipTrack = ensureTrackIncludesRelationIntro(card.relationshipTrack, intro);
+  return card;
 }
 
 function applyOutlineRiasec(card) {
@@ -646,7 +684,7 @@ function normalizeChoiceTag(value, prefix) {
   return prefix === "A" ? "主动处理" : "稳住节奏";
 }
 
-function validateBatch(data, expectedCount, startYear, history = []) {
+function validateBatch(data, expectedCount, startYear, history = [], profile = {}) {
   if (!Array.isArray(data?.cards) || data.cards.length !== expectedCount) {
     throw new Error("Invalid batch JSON: bad cards count");
   }
@@ -654,7 +692,7 @@ function validateBatch(data, expectedCount, startYear, history = []) {
   return {
     cards: data.cards.map((card, index) => {
       const expectedYear = startYear + index;
-      const normalized = validateAnnual(card, history, seen, expectedYear);
+      const normalized = validateAnnual(card, history, seen, expectedYear, profile);
       if (Number(normalized.question.match(/\d+/)?.[0]) !== expectedYear) {
         throw new Error(`Invalid batch JSON: expected year ${expectedYear}`);
       }
@@ -1107,7 +1145,7 @@ async function handleApi(request, env, pathname) {
         return sendJson(409, { ok: false, error: "游戏已结束" });
       }
       const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
-      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year), env, model, null, promptLabDebug, null, request.signal);
+      const data = await callModel(buildAnnualMessages({ profile, history, year }), value => validateAnnual(value, history, history, year, profile), env, model, null, promptLabDebug, null, request.signal);
       return sendJson(200, { ok: true, model, card: annualCardFromData(data), ...debugField(data) });
     }
     if (pathname === "/api/game/batch") {
@@ -1115,7 +1153,7 @@ async function handleApi(request, env, pathname) {
       const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
       const data = await callModel(
         buildBatchMessages({ profile, history, startYear, count }),
-        value => validateBatch(value, count, startYear, history),
+        value => validateBatch(value, count, startYear, history, profile),
         env,
         model,
         null,
@@ -1147,13 +1185,13 @@ async function handleApi(request, env, pathname) {
           return sendJson(409, { ok: false, error: "游戏已结束" });
         }
         const year = Math.min(Math.max(requestedYear, 2), totalGameYears);
-        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history, history, year);
+        const data = validateAnnual(mockResponse(buildAnnualMessages({ profile, history, year })), history, history, year, profile);
         return sendJson(200, { ok: true, model, degraded: true, card: annualCardFromData(data) });
       }
       if (pathname === "/api/game/batch") {
         const startYear = Math.min(Math.max(Number(body.startYear || history.length + 1), 1), totalGameYears);
         const count = Math.min(Math.max(Number(body.count || 5), 1), totalGameYears - startYear + 1, 5);
-        const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history);
+        const data = validateBatch(mockResponse(buildBatchMessages({ profile, history, startYear, count })), count, startYear, history, profile);
         return sendJson(200, { ok: true, model, degraded: true, cards: data.cards.map(annualCardFromData) });
       }
       if (pathname === "/api/game/result") {

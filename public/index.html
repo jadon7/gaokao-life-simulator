@@ -1664,7 +1664,6 @@
       border: 1px solid rgba(84, 100, 130, 0.12);
       border-radius: 28px;
       padding: 17px;
-      margin-top: 28px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -1713,15 +1712,15 @@
 
     .ability-art {
       flex: 0 0 auto;
-      width: 104px;
-      height: 156px;
-      margin-bottom: -78px;
+      width: clamp(128px, 33vw, 148px);
+      height: clamp(192px, 49.5vw, 222px);
+      margin-bottom: clamp(-144px, -31vw, -114px);
       object-fit: contain;
       object-position: center bottom;
       filter: drop-shadow(0 12px 18px rgba(31, 45, 76, 0.2));
       position: relative;
       z-index: 3;
-      transform: translateY(-48px);
+      transform: translateY(clamp(-88px, -20vw, -64px));
     }
 
     .ability-box {

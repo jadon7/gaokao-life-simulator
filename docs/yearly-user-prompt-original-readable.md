@@ -34,7 +34,8 @@
 - 有 stateHints.relationshipPressure 时，只写在 relationshipTrack 或 summary，不进入 scene.body/A/B/consequence。
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
-- stateHints.childRoute 按育儿线年龄推进：第 15 年选择，隔年孩子出生，之后写婴幼儿照护。
+- stateHints.childRoute 按育儿线年龄推进：第 12-15 年按用户画像抽取选择窗口，隔年孩子出生，之后写婴幼儿照护。
+- 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：【见下方每年原文】
 - 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
@@ -53,45 +54,29 @@
 - A/B 只用 label 写具体动作，不写类型名；A 对 outlineCard.riasecAxis[0]，B 对 outlineCard.riasecAxis[1]；两个选项必须排他。
 
 输入数据：
-【运行时 JSON：profile、storyCast、gameMeta、outlineCard、history、stateHints。固定 outlineCard 原文见下方；profile/history/stateHints 会随玩家和选择变化。】
+【运行时 JSON：profile、storyCast、gameMeta、outlineCard、history、stateHints。outlineCard 由固定锚点、随机事件池和分支事件共同决定；profile/history/stateHints 会随玩家和选择变化。】
 
 输出字段：
 【JSON 输出字段格式要求已省略。】
 ```
 
-## 每年阶段约束原文
+## 阶段约束运行时口径
 
 | 年份 | 阶段约束原文 |
 | --- | --- |
 | 第 1 年 | 正式流程不走年度 user prompt；走预置开局卡。 |
 | 第 2 年 | 阶段约束：校园开放日：把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。 |
-| 第 3 年 | 阶段约束：异地表态：实习和城市机会第一次分岔。 |
 | 第 4 年 | 阶段约束：毕业分流：考研、项目、实习二选一。 |
 | 第 4 年，分数低于 300 | 阶段约束：就业分流：只写实习、校园招聘、第一份工作三类选择。 |
-| 第 5 年 | 阶段约束：项目跑通：做成一件小事，被看见。 |
-| 第 5 年，读研分支 | 阶段约束：读研开局：导师、课题和同门分工成为主压力。 |
-| 第 6 年 | 阶段约束：生活落地：学生身份转向工作身份。 |
-| 第 6 年，读研分支 | 阶段约束：课题推进：论文、实验/作品和实习预备同时挤压。 |
-| 第 7 年 | 阶段约束：职场入口：转正、客户和收入第一次压身。 |
-| 第 7 年，读研分支 | 阶段约束：毕业分流：毕业论文、校招/读博和城市落点一起拍板。 |
-| 第 8 年 | 阶段约束：关系稳定：不用救火的共同日常。 |
-| 第 8 年，读研分支 | 阶段约束：研究生毕业第一站：入职、读博或规培落点定下来。 |
-| 第 9 年 | 阶段约束：口碑危机：一次职业失误影响后续机会。 |
-| 第 10 年 | 阶段约束：首付换城：钱、城市和长期关系一起落地。 |
-| 第 11 年 | 阶段约束：技能成型：被正式邀请，不是被催救火。 |
-| 第 12 年 | 阶段约束：搬家截稿：家庭任务和工作节点撞上。 |
-| 第 13 年 | 阶段约束：收到感谢：成年责任里有正反馈。 |
-| 第 14 年 | 阶段约束：低谷验账：升职落空、项目被砍或客户撤单。 |
-| 第 15 年 | 阶段约束：家庭责任：是否进入育儿线、照护或房贷重新排位。 |
-| 第 16 年 | 阶段约束：早年回援：前文人物带回帮助。 |
-| 第 16 年，已选择生小孩 | 阶段约束：孩子出生：生下小孩，新生儿照护和家庭支援落地。 |
-| 第 17 年 | 阶段约束：责任结算：养老、共同事业，或已选育儿线后的照护问题给出答案。 |
-| 第 17 年，已选择生小孩 | 阶段约束：婴幼儿照护：夜醒、陪诊、托育适应和分工。 |
+| 第 3-17 年，非固定锚点 | 阶段约束来自运行时抽中的 outlineCard：事件池包含城市表态、生活分账、前辈推荐、关系稳定、收入落地、家庭照护、平台换挡、见家长、住房预算、职业低谷、团队扩张、早年回援、共同事业、长期照护、主动休息、未来五年等约 30 个候选事件。 |
+| 第 12-15 年，抽中育儿选择 | 阶段约束：是否进入育儿线、照护或房贷重新排位。 |
+| 已选择生小孩后的下一年 | 阶段约束：孩子出生：生下小孩，新生儿照护和家庭支援落地。 |
+| 已选择生小孩后的第 2-4 年 | 阶段约束：婴幼儿照护：夜醒、陪诊、托育适应和分工。 |
 | 第 18 年 | 阶段约束：回顾收尾：回收开局、关键选择、职业代价和关系结果；像最后一张牌，不开新坑。 |
 
-## 每年固定 outlineCard 原文
+## 运行时 outlineCard 口径
 
-这些内容会进入运行时 `input.outlineCard`，也是 DeepSeek user prompt 的一部分。下面保留代码里的原句。
+这些内容会进入运行时 `input.outlineCard`，也是 DeepSeek user prompt 的一部分。当前不是固定年表：第 2、4、18 年是结构锚点；第 4 年低分进入直接就业；第 3-17 年其他卡从 `randomizedStoryEventCards` 中按用户画像和历史选择抽取，并用 history 避免相邻重复。下面固定年份小节只作为锚点和旧结构参考，实际中间年份以运行时 `outlineCard` 为准。
 
 ### 第 2 年
 
@@ -340,7 +325,8 @@
 - stateHints.routeState：根据历史选择生成的路线惯性。
 - stateHints.relationshipStage / relationshipBeat：关系阶段和本年关系信号。
 - stateHints.majorAnchor / currentIncident：按专业和年份生成的专业事件。
-- stateHints.childRoute：是否已选择进入育儿线。
+- stateHints.childRoute：是否已选择进入育儿线；选择窗口由用户画像抽取，不固定在第 15 年。
+- stateHints.storyPlan：本年抽中的重大事件；用于阻止模型补齐未抽中的固定节点。
 - stateHints.newRelation：只在关系主线的新恋情阶段写入。
 - stateHints.reliefMode：正反馈年份写入“正反馈：...”。
 - stateHints.closingFrame：第 18 年收尾框架。

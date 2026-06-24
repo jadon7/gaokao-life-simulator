@@ -18,40 +18,42 @@
   <li>除第二年外，非关系主线不把伴侣写进 scene.body、A/B 或 consequence；关系主线写共同生活选择。</li>
   <li>题面只写事件，不写当前年份或当前年龄。</li>
   <li>新恋情阶段只在关系主线写新关系信号，不生成姓名。</li>
-  <li>育儿线按年龄推进：第 15 年选择，隔年孩子出生，之后写婴幼儿照护。</li>
+  <li>第 3-17 年除固定锚点外，从约 30 个重大事件候选中按用户画像和历史选择抽取。</li>
+  <li>育儿线按年龄推进：第 12-15 年抽取选择窗口，隔年孩子出生，之后写婴幼儿照护。</li>
+  <li>只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。</li>
   <li>第 18 年按 closingFrame 收尾，不开新事件。</li>
   <li>上一年余波只进 summary；scene.body 写本年新事件。</li>
   <li>A/B 是完整互斥动作；只处理当前事件，A 对第一个选择轴，B 对第二个选择轴。</li>
   <li>填写分数低于 300 时，第 4 年进入直接就业路线。</li>
 </ul>
 
-<h2>正反馈年份分布</h2>
+<h2>正反馈信号池</h2>
 
 <table>
   <thead>
     <tr>
-      <th background-color="light-gray">年份</th>
+      <th background-color="light-gray">出现方式</th>
       <th background-color="light-gray">正反馈信号</th>
       <th background-color="light-gray">核心落点</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td>第 2 年</td><td>第一次被认可</td><td>校园开放日被看见；第一年有过相处的伴侣在场。</td></tr>
-    <tr><td>第 5 年</td><td>做成小项目</td><td>毕业前项目跑通，被外部机会转发。</td></tr>
-    <tr><td>第 8 年</td><td>关系变稳定</td><td>不用救火的周末出现，共同日常开始成形。</td></tr>
-    <tr><td>第 11 年</td><td>获得新技能</td><td>能力被正式邀请，不是被催救火。</td></tr>
-    <tr><td>第 13 年</td><td>收到感谢</td><td>成年责任里出现被家人认真感谢的时刻。</td></tr>
-    <tr><td>第 16 年</td><td>前几年的人回来帮忙</td><td>早年同伴回援，团队不再只靠主角单打独斗。</td></tr>
-    <tr><td>第 18 年</td><td>发现真正喜欢什么</td><td>回收前文，决定未来五年更愿意怎样生活。</td></tr>
+    <tr><td>固定锚点</td><td>第一次被认可</td><td>第二年校园开放日被看见；第一年有过相处的伴侣在场。</td></tr>
+    <tr><td>事件池抽取</td><td>项目被认可</td><td>奖学金、公开奖励、团队扩张、代表作等事件。</td></tr>
+    <tr><td>事件池抽取</td><td>关系变稳定</td><td>稳定周末、共同日常、长期承诺等事件。</td></tr>
+    <tr><td>事件池抽取</td><td>收到感谢</td><td>客户感谢、家人感谢、照护被看见等事件。</td></tr>
+    <tr><td>事件池抽取</td><td>获得新技能</td><td>专项邀请、能力筹码、试跑窗口等事件。</td></tr>
+    <tr><td>事件池抽取</td><td>前几年的人回来帮忙</td><td>早年同伴回援，合作不再只靠主角单打独斗。</td></tr>
+    <tr><td>事件池抽取或收尾</td><td>发现真正喜欢什么</td><td>回收前文，决定未来五年更愿意怎样生活。</td></tr>
   </tbody>
 </table>
 
-<h2>年度总表</h2>
+<h2>固定锚点与事件池</h2>
 
 <table>
   <thead>
     <tr>
-      <th background-color="light-gray">年份</th>
+      <th background-color="light-gray">范围</th>
       <th background-color="light-gray">阶段</th>
       <th background-color="light-gray">主线</th>
       <th background-color="light-gray">内容方向</th>
@@ -62,27 +64,19 @@
   <tbody>
     <tr><td>1</td><td>预置开局</td><td>预置</td><td>按专业匹配固定开局卡，不走年度生成提示词。</td><td>由预置卡决定</td><td>开局关系角色和选择后果进入后续 history</td></tr>
     <tr><td>2</td><td>校园开放日</td><td>生活</td><td>把专业小事讲给高中生听懂；固定伴侣在场。</td><td>做成教程 / 休息复盘</td><td>校园开放日、高中生听懂、第一次被看见</td></tr>
-    <tr><td>3</td><td>异地表态</td><td>关系</td><td>实习和城市机会第一次分岔。</td><td>说清异地 / 拿下窗口</td><td>暑期实习、异地约定、第一次表态</td></tr>
     <tr><td>4</td><td>毕业分流</td><td>生活</td><td>考研、项目、实习二选一。</td><td>锁定考研窗口 / 放弃备考抢项目</td><td>考研群、保研绩点、校外项目</td></tr>
     <tr><td>4（低于300分）</td><td>就业分流</td><td>生活</td><td>实习、校园招聘、第一份工作三类选择。</td><td>争取入职机会 / 排稳投递节奏</td><td>实习面试、校园招聘群、第一份工作</td></tr>
-    <tr><td>5</td><td>项目跑通</td><td>生活</td><td>做成一件小事，被看见。</td><td>讲出成果 / 打磨质量</td><td>项目跑通、外部转发、毕业后第一关</td></tr>
-    <tr><td>6</td><td>生活落地</td><td>生活</td><td>学生身份转向工作身份。</td><td>理顺生活 / 先保工作</td><td>租房合同、试用期考核、生活底盘</td></tr>
-    <tr><td>7</td><td>职场入口</td><td>生活</td><td>转正、客户和收入第一次压身。</td><td>公开承担 / 动手补救</td><td>客户会点名、交付材料出错、两头夹击</td></tr>
-    <tr><td>8</td><td>关系稳定</td><td>关系</td><td>不用救火的共同日常。</td><td>排进日常 / 说清节奏</td><td>稳定周末、城市续约、共同日常</td></tr>
-    <tr><td>9</td><td>口碑危机</td><td>生活</td><td>一次职业失误影响后续机会。</td><td>动手补锅 / 拉人协作</td><td>群聊截图、第一次翻车、口碑危机</td></tr>
-    <tr><td>10</td><td>首付换城</td><td>关系</td><td>钱、城市和长期关系一起落地。</td><td>落钱落城市 / 先定边界</td><td>首付预算、换城市、长期落点</td></tr>
-    <tr><td>11</td><td>技能成型</td><td>生活</td><td>被正式邀请，不是被催救火。</td><td>接试跑窗口 / 算清条件</td><td>新技能、试跑邀请、能力筹码</td></tr>
-    <tr><td>12</td><td>搬家截稿</td><td>生活</td><td>家庭任务和工作节点撞上。</td><td>共同承担 / 摊开边界</td><td>搬家任务、项目截稿、现实责任</td></tr>
-    <tr><td>13</td><td>收到感谢</td><td>生活</td><td>成年责任里有正反馈。</td><td>补回陪伴 / 写清分工</td><td>收到感谢、陪伴补回、责任分摊</td></tr>
-    <tr><td>14</td><td>低谷验账</td><td>生活</td><td>升职落空、项目被砍或客户撤单。</td><td>重写证据 / 做新筹码</td><td>升职落空、项目被砍、低谷被看见</td></tr>
-    <tr><td>15</td><td>家庭责任</td><td>关系</td><td>是否进入育儿线、照护或房贷重新排位。</td><td>说清育儿计划 / 先稳现有生活</td><td>育儿选择、照护分工、成年责任</td></tr>
-    <tr><td>16</td><td>早年回援</td><td>生活</td><td>前文人物带回帮助。</td><td>拆清账本 / 讲成故事</td><td>早年回援、团队扩张、合伙账本</td></tr>
-    <tr><td>16（已选择生小孩）</td><td>孩子出生</td><td>关系</td><td>孩子出生，新生儿照护和家庭支援落地。</td><td>一起扛夜里 / 排稳照护分工</td><td>孩子出生、夜里照护、照护分工</td></tr>
-    <tr><td>17</td><td>责任结算</td><td>生活</td><td>养老、共同事业，或已选育儿线后的照护问题给出答案。</td><td>争取同队 / 各自路线</td><td>长期责任、各自路线、最后表态</td></tr>
-    <tr><td>17（已选择生小孩）</td><td>婴幼儿照护</td><td>生活</td><td>夜醒、陪诊、托育适应和分工。</td><td>先接住照护 / 排稳支援表</td><td>婴幼儿照护、儿科陪诊、托育适应</td></tr>
+    <tr><td>3-17（非固定锚点）</td><td>事件池抽取</td><td>生活/关系</td><td>从城市表态、生活分账、关系稳定、收入落地、家庭照护、见家长、住房预算、职业低谷、团队扩张、早年回援、共同事业、长期照护、主动休息、未来五年等事件中抽取。</td><td>按抽中事件的 A/B 轴生成</td><td>history 避重，相邻年份换压力源和人物关系</td></tr>
+    <tr><td>12-15（抽中育儿选择）</td><td>育儿选择</td><td>关系</td><td>是否进入育儿线、照护或房贷重新排位。</td><td>说清育儿计划 / 先稳现有生活</td><td>育儿选择、照护分工、成年责任</td></tr>
+    <tr><td>选择生小孩后下一年</td><td>孩子出生</td><td>关系</td><td>孩子出生，新生儿照护和家庭支援落地。</td><td>一起扛夜里 / 排稳照护分工</td><td>孩子出生、夜里照护、照护分工</td></tr>
+    <tr><td>选择生小孩后第2-4年</td><td>婴幼儿照护</td><td>生活</td><td>夜醒、陪诊、托育适应和分工。</td><td>先接住照护 / 排稳支援表</td><td>婴幼儿照护、儿科陪诊、托育适应</td></tr>
     <tr><td>18</td><td>回顾收尾</td><td>生活</td><td>回收开局、关键选择、职业代价和关系结果。</td><td>摊开账本 / 体面收住</td><td>最终落点、未来五年、关系收束</td></tr>
   </tbody>
 </table>
+
+<callout emoji="⚠️" background-color="light-yellow" border-color="yellow">
+  <p>下面逐年小节只保留固定锚点和旧结构参考；第 3-17 年实际出牌以运行时 outlineCard 为准，不再按旧年表固定发生。</p>
+</callout>
 
 <h2>第 1 年：预置开局卡</h2>
 <table>
@@ -264,7 +258,7 @@
 <h2>第 16 年：孩子出生分支</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">触发条件</td><td>第 15 年选择进入育儿线。</td></tr>
+    <tr><td background-color="light-gray">触发条件</td><td>第 12-15 年抽中育儿选择，且玩家选择进入育儿线。</td></tr>
     <tr><td background-color="light-gray">阶段约束</td><td>孩子出生，新生儿照护和家庭支援落地。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>前一年说清育儿计划后，孩子出生；主角和伴侣开始处理夜里照护与支援分工。</td></tr>
     <tr><td background-color="light-gray">正反馈</td><td>孩子出生：计划变成现实生活。</td></tr>
@@ -298,7 +292,7 @@
 <h2>第 17 年：婴幼儿照护分支</h2>
 <table>
   <tbody>
-    <tr><td background-color="light-gray">触发条件</td><td>第 15 年选择进入育儿线，且第 16 年已写孩子出生。</td></tr>
+    <tr><td background-color="light-gray">触发条件</td><td>已选择进入育儿线，且上一阶段已写孩子出生。</td></tr>
     <tr><td background-color="light-gray">阶段约束</td><td>夜醒、陪诊、托育适应和分工。</td></tr>
     <tr><td background-color="light-gray">内容方向</td><td>孩子仍在婴幼儿阶段，照护、陪诊和托育适应挤进日程。</td></tr>
     <tr><td background-color="light-gray">角色与关系信号</td><td>伴侣、家庭型角色、儿科医生；育儿压力停留在婴幼儿照护和家庭支援。</td></tr>

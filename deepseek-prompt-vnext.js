@@ -489,6 +489,7 @@ export const vNextAnnualTaskPrompt = `生成 1 张 StoryStateCard，只输出 1 
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
 - 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；按年龄顺推。
+- 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 有 stateHints.closingFrame 时，scene.body 按它收尾，不开新事件。
 - 阶段约束：{{PHASE_PROMPT}}
 - 题面只写事件；scene.body/A/B/consequence 不写当前年份、当前年龄。
@@ -554,6 +555,7 @@ export const vNextBatchTaskPrompt = `请根据以下输入，连续生成 {{coun
 - relationshipTrack 阶段使用 stateHints.relationshipStage，并写 stateHints.relationshipBeat 的信号。
 - 新恋情阶段只在关系主线写 stateHints.newRelation，不生成姓名。
 - 按 stateHints.childRoute 写育儿线：先出生，再婴幼儿照护；按年龄顺推。
+- 有 stateHints.storyPlan 时，只写本年抽中的重大事件，不补未抽中的结婚、生子、买房、跳槽。
 - 未发生年份不写死未来选择；summary 写阶段趋势和一个具体动作。
 - 输入 history 已有 consequence 时，以 history 为准。
 - relationshipTrack 使用允许阶段：暧昧升温/确定关系/冷战后撤/分手收束/体面告别/新恋情萌芽/订婚结婚/生儿育女。
@@ -631,39 +633,9 @@ function isDirectWorkProfile(profile = {}) {
 
 function phasePromptForYear(year = 1, history = [], profile = {}) {
   const currentYear = Number(year || 1);
-  const directWork = isDirectWorkProfile(profile);
-  const educationState = educationStateHint(history, profile);
-  const childStage = childTimelineStage(history, currentYear);
-  if (directWork && currentYear === 4) {
-    return "就业分流：只写实习、校园招聘、第一份工作三类选择。";
-  }
-  if (childStage === "出生") {
-    return "孩子出生：生下小孩，新生儿照护和家庭支援落地。";
-  }
-  if (childStage === "婴幼儿" && currentYear <= 17) {
-    return "婴幼儿照护：夜醒、陪诊、托育适应和分工。";
-  }
-  const prompts = {
-    1: "开学入场：专业第一件事和关键角色入场。",
-    2: "校园开放日：把专业小事讲给高中生听懂；伴侣作为第一年有过相处的人在场。",
-    3: "异地表态：实习和城市机会第一次分岔。",
-    4: "毕业分流：考研、项目、实习二选一。",
-    5: educationState === "继续读研" ? "读研开局：导师、课题和同门分工成为主压力。" : "项目跑通：做成一件小事，被看见。",
-    6: educationState === "继续读研" ? "课题推进：论文、实验/作品和实习预备同时挤压。" : "生活落地：学生身份转向工作身份。",
-    7: educationState === "继续读研" ? "毕业分流：毕业论文、校招/读博和城市落点一起拍板。" : "职场入口：转正、客户和收入第一次压身。",
-    8: educationState === "继续读研" ? "研究生毕业第一站：入职、读博或规培落点定下来。" : "关系稳定：不用救火的共同日常。",
-    9: "口碑危机：一次职业失误影响后续机会。",
-    10: "首付换城：钱、城市和长期关系一起落地。",
-    11: "技能成型：被正式邀请，不是被催救火。",
-    12: "搬家截稿：家庭任务和工作节点撞上。",
-    13: "收到感谢：成年责任里有正反馈。",
-    14: "低谷验账：升职落空、项目被砍或客户撤单。",
-    15: "家庭责任：是否进入育儿线、照护或房贷重新排位。",
-    16: "早年回援：前文人物带回帮助。",
-    17: "责任结算：养老、共同事业，或已选育儿线后的照护问题给出答案。",
-    18: "回顾收尾：回收开局、关键选择、职业代价和关系结果；像最后一张牌，不开新坑。"
-  };
-  return prompts[currentYear] || "年度推进：一年后的新大事。";
+  const outline = getOutlineCard(currentYear, { profile, history });
+  if (outline?.phase && outline?.conflict) return `${outline.phase}：${cleanPromptText(outline.conflict)}`;
+  return "年度推进：一年后的新大事。";
 }
 
 function withAnnualPromptVars(template, year, history = [], profile = {}) {
@@ -801,6 +773,397 @@ const childInfantCareCard = {
   callbacks: ["婴幼儿照护", "儿科陪诊", "托育适应"]
 };
 
+const childDecisionCard = {
+  id: "child_route_choice",
+  act: "随机事件池：成年责任",
+  mainTrack: "relationship",
+  phase: "育儿选择",
+  routePhase: "育儿选择",
+  comedyDevice: "成年责任上桌",
+  riasecAxis: ["S", "C"],
+  conflict: "父母照护、房贷或未来几年生活安排摆到桌面。你要和伴侣把要不要生小孩说清，还是先把现有现实排稳。",
+  sideBeat: "本卡选择决定是否进入育儿线",
+  characters: ["关系线核心角色", "家庭型角色"],
+  abType: "说清育儿计划 / 先稳现有生活",
+  callbacks: ["育儿选择", "照护分工", "成年责任"]
+};
+
+function eventPoolCard(id, minYear, maxYear, card) {
+  return {
+    id,
+    minYear,
+    maxYear,
+    act: "随机事件池",
+    ...card
+  };
+}
+
+const randomizedStoryEventCards = [
+  eventPoolCard("intern_city_talk", 3, 6, {
+    mainTrack: "relationship",
+    phase: "城市表态",
+    comedyDevice: "外地机会",
+    riasecAxis: ["S", "I"],
+    conflict: "外地实习和本地项目同时递来机会，你们第一次认真谈以后在哪座城市生活。你要先把城市节奏说清，还是先判断机会值不值得去。",
+    sideBeat: "关系从顺手陪伴变成未来安排",
+    characters: ["关系线核心角色", "项目同伴"],
+    abType: "说清城市节奏 / 判断机会价值",
+    callbacks: ["外地实习", "城市表态", "未来安排"]
+  }),
+  eventPoolCard("scholarship_recognition", 3, 6, {
+    mainTrack: "life",
+    phase: "第一次被认可",
+    comedyDevice: "奖学金公示",
+    pressureMode: "relief",
+    reliefSignal: "项目被认可",
+    riasecAxis: ["A", "C"],
+    conflict: "你前面做的小项目被老师放进展示名单，还顺手进了奖学金讨论。你要把成果讲出去，还是先把材料补稳。",
+    sideBeat: "同学第一次把你和可靠联系起来",
+    characters: ["老师", "同学"],
+    abType: "讲出成果 / 补稳材料",
+    callbacks: ["展示名单", "奖学金讨论", "第一次被认可"]
+  }),
+  eventPoolCard("club_competition", 3, 6, {
+    mainTrack: "life",
+    phase: "公开展示",
+    comedyDevice: "比赛报名",
+    riasecAxis: ["E", "C"],
+    conflict: "学院比赛突然开放报名，队友想拉你上台展示，材料却还差一截。你要先争取展示位，还是先把交付清单补齐。",
+    sideBeat: "同伴开始把你当成能上台的人",
+    characters: ["队友", "老师"],
+    abType: "争取展示位 / 补齐清单",
+    callbacks: ["比赛报名", "展示位", "交付清单"]
+  }),
+  eventPoolCard("roommate_split", 3, 7, {
+    mainTrack: "life",
+    phase: "生活分账",
+    comedyDevice: "合租账单",
+    riasecAxis: ["S", "C"],
+    conflict: "室友临时换租，押金、通勤和课程安排一起乱掉。你要先把人接住，还是把账和边界写清。",
+    sideBeat: "生活里的小账第一次影响关系评价",
+    characters: ["室友", "同学"],
+    abType: "先接住人 / 写清账单边界",
+    callbacks: ["合租账单", "换租", "生活边界"]
+  }),
+  eventPoolCard("mentor_recommendation", 5, 9, {
+    mainTrack: "life",
+    phase: "前辈推荐",
+    comedyDevice: "被推荐",
+    pressureMode: "relief",
+    reliefSignal: "被前辈认可",
+    riasecAxis: ["E", "I"],
+    conflict: "前辈把你推荐给一个更大的机会，对方不是让你救火，而是想听你的判断。你要接下试跑窗口，还是先查清条件。",
+    sideBeat: "能力第一次变成能谈的筹码",
+    characters: ["前辈", "外部机会角色"],
+    abType: "接试跑窗口 / 查清条件",
+    callbacks: ["前辈推荐", "试跑窗口", "能力筹码"]
+  }),
+  eventPoolCard("first_work_error", 5, 9, {
+    mainTrack: "life",
+    phase: "职场入口",
+    comedyDevice: "第一次出错",
+    riasecAxis: ["R", "S"],
+    conflict: "你负责的小交付出了错，客户群已经开始追问。你要自己动手补救，还是拉同事一起把口径说清。",
+    sideBeat: "身边人开始判断你是可靠还是封闭",
+    characters: ["客户", "同事"],
+    abType: "动手补救 / 拉人说清",
+    callbacks: ["小交付出错", "客户追问", "补救"]
+  }),
+  eventPoolCard("stable_weekend", 6, 11, {
+    mainTrack: "relationship",
+    phase: "关系稳定",
+    comedyDevice: "稳定周末",
+    pressureMode: "relief",
+    reliefSignal: "关系变稳定",
+    riasecAxis: ["S", "C"],
+    conflict: "你们终于有一个不用救火的周末，连饭点都不用临时改。你要把共同生活排进日常，还是先把各自节奏说清。",
+    sideBeat: "关系稳定感第一次超过误会感",
+    characters: ["关系线核心角色", "朋友群像"],
+    abType: "排进日常 / 说清节奏",
+    callbacks: ["稳定周末", "共同日常", "关系变稳定"]
+  }),
+  eventPoolCard("first_salary", 6, 10, {
+    mainTrack: "life",
+    phase: "收入落地",
+    comedyDevice: "第一笔奖金",
+    pressureMode: "relief",
+    reliefSignal: "收入被看见",
+    riasecAxis: ["C", "E"],
+    conflict: "第一笔奖金到账，家里和朋友都开始认真看待你的工作。你要先补生活账，还是把这笔钱变成下一步机会。",
+    sideBeat: "现实状态第一次有了可见回报",
+    characters: ["家人", "朋友"],
+    abType: "补生活账 / 换下一步机会",
+    callbacks: ["第一笔奖金", "生活账", "可见回报"]
+  }),
+  eventPoolCard("city_lease", 7, 12, {
+    mainTrack: "relationship",
+    phase: "城市续约",
+    comedyDevice: "租约到期",
+    riasecAxis: ["A", "C"],
+    conflict: "租约到期、通勤变长和城市机会同时摆上桌。你要把未来落到城市上，还是先把生活边界说清。",
+    sideBeat: "生活选择开始和职业选择绑定",
+    characters: ["关系线核心角色", "房东/中介", "朋友"],
+    abType: "落到城市 / 说清边界",
+    callbacks: ["租约到期", "城市机会", "生活边界"]
+  }),
+  eventPoolCard("client_saved", 7, 12, {
+    mainTrack: "life",
+    phase: "口碑回正",
+    comedyDevice: "客户感谢",
+    pressureMode: "relief",
+    reliefSignal: "收到感谢",
+    riasecAxis: ["S", "R"],
+    conflict: "一个难缠客户终于当面说谢谢，团队也承认你把烂局接住了。你要继续接难题，还是趁机把流程改顺。",
+    sideBeat: "成年责任里出现一段正反馈",
+    characters: ["客户", "团队成员"],
+    abType: "继续接难题 / 改顺流程",
+    callbacks: ["客户感谢", "烂局接住", "流程改顺"]
+  }),
+  eventPoolCard("platform_switch", 8, 13, {
+    mainTrack: "life",
+    phase: "平台换挡",
+    comedyDevice: "跳槽窗口",
+    riasecAxis: ["E", "I"],
+    conflict: "一个新平台递来机会，旧团队也刚把关键任务交给你。你要争取换挡，还是先查清这次机会的真实条件。",
+    sideBeat: "职业选择开始影响身边人的安全感",
+    characters: ["旧团队", "外部机会角色"],
+    abType: "争取换挡 / 查清条件",
+    callbacks: ["跳槽窗口", "旧团队", "真实条件"]
+  }),
+  eventPoolCard("public_praise", 8, 13, {
+    mainTrack: "life",
+    phase: "公开认可",
+    comedyDevice: "公开表扬",
+    pressureMode: "relief",
+    reliefSignal: "项目被认可",
+    riasecAxis: ["A", "C"],
+    conflict: "你做的东西被放进公开复盘，主管第一次把功劳说到你名字上。你要顺势讲成代表作，还是先把方法沉淀下来。",
+    sideBeat: "你不只是救火的人，也开始有代表作",
+    characters: ["主管", "团队成员"],
+    abType: "讲成代表作 / 沉淀方法",
+    callbacks: ["公开复盘", "代表作", "方法沉淀"]
+  }),
+  eventPoolCard("family_checkup", 8, 13, {
+    mainTrack: "life",
+    phase: "家庭照护",
+    comedyDevice: "体检复查",
+    riasecAxis: ["S", "C"],
+    conflict: "家里长辈体检要复查，工作节点也刚好卡在同一周。你要先把陪诊接住，还是把支援表排稳。",
+    sideBeat: "家庭责任第一次正式进入你的日程表",
+    characters: ["家庭型角色", "同事"],
+    abType: "接住陪诊 / 排稳支援表",
+    callbacks: ["体检复查", "陪诊", "支援表"]
+  }),
+  eventPoolCard("side_project", 9, 14, {
+    mainTrack: "life",
+    phase: "副线机会",
+    comedyDevice: "副业试水",
+    riasecAxis: ["E", "A"],
+    conflict: "朋友想拉你做一个副线项目，主业又刚进入关键节点。你要先抢这个窗口，还是把它讲成更小的试验。",
+    sideBeat: "你开始分辨机会和消耗的区别",
+    characters: ["朋友", "团队成员"],
+    abType: "抢窗口 / 做小试验",
+    callbacks: ["副线项目", "机会窗口", "小试验"]
+  }),
+  eventPoolCard("relationship_family_meeting", 9, 14, {
+    mainTrack: "relationship",
+    phase: "见家长",
+    comedyDevice: "双方家人见面",
+    riasecAxis: ["S", "C"],
+    conflict: "双方家人第一次坐到一张桌上，问题从吃什么变成以后怎么安排。你要主动说清计划，还是先稳住现场节奏。",
+    sideBeat: "关系从两个人扩展到两个家庭",
+    characters: ["关系线核心角色", "家庭型角色"],
+    abType: "主动说清计划 / 稳住现场节奏",
+    callbacks: ["双方家人见面", "长期计划", "现场节奏"]
+  }),
+  eventPoolCard("proposal_or_no", 10, 14, {
+    mainTrack: "relationship",
+    phase: "长期承诺",
+    comedyDevice: "结婚讨论",
+    riasecAxis: ["S", "C"],
+    conflict: "朋友婚礼结束后，你们终于认真聊到要不要把关系落成长期承诺。你要把计划说透，还是先把现实条件排清。",
+    sideBeat: "关系稳定后开始面对制度化选择",
+    characters: ["关系线核心角色", "朋友群像"],
+    abType: "说透长期计划 / 排清现实条件",
+    callbacks: ["结婚讨论", "长期承诺", "现实条件"]
+  }),
+  eventPoolCard("home_budget", 10, 15, {
+    mainTrack: "relationship",
+    phase: "住房预算",
+    comedyDevice: "首付预算",
+    riasecAxis: ["A", "C"],
+    conflict: "首付预算、租房续约和换城市机会同时压来。你要把未来落到钱和城市上，还是先把生活边界说清。",
+    sideBeat: "钱和城市开始改写关系节奏",
+    characters: ["关系线核心角色", "家庭型角色"],
+    abType: "落钱落城市 / 先定生活边界",
+    callbacks: ["首付预算", "换城市", "长期落点"]
+  }),
+  eventPoolCard("skill_invite", 10, 15, {
+    mainTrack: "life",
+    phase: "技能成型",
+    comedyDevice: "专项邀请",
+    pressureMode: "relief",
+    reliefSignal: "获得新技能",
+    riasecAxis: ["E", "I"],
+    conflict: "你靠前几年的交付长出一项新技能，新机会不是催你救火，而是正式邀请你试一段。你要接下窗口，还是先算清条件。",
+    sideBeat: "能力第一次变成可谈的筹码",
+    characters: ["外部机会角色", "团队成员"],
+    abType: "接下窗口 / 算清条件",
+    callbacks: ["新技能", "专项邀请", "能力筹码"]
+  }),
+  eventPoolCard("project_cut", 10, 15, {
+    mainTrack: "life",
+    phase: "职业低谷",
+    comedyDevice: "项目被砍",
+    riasecAxis: ["I", "R"],
+    conflict: "你跟了很久的项目突然被砍，体面第一次明显掉价。你要重写证据争下一轮，还是动手做出新筹码。",
+    sideBeat: "朋友第一次看见你的职业低谷",
+    characters: ["主管", "朋友"],
+    abType: "重写证据 / 做新筹码",
+    callbacks: ["项目被砍", "低谷被看见", "新筹码"]
+  }),
+  eventPoolCard("care_split", 11, 16, {
+    mainTrack: "relationship",
+    phase: "照护分工",
+    comedyDevice: "照护排班",
+    riasecAxis: ["S", "C"],
+    conflict: "父母照护和工作节点一起挤进日程，谁来请假、谁来跑腿都要说清。你要先共同承担，还是把分工排成固定表。",
+    sideBeat: "成年责任从口头承诺变成日程表",
+    characters: ["关系线核心角色", "家庭型角色"],
+    abType: "共同承担 / 排成固定表",
+    callbacks: ["照护排班", "请假跑腿", "成年责任"]
+  }),
+  eventPoolCard("team_recruit", 11, 16, {
+    mainTrack: "life",
+    phase: "团队扩张",
+    comedyDevice: "招新人",
+    pressureMode: "relief",
+    reliefSignal: "项目被认可",
+    riasecAxis: ["E", "C"],
+    conflict: "你负责的方向终于能招新人，不再只靠自己硬扛。你要争取更大范围，还是先把协作规则排稳。",
+    sideBeat: "团队第一次围着你的方法扩张",
+    characters: ["团队成员", "新人/后辈"],
+    abType: "争取更大范围 / 排稳协作规则",
+    callbacks: ["招新人", "团队扩张", "协作规则"]
+  }),
+  eventPoolCard("old_friend_fallback", 12, 17, {
+    mainTrack: "life",
+    phase: "早年回援",
+    comedyDevice: "前几年的人回来帮忙",
+    pressureMode: "relief",
+    reliefSignal: "前几年的人回来帮忙",
+    riasecAxis: ["I", "A"],
+    conflict: "前几年一起扛过事的人回来帮你牵线，合作不再只靠你单打独斗。你要拆清账本，还是把经历讲成能拉人的故事。",
+    sideBeat: "早年种下的人情第一次正向回援",
+    characters: ["早年同伴", "新人/后辈"],
+    abType: "拆清账本 / 讲成故事",
+    callbacks: ["早年回援", "牵线", "合作账本"]
+  }),
+  eventPoolCard("public_mistake", 12, 16, {
+    mainTrack: "life",
+    phase: "口碑危机",
+    comedyDevice: "公开误读",
+    riasecAxis: ["I", "S"],
+    conflict: "一次公开表达被误读，群里开始按截图猜你的意思。你要先查清源头，还是主动把话说完整。",
+    sideBeat: "口碑开始考验你处理误会的方式",
+    characters: ["客户/公众", "团队成员"],
+    abType: "查清源头 / 主动说完整",
+    callbacks: ["公开误读", "截图", "口碑危机"]
+  }),
+  eventPoolCard("shared_business", 13, 17, {
+    mainTrack: "relationship",
+    phase: "共同事业",
+    comedyDevice: "共同项目",
+    riasecAxis: ["E", "C"],
+    conflict: "一个共同项目把你们的关系和事业绑到同一张表上。你要争取继续同队，还是先把账本和边界拆清。",
+    sideBeat: "长期关系开始接受事业压力测试",
+    characters: ["关系线核心角色", "合作方"],
+    abType: "争取继续同队 / 拆清账本边界",
+    callbacks: ["共同项目", "继续同队", "账本边界"]
+  }),
+  eventPoolCard("parent_care_long", 13, 17, {
+    mainTrack: "life",
+    phase: "长期照护",
+    comedyDevice: "养老安排",
+    riasecAxis: ["S", "C"],
+    conflict: "家里长辈的长期照护终于要定方案，钱、时间和居住安排都得落地。你要先把人接住，还是把长期方案排稳。",
+    sideBeat: "家庭责任进入长期结算",
+    characters: ["家庭型角色", "主角自己"],
+    abType: "先接住人 / 排稳长期方案",
+    callbacks: ["长期照护", "养老安排", "居住方案"]
+  }),
+  eventPoolCard("found_liked_work", 13, 17, {
+    mainTrack: "life",
+    phase: "喜欢的方向",
+    comedyDevice: "发现真正喜欢什么",
+    pressureMode: "relief",
+    reliefSignal: "发现真正喜欢什么",
+    riasecAxis: ["R", "A"],
+    conflict: "你突然发现自己最愿意反复做的，不是头衔最大的那件事，而是能让你真的进入状态的方向。你要继续投入，还是先把代价讲清。",
+    sideBeat: "职业选择第一次从外部评价转向内在确认",
+    characters: ["主角自己", "朋友群像"],
+    abType: "继续投入 / 讲清代价",
+    callbacks: ["喜欢的方向", "进入状态", "内在确认"]
+  }),
+  eventPoolCard("promotion_or_boundary", 13, 17, {
+    mainTrack: "life",
+    phase: "升职边界",
+    comedyDevice: "升职邀请",
+    riasecAxis: ["E", "C"],
+    conflict: "升职机会终于递到你面前，但它也会把生活时间重新切碎。你要争取拍板权，还是先把边界和条件谈清。",
+    sideBeat: "职业上行开始要你付出新的生活代价",
+    characters: ["老板", "团队成员"],
+    abType: "争取拍板权 / 谈清边界条件",
+    callbacks: ["升职邀请", "拍板权", "生活边界"]
+  }),
+  eventPoolCard("last_round_alliance", 14, 17, {
+    mainTrack: "life",
+    phase: "最后同盟",
+    comedyDevice: "关键合作",
+    riasecAxis: ["S", "E"],
+    conflict: "一个关键合作需要你把过去的人重新叫到一张桌上。你要先修复关系，还是直接争取最后拍板。",
+    sideBeat: "前文关系开始回到现实桌面",
+    characters: ["早年同伴", "合作方"],
+    abType: "先修复关系 / 争取最后拍板",
+    callbacks: ["关键合作", "早年同伴", "最后拍板"]
+  }),
+  eventPoolCard("quiet_recovery", 14, 17, {
+    mainTrack: "life",
+    phase: "主动休息",
+    comedyDevice: "主动休息",
+    pressureMode: "relief",
+    reliefSignal: "主动选择休息",
+    riasecAxis: ["S", "C"],
+    conflict: "事情终于没有追着你跑，你第一次主动空出一段完整休息。你要把陪伴补回来，还是把新的节奏排稳。",
+    sideBeat: "人生不只靠硬扛推进，也需要恢复",
+    characters: ["朋友群像", "家庭型角色"],
+    abType: "补回陪伴 / 排稳新节奏",
+    callbacks: ["主动休息", "陪伴补回", "新节奏"]
+  }),
+  eventPoolCard("final_offer", 15, 17, {
+    mainTrack: "life",
+    phase: "未来五年",
+    comedyDevice: "最终邀约",
+    riasecAxis: ["E", "A"],
+    conflict: "一个未来五年的邀约摆到面前，它不是立刻改变人生，却会改变你接下来怎么活。你要争取更大舞台，还是讲清真正想要的日子。",
+    sideBeat: "最后几步开始回收职业代价和生活愿望",
+    characters: ["外部机会角色", "主角自己"],
+    abType: "争取更大舞台 / 讲清想要的日子",
+    callbacks: ["未来五年", "更大舞台", "想要的日子"]
+  }),
+  eventPoolCard("relationship_settle_or_part", 15, 17, {
+    mainTrack: "relationship",
+    phase: "关系收束",
+    comedyDevice: "最后表态",
+    riasecAxis: ["S", "A"],
+    conflict: "长期责任把关系推到最后一次认真表态。你要争取继续同队，还是承认各自路线更好。",
+    sideBeat: "关系线只收束，不再开新误会",
+    characters: ["关系线核心角色", "主角自己"],
+    abType: "争取继续同队 / 承认各自路线",
+    callbacks: ["最后表态", "继续同队", "各自路线"]
+  })
+];
+
 const yearBeats = {
   1: "专业入场",
   2: "校园开放日",
@@ -824,6 +1187,93 @@ const yearBeats = {
 
 function yearBeatForYear(year = 1) {
   return yearBeats[Number(year || 1)] || "年度推进";
+}
+
+function materializeStoryCard(card, year = 1) {
+  if (!card) return null;
+  const { minYear, maxYear, ...rest } = card;
+  return {
+    ...rest,
+    year: Number(year || rest.year || 1),
+    routePhase: rest.routePhase || rest.phase
+  };
+}
+
+function baseOutlineCardForYear(year = 1) {
+  const card = outlineCards.find(item => Number(item.year) === Number(year));
+  return card ? { ...card, phase: yearBeatForYear(card.year) } : null;
+}
+
+function childDecisionYear(profile = {}) {
+  return 12 + (hashString(`${profileSeed(profile)}:child-decision-year`) % 4);
+}
+
+function shouldUseChildDecisionCard(year = 1, history = [], profile = {}) {
+  const route = childRouteChoice(history);
+  if (route.state) return false;
+  return Number(year || 1) === childDecisionYear(profile);
+}
+
+function storyChoiceSeed(history = []) {
+  return history.map(item => [
+    item?.year,
+    item?.choiceText,
+    item?.choiceTag,
+    item?.tag,
+    item?.consequence
+  ].filter(Boolean).join(":")).join("|");
+}
+
+function storyCardMarkers(card = {}) {
+  return [
+    card.id,
+    card.comedyDevice,
+    card.phase,
+    ...(Array.isArray(card.callbacks) ? card.callbacks : [])
+  ].map(cleanPromptText).filter(Boolean);
+}
+
+function storyCardScore(card = {}, year = 1, history = [], profile = {}) {
+  const recent = history.slice(-2);
+  const recentText = recentIncidentText(history, 3);
+  const usedText = recentIncidentText(history, Math.max(1, history.length));
+  let penalty = 0;
+  if (recent.length >= 2 && recent.every(item => item?.mainTrack === card.mainTrack)) penalty += 100000;
+  if (card.pressureMode === "relief" && recentText.includes("正反馈")) penalty += 20000;
+  storyCardMarkers(card).forEach(marker => {
+    if (recentText.includes(marker)) penalty += 80000;
+    else if (usedText.includes(marker)) penalty += 30000;
+  });
+  const seed = `${profileSeed(profile)}:${storyChoiceSeed(history)}:${year}:${card.id}`;
+  return penalty + (hashString(seed) % 10000);
+}
+
+function randomizedStoryCardForYear(year = 1, context = {}) {
+  const currentYear = Number(year || 1);
+  const history = context?.history || [];
+  const profile = context?.profile || {};
+  const eligible = randomizedStoryEventCards.filter(card => currentYear >= card.minYear && currentYear <= card.maxYear);
+  if (!eligible.length) return null;
+  const ordered = eligible
+    .map(card => ({ card, score: storyCardScore(card, currentYear, history, profile) }))
+    .sort((a, b) => a.score - b.score || String(a.card.id).localeCompare(String(b.card.id)));
+  return materializeStoryCard(ordered[0]?.card, currentYear);
+}
+
+function storyPlanHint(rawOutlineCard = null) {
+  if (!rawOutlineCard?.id || rawOutlineCard.id === "child_route_choice") return "";
+  return `本年事件池：${rawOutlineCard.phase || "年度事件"} / ${rawOutlineCard.comedyDevice || "本年事件"}；不补未抽中的固定节点。`;
+}
+
+function planningHistoryItemFromOutline(card = null) {
+  if (!card) return null;
+  return {
+    year: Number(card.year || 0) || 0,
+    sceneTitle: cleanPromptText(card.phase || card.comedyDevice),
+    summary: cleanPromptText(card.sideBeat),
+    mainTrack: card.mainTrack,
+    callbackSeeds: Array.isArray(card.callbacks) ? card.callbacks.slice(0, 3) : []
+  };
 }
 
 const defaultStoryCast = {
@@ -1536,7 +1986,7 @@ function incidentItem(label, aliases = []) {
   return { label, aliases: [label, ...aliases] };
 }
 
-const professionalIncidentYears = new Set([2, 5, 7, 9, 11, 12, 14, 16]);
+const professionalIncidentYearCandidates = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 const professionalIncidentRules = [
   [/设计|视觉|艺术|动画/, {
@@ -1800,6 +2250,18 @@ function professionalIncidentItems(profile = {}, year = 1, educationState = "") 
   return buckets[stageBucketForYear(currentYear, educationState)] || [];
 }
 
+function professionalIncidentYearsForProfile(profile = {}) {
+  return professionalIncidentYearCandidates
+    .map(year => ({ year, score: hashString(`${profileSeed(profile)}:professional-incident:${year}`) }))
+    .sort((a, b) => a.score - b.score || a.year - b.year)
+    .slice(0, 6)
+    .map(item => item.year);
+}
+
+function isProfessionalIncidentYear(profile = {}, year = 1) {
+  return professionalIncidentYearsForProfile(profile).includes(Number(year || 1));
+}
+
 function allProfessionalIncidentItems(profile = {}) {
   const major = profile.majorLabel || profile.major || "";
   const matched = professionalIncidentRules.find(([pattern]) => pattern.test(major));
@@ -1827,14 +2289,14 @@ function incidentAppears(item, text) {
 
 function currentIncidentHint(profile = {}, year = 1, history = [], outlineCard = null) {
   const currentYear = Number(year || 1);
-  if (!professionalIncidentYears.has(currentYear)) return "";
+  if (!isProfessionalIncidentYear(profile, currentYear)) return "";
+  if (outlineCard?.id && outlineCard.allowIncident !== true) return "";
   if (outlineCard?.mainTrack && outlineCard.mainTrack !== "life") return "";
   if (outlineCard?.pressureMode === "relief") return "";
   const items = professionalIncidentItems(profile, currentYear, educationStateHint(history, profile));
   if (!items.length) return "";
   const recentText = recentIncidentText(history, 2);
   const usedText = recentIncidentText(history, Math.max(2, history.length));
-  if (currentYear === 2) return `本年专业事件：${items[0].label}`;
   const start = (hashString(`${profile.majorLabel || profile.major || ""}:${currentYear}`) || 0) % items.length;
   const ordered = items.slice(start).concat(items.slice(0, start));
   const picked = ordered.find(item => !incidentAppears(item, recentText) && !incidentAppears(item, usedText))
@@ -1980,13 +2442,13 @@ function childTimelineStage(history = [], year = 1) {
   return "计划";
 }
 
-function childRouteHint(history = [], year = 1) {
+function childRouteHint(history = [], year = 1, profile = {}) {
   const currentYear = Number(year || 1);
   const stage = childTimelineStage(history, year);
   if (stage === "出生") return "育儿状态：已选择生小孩；本年只写孩子出生或生下小孩，以及新生儿照护。";
   if (stage === "婴幼儿") return "育儿状态：婴幼儿阶段；只写夜醒、发烧陪诊、托育适应、照护分工。";
   if (stage === "成长") return "育儿状态：孩子成长中；按年龄顺推，只写符合年龄的照护问题。";
-  if (currentYear < 15 && !stage) return "";
+  if (currentYear < childDecisionYear(profile) && !stage) return "";
   return "育儿状态：未选择生小孩，不把孩子写成既成事实；只写是否进入育儿线。";
 }
 
@@ -2060,6 +2522,8 @@ function relationshipBeatHint(history = [], year = 1) {
   const stage = relationshipStageHint(history, year);
   const childChosen = hasChosenChildRoute(history);
   const childStage = childTimelineStage(history, year);
+  if (childStage === "出生") return `关系背景：${pickFreshFact(["孩子出生", "夜里照护", "月子支援", "照护分工"], history, year)}`;
+  if (childStage === "婴幼儿") return `关系背景：${pickFreshFact(["孩子夜醒", "儿科陪诊", "托育适应", "照护分工"], history, year)}`;
   if (currentYear <= 2) return `关系背景：${pickFreshFact(["替你留座", "帮你核材料", "一起改到关灯"], history, year)}`;
   if (currentYear <= 4) return `关系背景：${pickFreshFact(["实习节奏说清", "互相知道近期安排", "第一次认真聊未来"], history, year)}`;
   if (currentYear <= 7) {
@@ -2077,8 +2541,6 @@ function relationshipBeatHint(history = [], year = 1) {
     return `关系背景：${pickFreshFact(["家庭支持稳定", "生活分工定型", "共同财务更清楚", "照护责任一起商量"], history, year)}`;
   }
   if (["分手收束", "体面告别", "新恋情萌芽"].includes(stage)) return `关系背景：${pickFreshFact(["分开结果", "第二段关系落地", "独自生活稳定"], history, year)}`;
-  if (childStage === "出生") return `关系背景：${pickFreshFact(["孩子出生", "夜里照护", "月子支援", "照护分工"], history, year)}`;
-  if (childStage === "婴幼儿") return `关系背景：${pickFreshFact(["孩子夜醒", "儿科陪诊", "托育适应", "照护分工"], history, year)}`;
   if (childChosen) return `关系背景：${pickFreshFact(["育儿分工定型", "长期关系稳定", "家庭支援说清"], history, year)}`;
   return `关系背景：${pickFreshFact(["家庭分工定型", "长期关系稳定", "各自空间清楚", "父母照护一起商量"], history, year)}`;
 }
@@ -2303,10 +2765,11 @@ function dominantTheme(history = []) {
 export function getOutlineCard(year, context = {}) {
   const childStage = childTimelineStage(context?.history, year);
   if (childStage === "出生") return { ...childBirthCard, year: Number(year) };
-  if (childStage === "婴幼儿" && Number(year) === 17) return { ...childInfantCareCard, year: Number(year) };
+  if (childStage === "婴幼儿" && Number(year) < 18) return { ...childInfantCareCard, year: Number(year) };
   if (Number(year) === 4 && isDirectWorkProfile(context?.profile)) return { ...directWorkYear4Card };
-  const card = outlineCards.find(item => Number(item.year) === Number(year));
-  return card ? { ...card, phase: yearBeatForYear(card.year) } : null;
+  if ([1, 2, 4, 18].includes(Number(year))) return baseOutlineCardForYear(year);
+  if (shouldUseChildDecisionCard(year, context?.history, context?.profile)) return materializeStoryCard(childDecisionCard, year);
+  return randomizedStoryCardForYear(year, context) || baseOutlineCardForYear(year);
 }
 
 export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }) {
@@ -2318,13 +2781,14 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
     history
   );
   const visibleEducationState = visibleEducationStateHint(history, year, profile);
-  const currentIncident = currentIncidentHint(profile, year, history, compactBaseOutlineCard);
+  const currentIncident = currentIncidentHint(profile, year, history, rawOutlineCard);
   const closingFrame = Number(year) === 18 ? closingFrameHint(history) : "";
   const relationshipStage = relationshipStageHint(history, year);
   const relationshipBeat = relationshipBeatHint(history, year);
   const relationshipPressure = relationshipPressureHint(history, year);
-  const childRoute = childRouteHint(history, year);
+  const childRoute = childRouteHint(history, year, profile);
   const careerRoute = careerRouteHint(history, year, profile);
+  const storyPlan = storyPlanHint(rawOutlineCard);
   const choiceBalance = choiceBalanceHint(compactBaseOutlineCard, relationshipBeat, currentIncident);
   const outlineCard = closingFrame
     ? compactOutlineCardWithClosing(rawOutlineCard, storyCast, closingFrame)
@@ -2355,6 +2819,7 @@ export function buildAnnualInput({ profile, history, year, totalGameYears = 18 }
   const lastYear = lastYearText(history, redactionTerms);
   const storySoFar = storySoFarText(history, year, profile);
   if (careerRoute) stateHints.careerRoute = careerRoute;
+  if (storyPlan) stateHints.storyPlan = storyPlan;
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, year);
@@ -2396,28 +2861,34 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const relationshipStage = relationshipStageHint(history, startYear);
   const relationshipBeat = relationshipBeatHint(history, startYear);
   const relationshipPressure = relationshipPressureHint(history, startYear);
-  const childRoute = childRouteHint(history, startYear);
+  const childRoute = childRouteHint(history, startYear, profile);
   const careerRoute = careerRouteHint(history, startYear, profile);
   const firstRawOutlineCard = getOutlineCard(startYear, { profile, history });
+  const storyPlan = storyPlanHint(firstRawOutlineCard);
   const firstOutlineCard = compactOutlineCardWithChildRoute(
     compactOutlineCardWithEducation(firstRawOutlineCard, storyCast, educationState, startYear),
     history
   );
-  const currentIncident = currentIncidentHint(profile, startYear, history, firstOutlineCard);
+  const currentIncident = currentIncidentHint(profile, startYear, history, firstRawOutlineCard);
   const choiceBalance = choiceBalanceHint(firstOutlineCard, relationshipBeat, currentIncident);
   const closingFrame = Number(startYear) === 18 ? closingFrameHint(history) : "";
+  const planningHistory = [...history];
   const outlineCardsForBatch = Array.from({ length: Math.max(1, Number(count || 1)) }, (_, index) => {
       const year = Number(startYear || 1) + index;
-      const card = getOutlineCard(year, { profile, history });
+      const card = getOutlineCard(year, { profile, history: planningHistory });
       const compactCard = compactOutlineCardWithChildRoute(
         compactOutlineCardWithEducation(card, storyCast, educationState, card.year),
-        history
+        planningHistory
       );
       const cardClosingFrame = Number(card.year) === 18 ? closingFrameHint(history) : "";
-      if (cardClosingFrame) return compactOutlineCardWithClosing(card, storyCast, cardClosingFrame);
-      const incident = currentIncidentHint(profile, card.year, history, compactCard);
-      const cardChoiceBalance = choiceBalanceHint(compactCard, relationshipBeatHint(history, card.year), incident);
-      return compactOutlineCardWithIncident(card, storyCast, incident, compactCard, cardChoiceBalance);
+      const incident = currentIncidentHint(profile, card.year, planningHistory, card);
+      const cardChoiceBalance = choiceBalanceHint(compactCard, relationshipBeatHint(planningHistory, card.year), incident);
+      const planned = cardClosingFrame
+        ? compactOutlineCardWithClosing(card, storyCast, cardClosingFrame)
+        : compactOutlineCardWithIncident(card, storyCast, incident, compactCard, cardChoiceBalance);
+      const planningItem = planningHistoryItemFromOutline(card);
+      if (planningItem) planningHistory.push(planningItem);
+      return planned;
     });
   const majorAnchor = currentIncident || firstOutlineCard?.mainTrack === "relationship" ? "" : majorAnchorHint(profile, startYear, history);
   const isYear2RelationEntry = Number(startYear) === 2 && Boolean(storyCast.relationName);
@@ -2446,6 +2917,7 @@ export function buildBatchInput({ profile, history, startYear, count, totalGameY
   const lastYear = lastYearText(history, redactionTerms);
   const storySoFar = storySoFarText(history, startYear, profile);
   if (careerRoute) stateHints.careerRoute = careerRoute;
+  if (storyPlan) stateHints.storyPlan = storyPlan;
   if (lastYear) stateHints.lastYear = lastYear;
   if (storySoFar) stateHints.storySoFar = storySoFar;
   const recentIncidents = recentIncidentsHint(profile, history, startYear);

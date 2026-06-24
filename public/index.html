@@ -1045,12 +1045,12 @@
     }
 
     .choice-pill {
-      flex: 1 1 0;
+      flex: 0 0 auto;
       min-width: 0;
       min-height: 52px;
-      display: flex;
+      display: grid;
       align-items: center;
-      justify-content: center;
+      justify-items: stretch;
       padding: 11px 14px;
       border-radius: 22px;
       text-align: left;
@@ -1070,11 +1070,15 @@
 
     .choice-pill b {
       display: block;
+      width: 100%;
+      min-width: 0;
       max-width: 100%;
       font-size: 16px;
       font-weight: 600;
       line-height: 1.35;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .choice-pill span,

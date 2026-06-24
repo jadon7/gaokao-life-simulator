@@ -2762,9 +2762,41 @@ function hollandScoresFromHistory(history = []) {
   }));
 }
 
-function topHollandCode(history = []) {
+const hollandRankCodes = ["R", "I", "A", "S", "E", "C"];
+const hollandTieThreshold = 2;
+
+function hollandRankSeed(history = [], profile = {}) {
+  const choices = history.map(item => [
+    item?.year,
+    item?.choiceText,
+    item?.choice,
+    item?.tag,
+    item?.consequence
+  ].filter(Boolean).join(":")).join("|");
+  return `${profileSeed(profile)}:${choices}`;
+}
+
+function hollandTiePriority(seed = "") {
+  return Object.fromEntries(hollandRankCodes
+    .map(code => ({ code, score: hashString(`${seed}:holland:${code}`) }))
+    .sort((a, b) => a.score - b.score)
+    .map((item, index) => [item.code, index]));
+}
+
+function rankHollandScores(scores = {}, seed = "") {
+  const priority = hollandTiePriority(seed);
+  return hollandRankCodes
+    .map(code => [code, Number(scores?.[code] || 0)])
+    .sort((a, b) => {
+      const diff = b[1] - a[1];
+      if (Math.abs(diff) > hollandTieThreshold) return diff;
+      return (priority[a[0]] ?? 0) - (priority[b[0]] ?? 0);
+    });
+}
+
+function topHollandCode(history = [], profile = {}) {
   const scores = hollandScoresFromHistory(history);
-  return Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key]) => key).join("") || "ICE";
+  return rankHollandScores(scores, hollandRankSeed(history, profile)).slice(0, 3).map(([key]) => key).join("") || "ICE";
 }
 
 function dominantTheme(history = []) {
@@ -2972,7 +3004,7 @@ export function buildResultInput({ profile, history, totalGameYears = 18, finalR
     historyDigest: history.slice(-totalGameYears).map(item => normalizeResultHistoryItem(item, redactionTerms)),
     evidence: buildResultEvidence(history, redactionTerms),
     hollandSummary: {
-      code: topHollandCode(history),
+      code: topHollandCode(history, profile),
       scores: hollandScoresFromHistory(history)
     },
     yearningStats: buildYearningStats(history, redactionTerms),

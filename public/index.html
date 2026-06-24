@@ -8486,8 +8486,36 @@
       }));
     }
 
+    const hollandRankCodes = ["R", "I", "A", "S", "E", "C"];
+    const hollandTieThreshold = 2;
+
+    function hollandRankSeed() {
+      const choices = state.history.map(item => [
+        item.year,
+        item.choiceText,
+        item.choice,
+        item.tag,
+        item.consequence
+      ].filter(Boolean).join(":")).join("|");
+      return `${profileSignature(state.profile)}:${choices}`;
+    }
+
+    function hollandTiePriority(seed = "") {
+      return Object.fromEntries(hollandRankCodes
+        .map(code => ({ code, score: hashString(`${seed}:holland:${code}`) }))
+        .sort((a, b) => a.score - b.score)
+        .map((item, index) => [item.code, index]));
+    }
+
     function getHollandRank(scores = getHollandScoresFromHistory()) {
-      return Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const priority = hollandTiePriority(hollandRankSeed());
+      return hollandRankCodes
+        .map(code => [code, Number(scores?.[code] || 0)])
+        .sort((a, b) => {
+          const diff = b[1] - a[1];
+          if (Math.abs(diff) > hollandTieThreshold) return diff;
+          return (priority[a[0]] ?? 0) - (priority[b[0]] ?? 0);
+        });
     }
 
     function getHollandPercent(code, scores) {
@@ -8501,11 +8529,12 @@
       const min = Math.min(...values);
       const max = Math.max(...values);
       if (max <= 0 || max === min) {
-        return Object.fromEntries(order.map((key, index) => [key, index === 0 ? 76 : 58]));
+        return Object.fromEntries(order.map(key => [key, max <= 0 ? 58 : 64]));
       }
+      const rankIndex = Object.fromEntries(getHollandRank(scores).map(([key], index) => [key, index]));
       const ranked = order
         .map((key, index) => ({ key, value: values[index] }))
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => (rankIndex[a.key] ?? 0) - (rankIndex[b.key] ?? 0));
       const rankBoost = new Map(ranked.map((item, index) => [item.key, [16, 10, 6, 2, -2, -5][index] || 0]));
       return Object.fromEntries(order.map((key, index) => {
         const normalized = (values[index] - min) / (max - min);
@@ -10280,6 +10309,31 @@
             rightAlign: right ? getComputedStyle(right).textAlign : "",
             leftTitleAlign: leftTitle ? getComputedStyle(leftTitle).textAlign : "",
             rightTitleAlign: rightTitle ? getComputedStyle(rightTitle).textAlign : ""
+          });
+        },
+        hollandTieBreak() {
+          const originalProfile = state.profile;
+          const originalHistory = state.history;
+          const scores = { R: 10, I: 10, A: 10, S: 10, E: 10, C: 10 };
+          const tops = Array.from({ length: 18 }, (_, index) => {
+            state.profile = {
+              name: `并列样本${index}`,
+              gender: index % 2 ? "男生" : "女生",
+              province: "广东",
+              score: String(300 + index),
+              major: index % 2 ? "护理学" : "计算机科学与技术",
+              majorLabel: index % 2 ? "护理学" : "计算机科学与技术"
+            };
+            state.history = [{ year: 1, choiceText: `选择${index}`, tag: "测试" }];
+            return getHollandRank(scores)[0]?.[0] || "";
+          });
+          state.profile = originalProfile;
+          state.history = originalHistory;
+          emit({
+            test: "hollandTieBreak",
+            tops,
+            uniqueCount: new Set(tops).size,
+            allR: tops.every(code => code === "R")
           });
         }
       };

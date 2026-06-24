@@ -53,6 +53,10 @@ const suites = {
   choiceAlign: d => [
     ["左选项居中", d.leftAlign === "center" && d.leftTitleAlign === "center"],
     ["右选项居中", d.rightAlign === "center" && d.rightTitleAlign === "center"]
+  ],
+  hollandTieBreak: d => [
+    ["并列分不会固定落到 R", d.allR === false],
+    [`并列样本能覆盖多个类型：${(d.tops || []).join("")}`, Number(d.uniqueCount || 0) >= 4]
   ]
 };
 

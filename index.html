@@ -73,7 +73,7 @@
     }
 
     html[data-flow="result"] {
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
+      background: var(--result-bg, linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%));
     }
 
     body {
@@ -220,7 +220,37 @@
     }
 
     body[data-flow="result"] {
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%) fixed;
+      background: var(--result-bg, linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%)) fixed;
+    }
+
+    html[data-result-primary="R"] {
+      --result-bg: linear-gradient(193.81deg, #91c6fb 19.38%, #99ffb7 55.3%, #eeffea 80.27%);
+      --result-head-color: #113365;
+      --result-theme-color: #eeffea;
+    }
+
+    html[data-result-primary="C"] {
+      --result-bg: linear-gradient(193.81deg, #b2f99c 19.38%, #fff899 55.3%, #ebffea 80.27%);
+      --result-head-color: #293b01;
+      --result-theme-color: #ebffea;
+    }
+
+    html[data-result-primary="E"] {
+      --result-bg: linear-gradient(193.81deg, #ff9090 19.38%, #cf99ff 55.3%, #fff3ea 80.27%);
+      --result-head-color: #4e1300;
+      --result-theme-color: #fff3ea;
+    }
+
+    html[data-result-primary="I"] {
+      --result-bg: linear-gradient(193.81deg, #d694ef 19.38%, #99a3ff 55.3%, #fff3ea 80.27%);
+      --result-head-color: #350049;
+      --result-theme-color: #fff3ea;
+    }
+
+    html[data-result-primary="S"] {
+      --result-bg: linear-gradient(193.81deg, #94efe2 19.38%, #999cff 55.3%, #eaf8ff 80.27%);
+      --result-head-color: #00494b;
+      --result-theme-color: #eaf8ff;
     }
 
     /* ====== shared atoms ====== */
@@ -1292,7 +1322,6 @@
       position: relative;
       min-height: var(--screen-h);
       overflow: visible;
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
       z-index: 40;
     }
 
@@ -1308,7 +1337,7 @@
 
     /* 仅在导出结果长图时给卡片自身铺上渐变背景 */
     .result-card.is-capturing {
-      background: linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%);
+      background: var(--result-bg, linear-gradient(191.79deg, #ffc465 18.99%, #5fc9d3 58.8%, #e9f9e6 99.67%));
     }
 
     /* 截图时隐藏按钮 */
@@ -1382,7 +1411,7 @@
       font-size: 33px;
       font-weight: 700;
       line-height: 1.1;
-      color: #6c4507;
+      color: var(--result-head-color, #6c4507);
     }
 
     .result-title span {
@@ -1470,7 +1499,7 @@
       font-weight: 400;
       line-height: 1.4;
       letter-spacing: -0.15px;
-      color: #6c4507;
+      color: var(--result-head-color, #6c4507);
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
     }
 
@@ -1490,7 +1519,7 @@
       border-radius: 999px;
       font-size: 11px;
       font-weight: 700;
-      color: #6c4507;
+      color: #fff;
       background: #fef5e6;
       white-space: nowrap;
     }
@@ -5892,10 +5921,32 @@
       play: "#ffffff",
       result: "#e9f9e6"
     };
+    const resultThemeColors = {
+      A: "#e9f9e6",
+      R: "#eeffea",
+      C: "#ebffea",
+      E: "#fff3ea",
+      I: "#fff3ea",
+      S: "#eaf8ff"
+    };
+
+    function normalizeResultPrimary(primary = "A") {
+      const code = String(primary || "A").trim().charAt(0).toUpperCase();
+      return hollandTypes[code] ? code : "A";
+    }
+
+    function applyResultTheme(primary = "A") {
+      const code = normalizeResultPrimary(primary);
+      document.documentElement.dataset.resultPrimary = code;
+      document.body.dataset.resultPrimary = code;
+      if (document.body.dataset.flow === "result") syncThemeColor();
+    }
 
     function syncThemeColor() {
       const flow = document.body.dataset.flow || "entry";
-      document.querySelector("#themeColor")?.setAttribute("content", flowThemeColors[flow] || "#ffffff");
+      const resultPrimary = normalizeResultPrimary(document.documentElement.dataset.resultPrimary);
+      const color = flow === "result" ? resultThemeColors[resultPrimary] : flowThemeColors[flow];
+      document.querySelector("#themeColor")?.setAttribute("content", color || "#ffffff");
     }
 
     function showFlow(flow) {
@@ -8407,7 +8458,9 @@
     async function showResult() {
       els.progressFill.style.width = "100%";
       // API 等待期间只预载 RIASEC 公仔图，等结果文案一起亮相
-      probeArt(hollandTypeArtUrl(getHollandSummaryData().primary));
+      const hollandSummary = getHollandSummaryData();
+      applyResultTheme(hollandSummary.primary);
+      probeArt(hollandTypeArtUrl(hollandSummary.primary));
       showFlow("result");
       renderResultLoading();
       renderResultStreaming({});
@@ -8501,6 +8554,7 @@
       const eyebrow = document.querySelector("#resultEyebrow");
       if (eyebrow) eyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const summary = getHollandSummaryData();
+      applyResultTheme(summary.primary);
       els.resultTags.innerHTML = [majorLabel(), `霍兰德 ${summary.code}`, hollandTypes[summary.primary]?.label || "研究型"]
         .map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join("");
       els.resultTitle.innerHTML = partial.title ? resultTitleHTML(partial.title, partial) : `<span class="sk"></span><span class="sk"></span>`;
@@ -8572,6 +8626,7 @@
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const hollandSummary = getHollandSummaryData();
+      applyResultTheme(hollandSummary.primary);
       const tags = [majorLabel(), `霍兰德 ${hollandSummary.code}`, hollandTypes[hollandSummary.primary]?.label || "研究型"];
       const scenes = (Array.isArray(result.famousScenes) ? result.famousScenes : [])
         .slice(0, 3)

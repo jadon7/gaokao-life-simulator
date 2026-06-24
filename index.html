@@ -1219,6 +1219,8 @@
       background: linear-gradient(110deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 70%);
       transform: translateX(-100%);
       animation: card-sheen 1.4s ease infinite;
+      z-index: 1;
+      pointer-events: none;
     }
 
     @keyframes card-sheen {
@@ -1229,11 +1231,12 @@
 
     .card-loading-orbit {
       position: absolute;
-      right: 22px;
-      top: 22px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       gap: 5px;
-      z-index: 5;
+      z-index: 2;
     }
 
     .card-loading-orbit i {
@@ -7594,7 +7597,9 @@
         : `<span class="stream-placeholder" aria-label="选项生成中"></span>`;
       article.innerHTML = `
         ${streamPreviousFeedbackHTML(stream, isNew)}
-        <div class="card-illustration" aria-hidden="true"></div>
+        <div class="card-illustration" aria-hidden="true">
+          ${state.loadError ? "" : `<div class="card-loading-orbit"><i></i><i></i><i></i></div>`}
+        </div>
         <p class="card-prompt">${state.loadError ? escapeHTML(state.loadError) : bodyHTML}</p>
         <div class="choice-preview">
           <button class="choice-pill left" type="button" ${state.loadError ? "" : "disabled"}>
@@ -7604,7 +7609,6 @@
             <b class="choice-title">${state.loadError ? "返回" : rightLabelHTML}</b>
           </button>
         </div>
-        ${state.loadError ? "" : `<div class="card-loading-orbit" aria-hidden="true"><i></i><i></i><i></i></div>`}
       `;
       if (state.loadError) {
         article.querySelector(".choice-pill.left").addEventListener("click", retryCurrentStep);

@@ -2125,12 +2125,6 @@
       transform: translateY(1px);
     }
 
-    .result-actions button:disabled {
-      cursor: default;
-      opacity: 0.55;
-      box-shadow: none !important;
-    }
-
     .result-actions #saveResult {
       background: linear-gradient(180deg, var(--blue-hi) 0%, var(--blue-lo) 100%);
       color: #ffffff;
@@ -8536,13 +8530,6 @@
       };
     }
 
-    function setResultActionsReady(isReady) {
-      const save = document.querySelector("#saveResult");
-      if (!save) return;
-      save.disabled = !isReady;
-      save.textContent = isReady ? "分享结果" : "生成中";
-    }
-
     async function showResult() {
       els.progressFill.style.width = "100%";
       // API 等待期间只预载 RIASEC 公仔图，等结果文案一起亮相
@@ -8550,7 +8537,6 @@
       applyResultTheme(hollandSummary.primary);
       probeArt(hollandTypeArtUrl(hollandSummary.primary));
       showFlow("result");
-      setResultActionsReady(false);
       renderResultLoading();
       renderResultStreaming({});
       try {
@@ -8612,7 +8598,6 @@
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading", "is-streaming");
       card?.classList.add("is-revealed");
-      setResultActionsReady(false);
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears}张牌后的你`;
       els.resultTitle.textContent = "这一页没装订成功";
@@ -8641,7 +8626,6 @@
       if (!card) return;
       card.classList.remove("is-loading");
       card.classList.add("is-streaming");
-      setResultActionsReady(false);
       const eyebrow = document.querySelector("#resultEyebrow");
       if (eyebrow) eyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const summary = getHollandSummaryData();
@@ -8714,7 +8698,6 @@
       const card = document.querySelector(".result-card");
       card?.classList.remove("is-loading", "is-streaming");
       card?.classList.add("is-revealed");
-      setResultActionsReady(true);
       const resultEyebrow = document.querySelector("#resultEyebrow");
       if (resultEyebrow) resultEyebrow.textContent = `${state.totalYears} 张牌后的你`;
       const hollandSummary = getHollandSummaryData();

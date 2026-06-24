@@ -1549,7 +1549,7 @@
       font-size: 11px;
       font-weight: 700;
       color: var(--result-head-color, #6c4507);
-      background: #fff;
+      background: #ffffff94;
       white-space: nowrap;
     }
 
@@ -1658,10 +1658,13 @@
 
     /* RIASEC ability card */
     .ability-section {
+      position: relative;
+      overflow: visible;
       background: #ffffff;
       border: 1px solid rgba(84, 100, 130, 0.12);
       border-radius: 28px;
       padding: 17px;
+      margin-top: 28px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -1671,7 +1674,7 @@
     .ability-top {
       display: flex;
       gap: 12px;
-      align-items: flex-end;
+      align-items: flex-start;
       width: 100%;
     }
 
@@ -1712,12 +1715,13 @@
       flex: 0 0 auto;
       width: 104px;
       height: 156px;
-      margin-bottom: -37px;
+      margin-bottom: -78px;
       object-fit: contain;
       object-position: center bottom;
       filter: drop-shadow(0 12px 18px rgba(31, 45, 76, 0.2));
       position: relative;
       z-index: 3;
+      transform: translateY(-48px);
     }
 
     .ability-box {
@@ -2785,7 +2789,7 @@
     const hollandTypes = {
       R: { label: "实用型", nick: "匠人", word: "动手", color: "#315c9a", short: "工具、现场、原型、实际问题", careerLabel: "工程实作", directions: ["工程设计", "智能硬件", "工业设计", "建筑土木", "现场技术"] },
       I: { label: "研究型", nick: "哲人", word: "研究", color: "#6c5ce7", short: "分析、推理、验证、探索规律", careerLabel: "研究分析", directions: ["科研", "算法", "数据分析", "医学研究", "统计建模"] },
-      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#ff5b23", short: "表达、审美、内容、作品成形", careerLabel: "内容创意", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
+      A: { label: "艺术型", nick: "艺人", word: "创意", color: "#FF8400", short: "表达、审美、内容、作品成形", careerLabel: "内容创意", directions: ["视觉设计", "内容创作", "交互设计", "建筑设计", "计算机图形"] },
       S: { label: "社会型", nick: "好人", word: "助人", color: "#0f8b8d", short: "沟通、陪伴、教育、服务他人", careerLabel: "沟通助人", directions: ["教育", "心理咨询", "用户研究", "医疗服务", "公益服务"] },
       E: { label: "企业型", nick: "商人", word: "组织", color: "#ed4710", short: "说服、管理、争取、推动资源", careerLabel: "组织推进", directions: ["商业管理", "创业", "市场增长", "商务推进", "法律商务"] },
       C: { label: "常规型", nick: "公人", word: "秩序", color: "#8bbf16", short: "流程、规则、数据、稳定执行", careerLabel: "流程运营", directions: ["财会审计", "合规风控", "数据运营", "行政管理", "流程管理"] }

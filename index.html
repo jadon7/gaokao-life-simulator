@@ -1908,8 +1908,7 @@
     }
 
     .result-scene b {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       max-width: 100%;
       padding: 3.5px 10px;
       border-radius: 999px;
@@ -1917,7 +1916,9 @@
       font-size: 16px;
       font-weight: 700;
       line-height: 21.44px;
-      white-space: normal;
+      white-space: nowrap;
+      word-break: keep-all;
+      overflow-wrap: normal;
     }
 
     .result-scene span {
@@ -1973,15 +1974,16 @@
     }
 
     .result-chronicle-item b {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       max-width: 100%;
       padding: 3.3px 10px 4px;
       border-radius: 999px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      line-height: 21.24px;
-      white-space: normal;
+      line-height: 20.8px;
+      white-space: nowrap;
+      word-break: keep-all;
+      overflow-wrap: normal;
     }
 
     .result-chronicle-item p {
@@ -2035,8 +2037,7 @@
     }
 
     .result-guide-card b {
-      display: inline-flex;
-      align-items: center;
+      display: inline-block;
       max-width: 100%;
       padding: 4px 10px;
       border-radius: 999px;
@@ -2044,7 +2045,9 @@
       font-weight: 700;
       line-height: 19.5px;
       color: #172033;
-      white-space: normal;
+      white-space: nowrap;
+      word-break: keep-all;
+      overflow-wrap: normal;
     }
 
     .result-guide-card p {

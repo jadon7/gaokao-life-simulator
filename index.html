@@ -4862,6 +4862,7 @@
     function apiProfile(profile = state.profile) {
       const out = {
         gender: profile.gender || "不限定",
+        score: profile.score || "未知分数",
         hope: profile.hope || "稳定且体面",
         major: profile.majorLabel || profile.major || majorLabel()
       };

@@ -436,7 +436,8 @@
         ["完整跑完", t.completes],
         ["完成率", pct(t.completion_rate)],
         ["跳出率", pct(t.bounce_rate)],
-        ["分享点击", t.share_clicks]
+        ["分享点击", t.share_clicks],
+        ["抖音跳转", t.douyin_clicks]
       ];
       document.querySelector("#kpis").innerHTML = items.map(([label, value]) => `
         <div class="kpi"><b>${typeof value === "number" ? fmt(value) : safe(value)}</b><span>${safe(label)}</span></div>

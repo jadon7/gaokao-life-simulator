@@ -284,6 +284,7 @@ const analyticsEventNames = new Set([
   "share_click",
   "share_image_generated",
   "share_image_fail",
+  "douyin_click",
   "author_cta_click",
   "save_share_page_view",
   "api_request",
@@ -459,7 +460,7 @@ async function buildAnalyticsSummary(env, request) {
       COUNT(DISTINCT CASE WHEN event = 'result_view' THEN run_id END) AS result_views,
       COUNT(DISTINCT CASE WHEN event = 'game_complete' THEN run_id END) AS completes,
       SUM(CASE WHEN event = 'share_click' THEN 1 ELSE 0 END) AS share_clicks,
-      SUM(CASE WHEN event = 'author_cta_click' THEN 1 ELSE 0 END) AS author_clicks
+      SUM(CASE WHEN event IN ('douyin_click', 'author_cta_click') THEN 1 ELSE 0 END) AS douyin_clicks
     FROM analytics_events
     WHERE created_at >= ?
   `, since);

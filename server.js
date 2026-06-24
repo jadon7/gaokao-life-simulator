@@ -345,6 +345,7 @@ const analyticsEventNames = new Set([
   "share_click",
   "share_image_generated",
   "share_image_fail",
+  "douyin_click",
   "author_cta_click",
   "save_share_page_view",
   "api_request",

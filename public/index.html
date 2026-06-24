@@ -10472,7 +10472,8 @@
     });
     document.querySelector("#saveResult").addEventListener("click", openShareSheet);
     document.querySelector(".author-cta")?.addEventListener("click", () => {
-      trackAnalytics("author_cta_click", {
+      trackAnalytics("douyin_click", {
+        source: "result_author_cta",
         holland_primary: state.history.length ? getHollandSummaryData().primary : ""
       }, { beacon: true });
     });

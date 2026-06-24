@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>人生扭蛋机埋点面板</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #6b7485;
+      --line: #dce3ee;
+      --blue: #2377ff;
+      --green: #11a67a;
+      --orange: #ef7d18;
+      --red: #e54b4b;
+      --shadow: 0 14px 34px rgba(42, 58, 90, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button.is-active {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+    .panel {
+      grid-column: span 6;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .wide { grid-column: span 12; }
+    .third { grid-column: span 4; }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .kpi {
+      background: #f8fbff;
+      border: 1px solid #e4ebf6;
+      border-radius: 12px;
+      padding: 13px;
+      min-width: 0;
+    }
+    .kpi b {
+      display: block;
+      font-size: 24px;
+      line-height: 1.1;
+      word-break: break-all;
+    }
+    .kpi span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .bar-list {
+      display: grid;
+      gap: 10px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) 64px;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .bar-label {
+      color: #344054;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bar-track {
+      height: 10px;
+      background: #edf2f8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      width: var(--value, 0%);
+      min-width: 2px;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #1e8fff, #12c7a0);
+    }
+    .bar-value {
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+    .chart {
+      width: 100%;
+      min-height: 180px;
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      padding-top: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .hour {
+      flex: 1;
+      min-width: 8px;
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+      height: 160px;
+    }
+    .hour i {
+      display: block;
+      flex: 1;
+      min-height: 2px;
+      border-radius: 4px 4px 0 0;
+    }
+    .hour .sessions { background: #8bb8ff; }
+    .hour .completes { background: #12c7a0; }
+    .legend {
+      display: flex;
+      gap: 14px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .legend i {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      margin-right: 5px;
+      vertical-align: -1px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 9px 7px;
+      border-bottom: 1px solid #edf1f7;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    td {
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: #1f62d1;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    .status {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .empty {
+      color: var(--muted);
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .top { display: block; }
+      .toolbar { justify-content: flex-start; margin-top: 14px; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .panel, .third { grid-column: span 12; }
+      .bar-row { grid-template-columns: 78px minmax(0, 1fr) 48px; }
+      .shell { width: min(100% - 20px, 1180px); padding-top: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div>
+        <h1>人生扭蛋机埋点面板</h1>
+        <p class="sub">只展示脱敏后的聚合数据；姓名、原始 prompt、完整剧情正文不会进入面板。</p>
+        <p class="status" id="status">正在加载数据...</p>
+      </div>
+      <div class="toolbar" id="rangeButtons">
+        <button type="button" data-days="1">1 天</button>
+        <button type="button" data-days="7" class="is-active">7 天</button>
+        <button type="button" data-days="30">30 天</button>
+        <button type="button" id="refresh">刷新</button>
+      </div>
+    </header>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="grid">
+      <article class="panel wide">
+        <h2>小时趋势</h2>
+        <div class="chart" id="hourly"></div>
+        <div class="legend"><span><i style="background:#8bb8ff"></i>访问会话</span><span><i style="background:#12c7a0"></i>完成</span></div>
+      </article>
+
+      <article class="panel">
+        <h2>主流程漏斗</h2>
+        <div id="funnel" class="bar-list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>跳出位置</h2>
+        <div id="exitsByFlow" class="bar-list"></div>
+      </article>
+
+      <article class="panel third">
+        <h2>退出进度</h2>
+        <div id="exitsByProgress" class="bar-list"></div>
+      </article>
+
+      <article class="panel third">
+        <h2>人格分布</h2>
+        <div id="holland" class="bar-list"></div>
+      </article>
+
+      <article class="panel third">
+        <h2>内容标记</h2>
+        <div id="contentFlags" class="bar-list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>分数段完成率</h2>
+        <div id="scoreBands" class="bar-list"></div>
+      </article>
+
+      <article class="panel">
+        <h2>重复场景 Top</h2>
+        <div id="topScenes" class="bar-list"></div>
+      </article>
+
+      <article class="panel wide">
+        <h2>接口表现</h2>
+        <div id="apiTable"></div>
+      </article>
+
+      <article class="panel wide">
+        <h2>最近事件</h2>
+        <div id="recentEvents"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const state = { days: 7, summary: null };
+    const eventLabels = {
+      profile_submit: "提交资料",
+      game_start_success: "开局成功",
+      choice_click: "选择卡片",
+      result_view: "到达结果",
+      game_complete: "完整跑完"
+    };
+    const flowLabels = {
+      entry: "首页",
+      setup: "资料页",
+      play: "答题中",
+      result: "结果页"
+    };
+    const flagLabels = {
+      postgrad_cards: "考研卡",
+      child_birth_cards: "孩子出生",
+      child_care_cards: "育儿照护",
+      positive_cards: "正反馈",
+      pressure_cards: "压力场景"
+    };
+
+    function n(value) {
+      return Number(value || 0);
+    }
+    function pct(value) {
+      return `${Math.round(n(value) * 100)}%`;
+    }
+    function fmt(value) {
+      return new Intl.NumberFormat("zh-CN").format(Math.round(n(value)));
+    }
+    function safe(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+    function maxOf(rows, field = "count") {
+      return Math.max(1, ...rows.map(row => n(row[field])));
+    }
+    function emptyHTML(text = "暂无数据") {
+      return `<div class="empty">${safe(text)}</div>`;
+    }
+    function barRows(rows, options = {}) {
+      if (!rows.length) return emptyHTML();
+      const valueField = options.valueField || "count";
+      const max = options.max || maxOf(rows, valueField);
+      return rows.map(row => {
+        const label = options.label ? options.label(row) : row.label;
+        const value = n(row[valueField]);
+        const text = options.value ? options.value(row) : fmt(value);
+        return `
+          <div class="bar-row">
+            <div class="bar-label" title="${safe(label)}">${safe(label)}</div>
+            <div class="bar-track"><div class="bar-fill" style="--value:${Math.max(1, value / max * 100)}%"></div></div>
+            <div class="bar-value">${safe(text)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+    function renderKpis(summary) {
+      const t = summary.totals || {};
+      const items = [
+        ["会话", t.sessions],
+        ["提交资料", t.starts],
+        ["完整跑完", t.completes],
+        ["完成率", pct(t.completion_rate)],
+        ["跳出率", pct(t.bounce_rate)],
+        ["分享点击", t.share_clicks]
+      ];
+      document.querySelector("#kpis").innerHTML = items.map(([label, value]) => `
+        <div class="kpi"><b>${typeof value === "number" ? fmt(value) : safe(value)}</b><span>${safe(label)}</span></div>
+      `).join("");
+    }
+    function renderHourly(rows) {
+      const el = document.querySelector("#hourly");
+      if (!rows.length) {
+        el.innerHTML = emptyHTML();
+        return;
+      }
+      const max = Math.max(1, ...rows.map(row => Math.max(n(row.sessions), n(row.completes))));
+      el.innerHTML = rows.map(row => `
+        <div class="hour" title="${safe(row.hour)} 会话 ${fmt(row.sessions)} / 完成 ${fmt(row.completes)}">
+          <i class="sessions" style="height:${Math.max(2, n(row.sessions) / max * 100)}%"></i>
+          <i class="completes" style="height:${Math.max(2, n(row.completes) / max * 100)}%"></i>
+        </div>
+      `).join("");
+    }
+    function renderFunnel(rows) {
+      const byEvent = Object.fromEntries(rows.map(row => [row.event, n(row.count)]));
+      const ordered = ["profile_submit", "game_start_success", "choice_click", "result_view", "game_complete"]
+        .map(event => ({ label: eventLabels[event], count: byEvent[event] || 0 }));
+      document.querySelector("#funnel").innerHTML = barRows(ordered);
+    }
+    function renderSummary(summary) {
+      renderKpis(summary);
+      renderHourly(summary.hourly || []);
+      renderFunnel(summary.funnel || []);
+      document.querySelector("#exitsByFlow").innerHTML = barRows((summary.exitsByFlow || []).map(row => ({
+        ...row,
+        label: flowLabels[row.flow] || row.flow || "未知"
+      })), { valueField: "exits", value: row => `${fmt(row.exits)} / 跳出 ${fmt(row.bounces)}` });
+      document.querySelector("#exitsByProgress").innerHTML = barRows((summary.exitsByProgress || []).map(row => ({
+        ...row,
+        label: `${row.history_count || 0} 张`
+      })), { valueField: "exits" });
+      document.querySelector("#holland").innerHTML = barRows((summary.holland || []).map(row => ({
+        ...row,
+        label: row.holland_primary || "未知"
+      })));
+      const flags = summary.contentFlags || {};
+      document.querySelector("#contentFlags").innerHTML = barRows(Object.entries(flagLabels).map(([key, label]) => ({
+        label,
+        count: flags[key] || 0
+      })));
+      document.querySelector("#scoreBands").innerHTML = barRows((summary.scoreBands || []).map(row => ({
+        ...row,
+        label: row.score_band || "未知",
+        rate: n(row.starts) ? n(row.completes) / n(row.starts) : 0
+      })), { valueField: "starts", value: row => `${fmt(row.starts)} / ${pct(row.rate)}` });
+      document.querySelector("#topScenes").innerHTML = barRows((summary.topScenes || []).map(row => ({
+        ...row,
+        label: row.scene_title || "未知"
+      })));
+      renderApiTable(summary.api || []);
+      renderRecentEvents(summary.recentEvents || []);
+    }
+    function renderApiTable(rows) {
+      document.querySelector("#apiTable").innerHTML = rows.length ? `
+        <table>
+          <thead><tr><th>接口</th><th>状态</th><th>错误</th><th>次数</th><th>平均耗时</th></tr></thead>
+          <tbody>${rows.map(row => `
+            <tr>
+              <td>${safe(row.endpoint || "-")}</td>
+              <td><span class="tag">${safe(row.status || "-")}</span></td>
+              <td>${safe(row.error_type || "-")}</td>
+              <td>${fmt(row.count)}</td>
+              <td>${fmt(row.avg_ms)} ms</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
+      ` : emptyHTML();
+    }
+    function renderRecentEvents(rows) {
+      document.querySelector("#recentEvents").innerHTML = rows.length ? `
+        <table>
+          <thead><tr><th>时间</th><th>事件</th><th>位置</th><th>进度</th><th>状态</th><th>摘要</th></tr></thead>
+          <tbody>${rows.map(row => `
+            <tr>
+              <td>${safe(row.created_at || "")}</td>
+              <td>${safe(row.event || "")}</td>
+              <td>${safe(flowLabels[row.flow] || row.flow || "-")}</td>
+              <td>${safe(row.history_count ?? "-")}</td>
+              <td>${row.completed ? "完成" : row.bounced ? "跳出" : safe(row.status || "-")}</td>
+              <td>${safe(row.scene_title || row.endpoint || row.major_label || row.holland_primary || "-")}</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
+      ` : emptyHTML();
+    }
+    async function load() {
+      const status = document.querySelector("#status");
+      status.textContent = "正在加载数据...";
+      try {
+        const res = await fetch(`/api/analytics/summary?days=${state.days}`, { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || "加载失败");
+        state.summary = data.summary;
+        renderSummary(data.summary);
+        status.textContent = `最近 ${data.summary.days} 天，更新时间 ${new Date(data.summary.generatedAt).toLocaleString("zh-CN")}`;
+      } catch (error) {
+        status.textContent = error.message || "加载失败";
+      }
+    }
+    document.querySelector("#rangeButtons").addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      if (button.id === "refresh") {
+        load();
+        return;
+      }
+      const days = Number(button.dataset.days || 7);
+      state.days = days;
+      document.querySelectorAll("[data-days]").forEach(item => item.classList.toggle("is-active", Number(item.dataset.days) === days));
+      load();
+    });
+    load();
+  </script>
+</body>
+</html>

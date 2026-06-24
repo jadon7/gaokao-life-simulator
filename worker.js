@@ -349,7 +349,225 @@ function analyticsBodySummary(body = {}, meta = {}) {
 }
 
 function logAnalyticsEvent(body = {}, meta = {}) {
-  console.log(JSON.stringify(analyticsBodySummary(body, meta)));
+  const row = analyticsBodySummary(body, meta);
+  console.log(JSON.stringify(row));
+  return row;
+}
+
+function dbBool(value) {
+  return value === true ? 1 : value === false ? 0 : null;
+}
+
+async function storeAnalyticsEvent(env, row = {}) {
+  if (!env?.ANALYTICS_DB || row.event === "unknown") return;
+  await env.ANALYTICS_DB.prepare(`
+    INSERT INTO analytics_events (
+      event, session_id, run_id, flow, year, history_count, completed, bounced,
+      duration_ms, endpoint, status, error_type, transport, score_band, major_label,
+      holland_primary, scene_title, phase, main_track, choice_side, choice_tag,
+      choice_riasec_top, is_postgrad, child_birth, child_care, positive_scene,
+      pressure_scene, degraded, share_mode, source, exit_reason, path, referrer_host, ua
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    row.event || null,
+    row.session_id || null,
+    row.run_id || null,
+    row.flow || null,
+    row.year == null ? null : String(row.year),
+    row.history_count ?? null,
+    dbBool(row.completed),
+    dbBool(row.bounced),
+    row.duration_ms ?? null,
+    row.endpoint || null,
+    row.status ?? null,
+    row.error_type || null,
+    row.transport || null,
+    row.score_band || null,
+    row.major_label || null,
+    row.holland_primary || null,
+    row.scene_title || null,
+    row.phase || null,
+    row.main_track || null,
+    row.choice_side || null,
+    row.choice_tag || null,
+    row.choice_riasec_top || null,
+    dbBool(row.is_postgrad),
+    dbBool(row.child_birth),
+    dbBool(row.child_care),
+    dbBool(row.positive_scene),
+    dbBool(row.pressure_scene),
+    dbBool(row.degraded),
+    row.share_mode || null,
+    row.source || null,
+    row.exit_reason || null,
+    row.path || null,
+    row.referrer_host || null,
+    row.ua || null
+  ).run();
+}
+
+function emptyAnalyticsSummary(days = 7) {
+  return {
+    days,
+    generatedAt: new Date().toISOString(),
+    totals: {},
+    funnel: [],
+    hourly: [],
+    exitsByFlow: [],
+    exitsByProgress: [],
+    holland: [],
+    scoreBands: [],
+    contentFlags: {},
+    topScenes: [],
+    api: [],
+    recentEvents: []
+  };
+}
+
+async function analyticsQuery(db, sql, ...bindings) {
+  const result = await db.prepare(sql).bind(...bindings).all();
+  return result.results || [];
+}
+
+async function buildAnalyticsSummary(env, request) {
+  if (!env?.ANALYTICS_DB) return emptyAnalyticsSummary();
+  const url = new URL(request.url);
+  const days = Math.min(Math.max(Number(url.searchParams.get("days") || 7) || 7, 1), 30);
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const db = env.ANALYTICS_DB;
+  const summary = emptyAnalyticsSummary(days);
+  summary.since = since;
+
+  const [totals] = await analyticsQuery(db, `
+    SELECT
+      COUNT(*) AS events,
+      COUNT(DISTINCT session_id) AS sessions,
+      COUNT(DISTINCT run_id) AS runs,
+      COUNT(DISTINCT CASE WHEN event = 'profile_submit' THEN run_id END) AS starts,
+      COUNT(DISTINCT CASE WHEN event = 'result_view' THEN run_id END) AS result_views,
+      COUNT(DISTINCT CASE WHEN event = 'game_complete' THEN run_id END) AS completes,
+      SUM(CASE WHEN event = 'share_click' THEN 1 ELSE 0 END) AS share_clicks,
+      SUM(CASE WHEN event = 'author_cta_click' THEN 1 ELSE 0 END) AS author_clicks
+    FROM analytics_events
+    WHERE created_at >= ?
+  `, since);
+
+  const [exits] = await analyticsQuery(db, `
+    SELECT
+      COUNT(*) AS exits,
+      SUM(CASE WHEN bounced = 1 THEN 1 ELSE 0 END) AS bounces,
+      AVG(history_count) AS avg_history_count
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'session_exit'
+  `, since);
+
+  const starts = Number(totals?.starts || 0);
+  const completes = Number(totals?.completes || 0);
+  const exitsCount = Number(exits?.exits || 0);
+  const bounces = Number(exits?.bounces || 0);
+  summary.totals = {
+    ...totals,
+    exits: exitsCount,
+    bounces,
+    completion_rate: starts ? completes / starts : 0,
+    bounce_rate: exitsCount ? bounces / exitsCount : 0,
+    avg_exit_history_count: Number(exits?.avg_history_count || 0)
+  };
+
+  summary.funnel = await analyticsQuery(db, `
+    SELECT event, COUNT(DISTINCT run_id) AS count
+    FROM analytics_events
+    WHERE created_at >= ? AND event IN ('profile_submit', 'game_start_success', 'choice_click', 'result_view', 'game_complete')
+    GROUP BY event
+  `, since);
+
+  summary.hourly = await analyticsQuery(db, `
+    SELECT
+      substr(created_at, 1, 13) || ':00:00Z' AS hour,
+      COUNT(DISTINCT session_id) AS sessions,
+      COUNT(DISTINCT CASE WHEN event = 'profile_submit' THEN run_id END) AS starts,
+      COUNT(DISTINCT CASE WHEN event = 'game_complete' THEN run_id END) AS completes,
+      SUM(CASE WHEN event = 'share_click' THEN 1 ELSE 0 END) AS shares
+    FROM analytics_events
+    WHERE created_at >= ?
+    GROUP BY hour
+    ORDER BY hour
+  `, since);
+
+  summary.exitsByFlow = await analyticsQuery(db, `
+    SELECT flow, COUNT(*) AS exits, SUM(CASE WHEN bounced = 1 THEN 1 ELSE 0 END) AS bounces
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'session_exit'
+    GROUP BY flow
+    ORDER BY exits DESC
+  `, since);
+
+  summary.exitsByProgress = await analyticsQuery(db, `
+    SELECT history_count, COUNT(*) AS exits
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'session_exit'
+    GROUP BY history_count
+    ORDER BY history_count
+  `, since);
+
+  summary.holland = await analyticsQuery(db, `
+    SELECT holland_primary, COUNT(DISTINCT run_id) AS count
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'result_view' AND holland_primary IS NOT NULL
+    GROUP BY holland_primary
+    ORDER BY count DESC
+  `, since);
+
+  summary.scoreBands = await analyticsQuery(db, `
+    SELECT
+      score_band,
+      COUNT(DISTINCT CASE WHEN event = 'profile_submit' THEN run_id END) AS starts,
+      COUNT(DISTINCT CASE WHEN event = 'game_complete' THEN run_id END) AS completes
+    FROM analytics_events
+    WHERE created_at >= ? AND score_band IS NOT NULL
+    GROUP BY score_band
+    ORDER BY score_band
+  `, since);
+
+  const [contentFlags] = await analyticsQuery(db, `
+    SELECT
+      SUM(CASE WHEN is_postgrad = 1 THEN 1 ELSE 0 END) AS postgrad_cards,
+      SUM(CASE WHEN child_birth = 1 THEN 1 ELSE 0 END) AS child_birth_cards,
+      SUM(CASE WHEN child_care = 1 THEN 1 ELSE 0 END) AS child_care_cards,
+      SUM(CASE WHEN positive_scene = 1 THEN 1 ELSE 0 END) AS positive_cards,
+      SUM(CASE WHEN pressure_scene = 1 THEN 1 ELSE 0 END) AS pressure_cards
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'card_view'
+  `, since);
+  summary.contentFlags = contentFlags || {};
+
+  summary.topScenes = await analyticsQuery(db, `
+    SELECT scene_title, COUNT(*) AS count
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'card_view' AND scene_title IS NOT NULL
+    GROUP BY scene_title
+    ORDER BY count DESC
+    LIMIT 12
+  `, since);
+
+  summary.api = await analyticsQuery(db, `
+    SELECT endpoint, status, error_type, COUNT(*) AS count, AVG(duration_ms) AS avg_ms
+    FROM analytics_events
+    WHERE created_at >= ? AND event = 'api_request'
+    GROUP BY endpoint, status, error_type
+    ORDER BY count DESC
+    LIMIT 24
+  `, since);
+
+  summary.recentEvents = await analyticsQuery(db, `
+    SELECT created_at, event, flow, year, history_count, completed, bounced, endpoint, status, error_type, score_band, major_label, holland_primary, scene_title
+    FROM analytics_events
+    WHERE created_at >= ?
+    ORDER BY created_at DESC
+    LIMIT 80
+  `, since);
+
+  return summary;
 }
 
 function attachModelError(error, metadata = {}) {
@@ -1375,10 +1593,15 @@ async function handleApi(request, env, pathname) {
     });
   }
 
+  if (pathname === "/api/analytics/summary") {
+    return sendJson(200, { ok: true, summary: await buildAnalyticsSummary(env, request) });
+  }
+
   if (pathname === "/api/analytics") {
     try {
       const body = await readJson(request);
-      logAnalyticsEvent(body, { ua: request.headers.get("user-agent") || "" });
+      const row = logAnalyticsEvent(body, { ua: request.headers.get("user-agent") || "" });
+      await storeAnalyticsEvent(env, row);
     } catch (error) {
       console.warn(JSON.stringify({
         evt: "analytics_parse_failed",
@@ -1516,7 +1739,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
-      if (url.pathname !== "/api/health" && request.method !== "POST") {
+      const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary";
+      if (!allowsGet && request.method !== "POST") {
         return sendJson(405, { ok: false, error: "Method not allowed" });
       }
       const startedAt = Date.now();

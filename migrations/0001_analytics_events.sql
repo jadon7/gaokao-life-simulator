@@ -1,0 +1,42 @@
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  event TEXT NOT NULL,
+  session_id TEXT,
+  run_id TEXT,
+  flow TEXT,
+  year TEXT,
+  history_count INTEGER,
+  completed INTEGER,
+  bounced INTEGER,
+  duration_ms INTEGER,
+  endpoint TEXT,
+  status INTEGER,
+  error_type TEXT,
+  transport TEXT,
+  score_band TEXT,
+  major_label TEXT,
+  holland_primary TEXT,
+  scene_title TEXT,
+  phase TEXT,
+  main_track TEXT,
+  choice_side TEXT,
+  choice_tag TEXT,
+  choice_riasec_top TEXT,
+  is_postgrad INTEGER,
+  child_birth INTEGER,
+  child_care INTEGER,
+  positive_scene INTEGER,
+  pressure_scene INTEGER,
+  degraded INTEGER,
+  share_mode TEXT,
+  source TEXT,
+  exit_reason TEXT,
+  path TEXT,
+  referrer_host TEXT,
+  ua TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_created ON analytics_events(event, created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_session ON analytics_events(session_id, created_at);

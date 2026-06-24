@@ -413,6 +413,24 @@ function logAnalyticsEvent(body = {}, meta = {}) {
   console.log(JSON.stringify(analyticsBodySummary(body, meta)));
 }
 
+function emptyAnalyticsSummary(days = 7) {
+  return {
+    days,
+    generatedAt: new Date().toISOString(),
+    totals: {},
+    funnel: [],
+    hourly: [],
+    exitsByFlow: [],
+    exitsByProgress: [],
+    holland: [],
+    scoreBands: [],
+    contentFlags: {},
+    topScenes: [],
+    api: [],
+    recentEvents: []
+  };
+}
+
 function attachModelError(error, metadata = {}) {
   if (!error || typeof error !== "object") return error;
   if (metadata.status && !error.status) error.status = metadata.status;
@@ -1430,6 +1448,10 @@ async function handleApi(req, res, pathname) {
     });
     return;
   }
+  if (pathname === "/api/analytics/summary") {
+    sendJson(res, 200, { ok: true, summary: emptyAnalyticsSummary() });
+    return;
+  }
   if (pathname === "/api/analytics") {
     try {
       const body = await readJson(req);
@@ -1604,7 +1626,8 @@ async function serveStatic(res, pathname) {
 createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
   if (url.pathname.startsWith("/api/")) {
-    if (url.pathname !== "/api/health" && req.method !== "POST") {
+    const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary";
+    if (!allowsGet && req.method !== "POST") {
       sendJson(res, 405, { ok: false, error: "Method not allowed" });
       return;
     }

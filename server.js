@@ -426,8 +426,20 @@ function emptyAnalyticsSummary(days = 7) {
     scoreBands: [],
     contentFlags: {},
     topScenes: [],
-    api: [],
-    recentEvents: []
+    api: []
+  };
+}
+
+function emptyAnalyticsEvents(days = 7, page = 1, limit = 100) {
+  return {
+    days,
+    page,
+    limit,
+    total: null,
+    totalPages: null,
+    hasPrev: false,
+    hasNext: false,
+    events: []
   };
 }
 
@@ -1452,6 +1464,14 @@ async function handleApi(req, res, pathname) {
     sendJson(res, 200, { ok: true, summary: emptyAnalyticsSummary() });
     return;
   }
+  if (pathname === "/api/analytics/events") {
+    const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
+    const days = Math.min(Math.max(Number(url.searchParams.get("days") || 7) || 7, 1), 30);
+    const page = Math.max(Number(url.searchParams.get("page") || 1) || 1, 1);
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 100) || 100, 1), 100);
+    sendJson(res, 200, { ok: true, recentEvents: emptyAnalyticsEvents(days, page, limit) });
+    return;
+  }
   if (pathname === "/api/analytics") {
     try {
       const body = await readJson(req);
@@ -1626,7 +1646,7 @@ async function serveStatic(res, pathname) {
 createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
   if (url.pathname.startsWith("/api/")) {
-    const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary";
+    const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary" || url.pathname === "/api/analytics/events";
     if (!allowsGet && req.method !== "POST") {
       sendJson(res, 405, { ok: false, error: "Method not allowed" });
       return;

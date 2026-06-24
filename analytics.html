@@ -57,6 +57,26 @@
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .panel-head h2 {
+      margin: 0;
+    }
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
     button {
       border: 1px solid var(--line);
       background: #fff;
@@ -70,6 +90,10 @@
       border-color: var(--blue);
       background: var(--blue);
       color: #fff;
+    }
+    button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
     }
     .grid {
       display: grid;
@@ -235,6 +259,12 @@
       color: var(--muted);
       font-size: 12px;
     }
+    .events-meta {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
     .empty {
       color: var(--muted);
       padding: 18px;
@@ -245,6 +275,8 @@
     @media (max-width: 900px) {
       .top { display: block; }
       .toolbar { justify-content: flex-start; margin-top: 14px; }
+      .panel-head { display: block; }
+      .pager { justify-content: flex-start; margin-top: 10px; }
       .kpis { grid-template-columns: repeat(2, 1fr); }
       .panel, .third { grid-column: span 12; }
       .bar-row { grid-template-columns: 78px minmax(0, 1fr) 48px; }
@@ -318,14 +350,22 @@
       </article>
 
       <article class="panel wide">
-        <h2>最近事件</h2>
+        <div class="panel-head">
+          <h2>最近事件</h2>
+          <div class="pager">
+            <button type="button" id="recentPrev">上一页</button>
+            <span id="recentPage">第 1 页</span>
+            <button type="button" id="recentNext">下一页</button>
+          </div>
+        </div>
+        <p class="events-meta" id="recentMeta">每页最多 100 条</p>
         <div id="recentEvents"></div>
       </article>
     </section>
   </main>
 
   <script>
-    const state = { days: 7, summary: null };
+    const state = { days: 7, summary: null, recentPage: 1, recentLimit: 100 };
     const eventLabels = {
       profile_submit: "提交资料",
       game_start_success: "开局成功",
@@ -453,7 +493,6 @@
         label: row.scene_title || "未知"
       })));
       renderApiTable(summary.api || []);
-      renderRecentEvents(summary.recentEvents || []);
     }
     function renderApiTable(rows) {
       document.querySelector("#apiTable").innerHTML = rows.length ? `
@@ -471,7 +510,15 @@
         </table>
       ` : emptyHTML();
     }
-    function renderRecentEvents(rows) {
+    function renderRecentEvents(payload) {
+      const rows = payload.events || [];
+      const pageHint = payload.hasNext ? "还有下一页" : "已到最后一页";
+      document.querySelector("#recentMeta").textContent = rows.length
+        ? `第 ${payload.page} 页，本页 ${fmt(rows.length)} 条，每页最多 ${payload.limit} 条，${pageHint}`
+        : `最近 ${payload.days} 天暂无事件，每页最多 ${payload.limit} 条`;
+      document.querySelector("#recentPage").textContent = `第 ${payload.page} 页`;
+      document.querySelector("#recentPrev").disabled = !payload.hasPrev;
+      document.querySelector("#recentNext").disabled = !payload.hasNext;
       document.querySelector("#recentEvents").innerHTML = rows.length ? `
         <table>
           <thead><tr><th>时间</th><th>事件</th><th>位置</th><th>进度</th><th>状态</th><th>摘要</th></tr></thead>
@@ -488,6 +535,13 @@
         </table>
       ` : emptyHTML();
     }
+    async function loadRecentEvents() {
+      document.querySelector("#recentMeta").textContent = "正在加载最近事件...";
+      const res = await fetch(`/api/analytics/events?days=${state.days}&page=${state.recentPage}&limit=${state.recentLimit}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "最近事件加载失败");
+      renderRecentEvents(data.recentEvents);
+    }
     async function load() {
       const status = document.querySelector("#status");
       status.textContent = "正在加载数据...";
@@ -497,6 +551,7 @@
         if (!res.ok || !data.ok) throw new Error(data.error || "加载失败");
         state.summary = data.summary;
         renderSummary(data.summary);
+        await loadRecentEvents();
         status.textContent = `最近 ${data.summary.days} 天，更新时间 ${new Date(data.summary.generatedAt).toLocaleString("zh-CN")}`;
       } catch (error) {
         status.textContent = error.message || "加载失败";
@@ -511,8 +566,17 @@
       }
       const days = Number(button.dataset.days || 7);
       state.days = days;
+      state.recentPage = 1;
       document.querySelectorAll("[data-days]").forEach(item => item.classList.toggle("is-active", Number(item.dataset.days) === days));
       load();
+    });
+    document.querySelector("#recentPrev").addEventListener("click", () => {
+      state.recentPage = Math.max(1, state.recentPage - 1);
+      loadRecentEvents();
+    });
+    document.querySelector("#recentNext").addEventListener("click", () => {
+      state.recentPage += 1;
+      loadRecentEvents();
     });
     load();
   </script>

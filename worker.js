@@ -419,8 +419,20 @@ function emptyAnalyticsSummary(days = 7) {
     scoreBands: [],
     contentFlags: {},
     topScenes: [],
-    api: [],
-    recentEvents: []
+    api: []
+  };
+}
+
+function emptyAnalyticsEvents(days = 7, page = 1, limit = 100) {
+  return {
+    days,
+    page,
+    limit,
+    total: null,
+    totalPages: null,
+    hasPrev: false,
+    hasNext: false,
+    events: []
   };
 }
 
@@ -559,15 +571,39 @@ async function buildAnalyticsSummary(env, request) {
     LIMIT 24
   `, since);
 
-  summary.recentEvents = await analyticsQuery(db, `
+  return summary;
+}
+
+async function buildAnalyticsEvents(env, request) {
+  const url = new URL(request.url);
+  const days = Math.min(Math.max(Number(url.searchParams.get("days") || 7) || 7, 1), 30);
+  const page = Math.max(Number(url.searchParams.get("page") || 1) || 1, 1);
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 100) || 100, 1), 100);
+  if (!env?.ANALYTICS_DB) return emptyAnalyticsEvents(days, page, limit);
+
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const db = env.ANALYTICS_DB;
+  const offset = (page - 1) * limit;
+  const rows = await analyticsQuery(db, `
     SELECT created_at, event, flow, year, history_count, completed, bounced, endpoint, status, error_type, score_band, major_label, holland_primary, scene_title
     FROM analytics_events
     WHERE created_at >= ?
     ORDER BY created_at DESC
-    LIMIT 80
-  `, since);
+    LIMIT ? OFFSET ?
+  `, since, limit + 1, offset);
+  const hasNext = rows.length > limit;
 
-  return summary;
+  return {
+    days,
+    since,
+    page,
+    limit,
+    total: null,
+    totalPages: null,
+    hasPrev: page > 1,
+    hasNext,
+    events: hasNext ? rows.slice(0, limit) : rows
+  };
 }
 
 function attachModelError(error, metadata = {}) {
@@ -1597,6 +1633,10 @@ async function handleApi(request, env, pathname) {
     return sendJson(200, { ok: true, summary: await buildAnalyticsSummary(env, request) });
   }
 
+  if (pathname === "/api/analytics/events") {
+    return sendJson(200, { ok: true, recentEvents: await buildAnalyticsEvents(env, request) });
+  }
+
   if (pathname === "/api/analytics") {
     try {
       const body = await readJson(request);
@@ -1739,7 +1779,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
-      const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary";
+      const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary" || url.pathname === "/api/analytics/events";
       if (!allowsGet && request.method !== "POST") {
         return sendJson(405, { ok: false, error: "Method not allowed" });
       }

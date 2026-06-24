@@ -8,7 +8,6 @@ import {
   buildAnnualInput,
   buildBatchInput,
   buildResultInput,
-  childTimelineStage,
   getOutlineCard,
   vNextResultTaskPrompt,
   vNextSystemPrompt
@@ -35,8 +34,6 @@ const promptLabRealProxyModels = [
 
 const annualFields = ["summary", "question", "scene", "a", "b"];
 const resultFields = ["title", "status42", "majorCareerNote", "careerPossibilities", "famousScenes", "timelineBlocks", "choiceHabit", "mentalPrep", "letter18", "innerYearning", "shareHooks"];
-const childBornFactPattern = /孩子(?:出生|刚出生|刚满|满[一二两三四五六七八九十\d]+岁|夜醒|照护|生病|发烧|哭闹|接送|上学|入园|睡着|睡了)|小孩(?:出生|刚出生|刚满|满[一二两三四五六七八九十\d]+岁|夜醒|照护|生病|发烧|哭闹|接送|上学|入园)|宝宝|新生儿|托育|幼儿园|班主任|儿科|陪诊|分离焦虑|哄娃|育儿分工|婴幼儿|新成员抱回家|生下小孩/;
-const matureChildCarePattern = /托育|幼儿园|班主任|分离焦虑|入园|上学|周岁|刚满[一二两三四五六七八九十\d]+岁|满[一二两三四五六七八九十\d]+岁/;
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -535,40 +532,8 @@ function validateAnnual(data, history = [], repeatHistory = history, expectedYea
   if (!normalized.scene.body || !normalized.a.title || !normalized.b.title) {
     throw new Error("Invalid annual JSON: empty required field");
   }
-  enforceChildTimelineOrder(normalized, history);
   enforceSecondYearRelationEntry(normalized, profile);
   return normalized;
-}
-
-function annualChildTimelineText(card) {
-  return [
-    card?.phase,
-    card?.lifeTrack,
-    card?.relationshipTrack,
-    card?.summary,
-    card?.scene?.title,
-    card?.scene?.body,
-    card?.a?.title,
-    card?.a?.label,
-    card?.a?.tag,
-    card?.a?.consequence,
-    card?.b?.title,
-    card?.b?.label,
-    card?.b?.tag,
-    card?.b?.consequence
-  ].map(optionalCleanText).filter(Boolean).join(" ");
-}
-
-function enforceChildTimelineOrder(card, history = []) {
-  const text = annualChildTimelineText(card);
-  const stage = childTimelineStage(history, card?.year);
-  if (stage === "出生") {
-    if (matureChildCarePattern.test(text)) throw new Error("Invalid annual JSON: child care before child birth");
-    return card;
-  }
-  if (stage === "婴幼儿" || stage === "成长") return card;
-  if (childBornFactPattern.test(text)) throw new Error("Invalid annual JSON: child care before child birth");
-  return card;
 }
 
 function secondYearRelationIntro(profile = {}) {

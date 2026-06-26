@@ -204,6 +204,8 @@
     }
     .hour .sessions { background: #8bb8ff; }
     .hour .starts { background: #2377ff; }
+    .hour .previous-starts { background: #c9d8f2; }
+    .hour .current-starts { background: #2377ff; }
     .hour .completes { background: #12c7a0; }
     .legend {
       display: flex;
@@ -308,6 +310,12 @@
         <h2>小时趋势</h2>
         <div class="chart" id="hourly"></div>
         <div class="legend"><span><i style="background:#8bb8ff"></i>访问会话</span><span><i style="background:#2377ff"></i>新增开局</span><span><i style="background:#12c7a0"></i>完成</span></div>
+      </article>
+
+      <article class="panel wide">
+        <h2>测量人数对比</h2>
+        <div class="chart" id="hourlyStartsCompare"></div>
+        <div class="legend"><span><i style="background:#2377ff"></i>当前周期</span><span><i style="background:#c9d8f2"></i>上一周期同小时</span></div>
       </article>
 
       <article class="panel">
@@ -459,6 +467,24 @@
         </div>
       `).join("");
     }
+    function renderHourlyStartsCompare(rows) {
+      const el = document.querySelector("#hourlyStartsCompare");
+      if (!rows.length) {
+        el.innerHTML = emptyHTML();
+        return;
+      }
+      const max = Math.max(1, ...rows.map(row => Math.max(n(row.starts), n(row.previous_starts))));
+      el.innerHTML = rows.map(row => {
+        const delta = n(row.starts) - n(row.previous_starts);
+        const deltaText = delta > 0 ? `+${fmt(delta)}` : fmt(delta);
+        return `
+          <div class="hour" title="${safe(row.hour)} 当前 ${fmt(row.starts)} / 上一周期 ${fmt(row.previous_starts)} / 差值 ${deltaText}">
+            <i class="current-starts" style="height:${Math.max(2, n(row.starts) / max * 100)}%"></i>
+            <i class="previous-starts" style="height:${Math.max(2, n(row.previous_starts) / max * 100)}%"></i>
+          </div>
+        `;
+      }).join("");
+    }
     function renderFunnel(rows) {
       const byEvent = Object.fromEntries(rows.map(row => [row.event, n(row.count)]));
       const ordered = ["profile_submit", "game_start_success", "choice_click", "result_view", "game_complete"]
@@ -468,6 +494,7 @@
     function renderSummary(summary) {
       renderKpis(summary);
       renderHourly(summary.hourly || []);
+      renderHourlyStartsCompare(summary.hourly || []);
       renderFunnel(summary.funnel || []);
       document.querySelector("#exitsByFlow").innerHTML = barRows((summary.exitsByFlow || []).map(row => ({
         ...row,

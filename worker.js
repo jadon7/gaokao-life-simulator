@@ -506,6 +506,25 @@ async function buildAnalyticsSummary(env, request) {
     GROUP BY hour
     ORDER BY hour
   `, since);
+  const previousHourly = await analyticsQuery(db, `
+    SELECT
+      substr(created_at, 1, 13) || ':00:00Z' AS hour,
+      COUNT(DISTINCT run_id) AS starts
+    FROM analytics_events
+    WHERE created_at >= ? AND created_at < ? AND event = 'profile_submit'
+    GROUP BY hour
+  `, new Date(Date.now() - days * 2 * 86400000).toISOString(), since);
+  const previousStartsByHour = Object.fromEntries(previousHourly.map(row => [row.hour, Number(row.starts || 0)]));
+  summary.hourly = summary.hourly.map(row => {
+    const previousHourTime = Date.parse(row.hour) - days * 86400000;
+    const previousHour = Number.isFinite(previousHourTime) ? new Date(previousHourTime).toISOString().slice(0, 13) + ":00:00Z" : "";
+    const previous_starts = previousStartsByHour[previousHour] || 0;
+    return {
+      ...row,
+      previous_starts,
+      starts_delta: Number(row.starts || 0) - previous_starts
+    };
+  });
 
   summary.exitsByFlow = await analyticsQuery(db, `
     SELECT flow, COUNT(*) AS exits, SUM(CASE WHEN bounced = 1 THEN 1 ELSE 0 END) AS bounces

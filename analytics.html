@@ -203,6 +203,7 @@
       border-radius: 4px 4px 0 0;
     }
     .hour .sessions { background: #8bb8ff; }
+    .hour .starts { background: #2377ff; }
     .hour .completes { background: #12c7a0; }
     .legend {
       display: flex;
@@ -306,7 +307,7 @@
       <article class="panel wide">
         <h2>小时趋势</h2>
         <div class="chart" id="hourly"></div>
-        <div class="legend"><span><i style="background:#8bb8ff"></i>访问会话</span><span><i style="background:#12c7a0"></i>完成</span></div>
+        <div class="legend"><span><i style="background:#8bb8ff"></i>访问会话</span><span><i style="background:#2377ff"></i>新增开局</span><span><i style="background:#12c7a0"></i>完成</span></div>
       </article>
 
       <article class="panel">
@@ -449,10 +450,11 @@
         el.innerHTML = emptyHTML();
         return;
       }
-      const max = Math.max(1, ...rows.map(row => Math.max(n(row.sessions), n(row.completes))));
+      const max = Math.max(1, ...rows.map(row => Math.max(n(row.sessions), n(row.starts), n(row.completes))));
       el.innerHTML = rows.map(row => `
-        <div class="hour" title="${safe(row.hour)} 会话 ${fmt(row.sessions)} / 完成 ${fmt(row.completes)}">
+        <div class="hour" title="${safe(row.hour)} 会话 ${fmt(row.sessions)} / 新增 ${fmt(row.starts)} / 完成 ${fmt(row.completes)}">
           <i class="sessions" style="height:${Math.max(2, n(row.sessions) / max * 100)}%"></i>
+          <i class="starts" style="height:${Math.max(2, n(row.starts) / max * 100)}%"></i>
           <i class="completes" style="height:${Math.max(2, n(row.completes) / max * 100)}%"></i>
         </div>
       `).join("");

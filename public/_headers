@@ -1,0 +1,14 @@
+# Cloudflare Workers 静态资源响应头
+# 由 wrangler [assets]（directory = ./public）在部署时识别并应用。
+# 仅对静态资源生效，不影响 worker.js 生成的 /api/* 响应。
+#
+# 背景：CF Workers Assets 默认给所有静态资源发 `cache-control: max-age=0, must-revalidate`，
+# 浏览器零本地缓存、每次访问都回源校验。卡片插画 / Rive 动画 / 角色图等在游戏过程中会被
+# 反复加载，零缓存在移动弱网下是明显的卡顿来源。
+
+# 静态资源：内容稳定，开启 30 天浏览器本地缓存，
+# 让移动端、二次访问以及游戏内重复用到的资源直接命中本地、零网络回源。
+# 注意：这些文件名不带内容哈希，故用有限时长（30 天）而非 immutable；
+# 若更新某个资源且需立即生效，请改其文件名，或临时调小此 max-age。
+/assets/*
+  Cache-Control: public, max-age=2592000

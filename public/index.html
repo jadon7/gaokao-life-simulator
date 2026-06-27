@@ -5099,10 +5099,10 @@
         return;
       }
       if (options.beacon && navigator.sendBeacon) {
-        navigator.sendBeacon("/api/analytics", new Blob([body], { type: "application/json" }));
+        navigator.sendBeacon("/api/sync", new Blob([body], { type: "application/json" }));
         return;
       }
-      fetch("/api/analytics", {
+      fetch("/api/sync", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body,

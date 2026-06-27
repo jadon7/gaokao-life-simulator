@@ -1473,7 +1473,7 @@ async function handleApi(req, res, pathname) {
     sendJson(res, 200, { ok: true, recentEvents: emptyAnalyticsEvents(days, page, limit) });
     return;
   }
-  if (pathname === "/api/analytics") {
+  if (pathname === "/api/analytics" || pathname === "/api/sync") {
     try {
       const body = await readJson(req);
       logAnalyticsEvent(body, { ua: req.headers["user-agent"] || "" });

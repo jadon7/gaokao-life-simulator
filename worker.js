@@ -1657,7 +1657,7 @@ async function handleApi(request, env, pathname) {
     return sendJson(200, { ok: true, recentEvents: await buildAnalyticsEvents(env, request) });
   }
 
-  if (pathname === "/api/analytics") {
+  if (pathname === "/api/analytics" || pathname === "/api/sync") {
     try {
       const body = await readJson(request);
       const row = logAnalyticsEvent(body, { ua: request.headers.get("user-agent") || "" });

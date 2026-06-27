@@ -6542,12 +6542,16 @@
         return data;
       } catch (error) {
         if (error.name === "AbortError") {
-          trackApiRequest(path, payload, {
-            transport: "fetch",
-            status: 0,
-            duration_ms: Math.round(performance.now() - startedAt),
-            error_type: "timeout"
-          });
+          // 外部 signal 主动取消（如分支预取弃用未选中的分支）不是真超时，
+          // 不计入埋点，避免 dashboard 超时率被投机预取的取消请求虚高。
+          if (!externalSignal?.aborted) {
+            trackApiRequest(path, payload, {
+              transport: "fetch",
+              status: 0,
+              duration_ms: Math.round(performance.now() - startedAt),
+              error_type: "timeout"
+            });
+          }
           throw new Error(options.abortMessage || "生成超时，请重试");
         }
         if (isNetworkFetchError(error)) {

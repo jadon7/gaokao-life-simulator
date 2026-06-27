@@ -567,10 +567,23 @@
     }
     async function loadRecentEvents() {
       document.querySelector("#recentMeta").textContent = "正在加载最近事件...";
-      const res = await fetch(`/api/analytics/events?days=${state.days}&page=${state.recentPage}&limit=${state.recentLimit}`, { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "最近事件加载失败");
-      renderRecentEvents(data.recentEvents);
+      const path = `/api/analytics/recent?days=${state.days}&page=${state.recentPage}&limit=${state.recentLimit}`;
+      // events 端点偶发 503（worker/D1 瞬时超时，Cloudflare 平台层返回），自动重试几次再放弃
+      let lastError;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 400 * attempt));
+        try {
+          const res = await fetch(path, { cache: "no-store" });
+          if (res.status >= 500) { lastError = new Error(`服务繁忙（${res.status}）`); continue; }
+          const data = await res.json();
+          if (!res.ok || !data.ok) throw new Error(data.error || "最近事件加载失败");
+          renderRecentEvents(data.recentEvents);
+          return;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("最近事件加载失败");
     }
     async function load() {
       const status = document.querySelector("#status");
@@ -581,11 +594,15 @@
         if (!res.ok || !data.ok) throw new Error(data.error || "加载失败");
         state.summary = data.summary;
         renderSummary(data.summary);
-        await loadRecentEvents();
         status.textContent = `最近 ${data.summary.days} 天，更新时间 ${new Date(data.summary.generatedAt).toLocaleString("zh-CN")}`;
       } catch (error) {
         status.textContent = error.message || "加载失败";
+        return;
       }
+      // 最近事件独立加载：它走较重的明细查询、偶发 503，失败只提示该区域，不拖垮主面板
+      loadRecentEvents().catch(error => {
+        document.querySelector("#recentMeta").textContent = `最近事件加载失败：${error.message || "请点刷新重试"}`;
+      });
     }
     document.querySelector("#rangeButtons").addEventListener("click", event => {
       const button = event.target.closest("button");

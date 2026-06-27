@@ -1653,7 +1653,7 @@ async function handleApi(request, env, pathname) {
     return sendJson(200, { ok: true, summary: await buildAnalyticsSummary(env, request) });
   }
 
-  if (pathname === "/api/analytics/events") {
+  if (pathname === "/api/analytics/recent") {
     return sendJson(200, { ok: true, recentEvents: await buildAnalyticsEvents(env, request) });
   }
 
@@ -1799,7 +1799,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
-      const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary" || url.pathname === "/api/analytics/events";
+      const allowsGet = url.pathname === "/api/health" || url.pathname === "/api/analytics/summary" || url.pathname === "/api/analytics/recent";
       if (!allowsGet && request.method !== "POST") {
         return sendJson(405, { ok: false, error: "Method not allowed" });
       }
